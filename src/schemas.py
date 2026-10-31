@@ -79,3 +79,6 @@ class Recommendation(BaseModel):
     reviewer_notes: list[str]
     human_decision: Literal["pending", "approved", "rejected"] = "pending"
     log_path: str
+    # Additive: set when the deterministic fallback decided. {"fired": True, "reason", "chosen",
+    # "objective", "n_eligible", "eligible_ids", "excluded", "unchecked", "weights"}; None on consensus.
+    fallback: dict | None = None
