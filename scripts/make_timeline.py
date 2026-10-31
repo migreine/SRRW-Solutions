@@ -74,7 +74,7 @@ def main() -> None:
     client = anthropic.Anthropic()
     with client.beta.messages.stream(
         model=MODEL,
-        max_tokens=64000,
+        max_tokens=32000,
         # Re-run on another model if Fable's safety classifiers decline the request.
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
