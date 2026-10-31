@@ -1,0 +1,29 @@
+metric,value,unit,n,definition,note
+n_rows,200,rows,200,sample size,"SAMPLE FIXTURE: illustrative value, not a real result"
+n_completed,40,rows,200,scenarios finished,"SAMPLE FIXTURE: illustrative value, not a real result"
+n_guard_stopped,0,rows,200,stopped by cost/time guard,"SAMPLE FIXTURE: illustrative value, not a real result"
+consensus_rate,0.55,fraction,40,"decided_by==""consensus"" / n_completed","SAMPLE FIXTURE: illustrative value, not a real result"
+consensus_round1_rate,0.2,fraction,40,consensus with rounds_used==1,"SAMPLE FIXTURE: illustrative value, not a real result"
+consensus_round2_rate,0.35,fraction,40,consensus with rounds_used==2,"SAMPLE FIXTURE: illustrative value, not a real result"
+mean_rounds,1.7,rounds,40,mean rounds_used over agent runs,"SAMPLE FIXTURE: illustrative value, not a real result"
+fallback_rate_no_consensus,0.3,fraction,40,fallback no_consensus / n_completed,"SAMPLE FIXTURE: illustrative value, not a real result"
+fallback_rate_invalid_message,0.1,fraction,40,fallback invalid_message / n_completed,"SAMPLE FIXTURE: illustrative value, not a real result"
+fallback_rate_reviewer_reject,0.05,fraction,40,fallback reviewer_reject / n_completed,"SAMPLE FIXTURE: illustrative value, not a real result"
+agent_top_pick_rule_fail_rate,0.18,fraction,342,valid messages whose ranking[0] fails >=1 engine rule / valid messages,"SAMPLE FIXTURE: illustrative value, not a real result"
+consensus_excluded_by_rules_rate,0.08,fraction,40,runs where acceptable intersection is non-empty but none pass the rules,"SAMPLE FIXTURE: illustrative value, not a real result"
+reviewer_APPROVE_rate,0.6,fraction,40,verdict counts / n_completed,"SAMPLE FIXTURE: illustrative value, not a real result"
+reviewer_MODIFY_rate,0.32,fraction,40,verdict counts / n_completed,"SAMPLE FIXTURE: illustrative value, not a real result"
+reviewer_REJECT_rate,0.08,fraction,40,verdict counts / n_completed,"SAMPLE FIXTURE: illustrative value, not a real result"
+reviewer_engine_disagreement_rate,0.04,fraction,360,candidates with engine != reviewer pass / candidates checked,"SAMPLE FIXTURE: illustrative value, not a real result"
+cited_value_mismatch_rate,0.06,fraction,1210,mismatched citations / citations with a value,"SAMPLE FIXTURE: illustrative value, not a real result"
+schema_invalid_rate,0.03,fraction,360,invalid messages / total agent calls,"SAMPLE FIXTURE: illustrative value, not a real result"
+modelled_delay_agents_mean,17.5,min,40,est_delay_min of chosen (agents),model estimate; not comparable like-for-like with actual
+modelled_delay_solver_mean,15.2,min,40,est_delay_min of chosen (solver only),model estimate; not comparable like-for-like with actual
+actual_delay_mean,96.4,min,40,ARRIVAL_DELAY of the row (data),data
+actual_chain_mean,141.0,min,40,"sum of downstream ARRIVAL_DELAY (data, partial)","data, partial: only delayed legs exist"
+modelled_saving_vs_actual_mean,78.9,min,40,actual - modelled (agents),model estimate; not comparable like-for-like with actual
+agents_vs_solver_same_pick_rate,0.62,fraction,40,chosen ids equal,"SAMPLE FIXTURE: illustrative value, not a real result"
+latency_s_mean,19.4,s,40,run latency,"SAMPLE FIXTURE: illustrative value, not a real result"
+cost_usd_mean,0.0031,USD,40,run cost,"SAMPLE FIXTURE: illustrative value, not a real result"
+cost_usd_total,0.124,USD,40,total cost,"SAMPLE FIXTURE: illustrative value, not a real result"
+human_decision,pending,,40,always pending in eval: the tool never acts,"SAMPLE FIXTURE: illustrative value, not a real result"
