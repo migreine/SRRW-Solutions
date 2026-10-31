@@ -24,9 +24,16 @@ Output <out>/<scenario_id>.json:
     meta: {scenario_id, row_index, agents, model, seed, flags, started_at, latency_s, cost_usd,
            tokens_in, tokens_out, git_sha, ...}
     scenario, candidates, rule_results, turns, recommendation   (model_dump of each)
-    fallback: {fired, reason, objective, n_eligible, excluded, ...}
-    reviewer: {verdict, notes, re_derived, cited_mismatches, engine_disagreements, implemented}
+    fallback: {fired, reason, objective, n_eligible, excluded, rejected_candidate_id, ...}
+    reviewer: {verdict, notes, re_derived, cited_mismatches, engine_disagreements,
+               derived_delay_min, citations_checked, citations_with_value, not_rederived,
+               candidate_id, escalated, initial_review}
 The .json is overwritten on a re-run; <scenario_id>.jsonl is append-only, so history survives.
+
+Reviewer (src/reviewer/safety.py, docs/plan-rohan.md 3.4): reviews the pick against every
+candidate. REJECT -> the deterministic fallback re-picks excluding the rejected candidate and every
+candidate the reviewer fails (fallback_fired reason "reviewer_reject"), and the new pick is reviewed
+once more. If that is REJECT too, or nothing is eligible, chosen=None: escalate to the duty manager.
 """
 
 import argparse
@@ -46,7 +53,11 @@ from src.schemas import Recommendation, Scenario, Tagged
 AGENT_MODES = ("stub", "haiku", "sonnet", "none", "fixture")
 LIVE_MODES = ("haiku", "sonnet")
 SOURCE_TAGS = ("data", "estimated", "assumed", "synthetic")
-REVIEWER_NOT_IMPLEMENTED = "reviewer not implemented"
+ESCALATE_NOTE = "no candidate passes engine and reviewer; escalate to duty manager"
+REVIEWER_SECTION_KEYS = ("verdict", "notes", "re_derived", "cited_mismatches",
+                         "engine_disagreements", "derived_delay_min", "citations_checked",
+                         "citations_with_value", "not_rederived", "candidate_id", "escalated",
+                         "initial_review")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -148,23 +159,100 @@ def sum_usage(agents: list) -> dict:
     return usage
 
 
-def run_reviewer(s: Scenario, rec: Recommendation, turns: list) -> dict:
-    from src.reviewer.safety import review
+def _reviewer_failed_ids(detail: dict) -> set[str]:
+    """Candidates for which the reviewer's own FUEL/DUTY/WAKE re-derivation fails."""
+    return {e["candidate_id"] for e in detail.get("re_derived", []) if not e.get("passed")}
 
-    try:
-        verdict, notes = review(s, rec, turns)
-        implemented = True
-    except NotImplementedError:
-        verdict, notes, implemented = "APPROVE", [REVIEWER_NOT_IMPLEMENTED], False
-    detail = getattr(rec, "reviewer_detail", None) or {}
-    return {
-        "verdict": verdict,
-        "notes": list(notes),
-        "re_derived": detail.get("re_derived", []),
-        "cited_mismatches": detail.get("cited_mismatches", []),
-        "engine_disagreements": detail.get("engine_disagreements", []),
-        "implemented": implemented,
-    }
+
+def _reject_reasons(detail: dict) -> list[str]:
+    """The notes that made a review REJECT (a failed check on the pick, or an explicit REJECT)."""
+    return [n for n in detail.get("notes", []) if "-> FAIL" in n or "-> REJECT" in n]
+
+
+def review_and_resolve(s: Scenario, rec: Recommendation, turns: list, candidates: list,
+                       rules: list, weights: dict, emit) -> tuple[Recommendation, dict]:
+    """Independent review of the pick; on REJECT the deterministic fallback takes over once.
+
+    docs/plan-rohan.md 3.4 "Reviewer wiring":
+    - review with candidates= so engine disagreements are computed on every candidate.
+    - APPROVE / MODIFY: the recommendation stands with the reviewer's notes.
+    - REJECT: fallback_pick excluding the rejected pick and every candidate the reviewer fails,
+      decided_by="fallback", fallback_fired reason "reviewer_reject", then review the new pick once.
+      Still REJECT, or nothing eligible: chosen=None, verdict REJECT, escalate to duty manager.
+    Returns (final Recommendation, the JSON "reviewer" section). Logs every reviewer_verdict.
+    """
+    from src.reviewer.safety import review_detail
+
+    def log_review(detail: dict, stage: str, final: bool, candidate_id: str | None) -> None:
+        emit("reviewer_verdict", stage=stage, final=final, candidate_id=candidate_id,
+             verdict=detail["verdict"], notes=detail["notes"], re_derived=detail["re_derived"],
+             cited_mismatches=detail["cited_mismatches"],
+             engine_disagreements=detail["engine_disagreements"])
+
+    def cid(r: Recommendation) -> str | None:
+        return r.chosen.candidate_id if r.chosen else None
+
+    first = review_detail(s, rec, turns, candidates=candidates)
+    initial = None
+    if first["verdict"] != "REJECT":
+        log_review(first, "review", True, cid(rec))
+        final, escalated = first, False
+    else:
+        log_review(first, "review", False, cid(rec))
+        rejected = cid(rec)
+        exclude = _reviewer_failed_ids(first) | ({rejected} if rejected else set())
+        pick = fallback_pick(candidates, rules, weights, exclude=exclude)
+        info = fallback_explain(candidates, rules, weights, exclude=exclude)
+        prev_by = rec.decided_by
+        prev_reason = (rec.fallback or {}).get("reason") if prev_by == "fallback" else None
+        emit("fallback_fired", reason="reviewer_reject", candidate_id=info["chosen"],
+             objective=info["objective"], n_eligible=info["n_eligible"], weights=weights,
+             excluded=info["excluded"], eligible_ids=info["eligible_ids"],
+             unchecked=info["unchecked"], rounds_used=rec.rounds_used,
+             rejected_candidate_id=rejected, previous_decided_by=prev_by,
+             previous_fallback_reason=prev_reason)
+        rec = rec.model_copy(update={
+            "chosen": pick,
+            "decided_by": "fallback",
+            "fallback": {"fired": True, "reason": "reviewer_reject", **info,
+                         "weights": dict(weights), "rejected_candidate_id": rejected,
+                         "previous_decided_by": prev_by,
+                         "previous_fallback_reason": prev_reason},
+        })
+        handover = (
+            f"REVIEWER: REJECT of {rejected or 'no pick'} (decided by {prev_by}"
+            f"{', ' + prev_reason if prev_reason else ''}); deterministic fallback re-ran excluding "
+            f"{info['excluded']} -> {pick.candidate_id if pick else 'nothing eligible'} "
+            f"[docs/plan-rohan.md 3.4: reviewer_reject]."
+        )
+        initial = first
+        notes = [handover] + _reject_reasons(first)
+        if pick is not None:
+            second = review_detail(s, rec, turns, candidates=candidates)
+            notes += second["notes"]
+            escalated = second["verdict"] == "REJECT"
+            log_review(second, "re_review", not escalated, pick.candidate_id)
+            final = second
+        else:
+            final, escalated = first, True
+        if escalated:
+            rec = rec.model_copy(update={"chosen": None})
+            notes.append(ESCALATE_NOTE)
+            final = {**final, "verdict": "REJECT", "notes": notes}
+            log_review(final, "escalation", True, None)
+        else:
+            final = {**final, "notes": notes}
+
+    detail = {**final, "initial_review": initial, "escalated": escalated,
+              "candidate_id": cid(rec)}
+    rec = Recommendation.model_validate({
+        **rec.model_dump(),
+        "reviewer_verdict": detail["verdict"],
+        "reviewer_notes": detail["notes"],
+        "reviewer_detail": detail,
+    })
+    section = {k: detail.get(k) for k in REVIEWER_SECTION_KEYS}
+    return rec, section
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -189,7 +277,7 @@ def run_one(
     """Run one scenario end to end; write <out_dir>/<scenario_id>.json and append .jsonl.
 
     Returns the JSON payload that was written (plain dicts). `tamper_rules` is recorded in the
-    flags but is a no-op until the reviewer is wired (docs/plan-rohan.md cut #1).
+    flags only: the fault injection itself is not built (docs/plan-rohan.md cut #1).
     """
     if agents_mode not in AGENT_MODES:
         raise ValueError(f"unknown agents mode {agents_mode!r}; expected one of {AGENT_MODES}")
@@ -240,14 +328,8 @@ def run_one(
             rec, turns = negotiate(s, candidates, agents, rules, max_rounds, log=log,
                                    force_deadlock=force_deadlock, weights=weights)
 
-        reviewer = run_reviewer(s, rec, turns)
-        rec = Recommendation.model_validate({
-            **rec.model_dump(),
-            "reviewer_verdict": reviewer["verdict"],
-            "reviewer_notes": reviewer["notes"],
-            "log_path": str(log_path),
-        })
-        emit("reviewer_verdict", **reviewer)
+        rec, reviewer = review_and_resolve(s, rec, turns, candidates, rules, weights, emit)
+        rec = rec.model_copy(update={"log_path": str(log_path)})
         emit("recommendation", decided_by=rec.decided_by,
              candidate_id=rec.chosen.candidate_id if rec.chosen else None,
              rounds_used=rec.rounds_used, reviewer_verdict=rec.reviewer_verdict)
@@ -300,6 +382,9 @@ def run_one(
             "eligible_ids": fb.get("eligible_ids", []),
             "unchecked": fb.get("unchecked", []),
             "weights": fb.get("weights"),
+            "rejected_candidate_id": fb.get("rejected_candidate_id"),
+            "previous_decided_by": fb.get("previous_decided_by"),
+            "previous_fallback_reason": fb.get("previous_fallback_reason"),
         },
         "reviewer": reviewer,
     }
@@ -364,10 +449,12 @@ def render_pretty(result: dict) -> str:
     lines += [
         "",
         f"Decided by : {rec['decided_by']}"
-        + (f" (fallback reason: {fb['reason']})" if fb.get("fired") else ""),
-        f"Chosen     : {chosen_id or 'NONE - no candidate passes every rule; escalate to duty manager'}",
+        + (f" (fallback reason: {fb['reason']})" if fb.get("fired") else "")
+        + (f", reviewer rejected {fb['rejected_candidate_id']}"
+           if fb.get("reason") == "reviewer_reject" and fb.get("rejected_candidate_id") else ""),
+        f"Chosen     : {chosen_id or 'NONE - ' + ESCALATE_NOTE}",
         f"Rounds     : {rec['rounds_used']} of max {meta.get('max_rounds')}",
-        f"Reviewer   : {rv['verdict']}" + ("" if rv.get("implemented") else " (placeholder)"),
+        f"Reviewer   : {rv['verdict']}",
     ]
     lines += [f"  note: {n}" for n in rv["notes"]]
     lines += [
@@ -406,7 +493,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-rounds", type=int, default=2)
     parser.add_argument("--tamper-rules", action="store_true",
-                        help="fault injection (recorded only; no-op until the reviewer is wired)")
+                        help="fault injection (recorded only; not built, plan cut #1)")
     parser.add_argument("--fixture", action="store_true",
                         help="test-only: use the hand-built AA334 fixture data with any --agents")
     parser.add_argument("--pretty", action="store_true", help="print a compact summary table")

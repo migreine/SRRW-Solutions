@@ -29,7 +29,12 @@ Verdict = Literal["APPROVE", "REJECT", "MODIFY"]
 FUEL_FINAL_RESERVE_MIN = 45.0  # 14 CFR 121.639
 CRUISE_NM_PER_MIN = 7.0  # 420 kt
 DIVERT_GROUND_MIN = 60.0  # ground time at the alternate
-WAKE_SEP_NM = {"H": 4.0, "L": 5.0, "S": 6.0}  # follower category behind a Heavy leader
+
+# WAKE (FAA JO 7110.65 5-5-4). Required spacing is per runway, so the airport-wide arrival rate is
+# split over an assumed number of arrival runways before the two are compared.
+ASSUMED_LEADER_CATEGORY = "L"  # Large
+WAKE_SEP_NM_BEHIND_LARGE = 3.0  # radar minimum; the same for every follower category (H/L/S)
+ASSUMED_ARRIVAL_RUNWAYS = 2
 APPROACH_KT = 140.0
 MIN_EFFECTIVE_AAR = 1.0
 DELAY_REL_TOL = 0.20
@@ -40,7 +45,12 @@ CITE_REL_TOL = 0.02
 CIT_FUEL = "14 CFR 121.639; 45-min final reserve: assumed"
 CIT_DIVERT = "assumed: 420 kt cruise = 7 NM/min, 60 min ground time at alternate"
 CIT_DUTY = "14 CFR 117; duty remaining >= 0 at arrival: assumed"
-CIT_WAKE = "FAA JO 7110.65 5-5-4; Heavy leader, H/L/S follower 4/5/6 NM, 140 kt approach: assumed"
+CIT_WAKE_LEADER = (
+    "assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category"
+)
+CIT_WAKE_RUNWAYS = "assumed: 2 arrival runways share the airport arrival rate"
+CIT_WAKE_APPROACH = "assumed: 140 kt approach speed"
+CIT_WAKE = f"FAA JO 7110.65 5-5-4; {CIT_WAKE_LEADER}; {CIT_WAKE_RUNWAYS}; {CIT_WAKE_APPROACH}"
 CIT_DELAY = "assumed: reviewer delay tolerance 20% and 5 min"
 CIT_CITED = "reviewer cross-check vs Scenario, tolerance max(1.0, 2%): assumed"
 
@@ -214,15 +224,16 @@ def _check_duty(s: Scenario, c: Candidate, mo: dict) -> tuple[dict, str]:
 
 
 def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
+    """Per-runway spacing available vs. the separation behind an assumed Large leader.
+
+    required_s  = 3 NM / (140 kt / 3600)                                  (77.1 s)
+    available_s = 3600 * runways / max(nominal_aar - dest_disruption, 1)  (per-runway gap)
+    The follower's wake_category is recorded but does not change the 3 NM behind a Large leader.
+    """
     cat_raw = str(s.wake_category.value).strip().upper()
     cat_src = s.wake_category.source
-    cat_note = ""
-    if cat_raw in WAKE_SEP_NM:
-        cat = cat_raw
-    else:
-        cat = "S"  # unknown category: use the largest separation (conservative)
-        cat_note = f", unknown {s.wake_category.value!r} treated as S (assumed)"
-    sep_nm = WAKE_SEP_NM[cat]
+    cat_note = "" if cat_raw in ("H", "L", "S") else f", unknown {s.wake_category.value!r}"
+    sep_nm = WAKE_SEP_NM_BEHIND_LARGE
     required_s = sep_nm / (APPROACH_KT / 3600.0)
     aar = _to_float(s.nominal_aar.value)
     dis = _to_float(s.dest_disruption.value)
@@ -230,7 +241,7 @@ def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
         eff, avail_s, passed = None, None, False
     else:
         eff = max(aar - dis, MIN_EFFECTIVE_AAR)
-        avail_s = 3600.0 / eff
+        avail_s = 3600.0 * ASSUMED_ARRIVAL_RUNWAYS / eff
         passed = avail_s >= required_s
     entry = {
         "check": "WAKE",
@@ -240,9 +251,11 @@ def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
         "passed": passed,
         "citation": CIT_WAKE,
         "inputs": {
-            "wake_category": cat,
+            "wake_category": cat_raw,
             "wake_source": cat_src,
+            "leader_category": ASSUMED_LEADER_CATEGORY,
             "sep_nm": sep_nm,
+            "arrival_runways": ASSUMED_ARRIVAL_RUNWAYS,
             "nominal_aar": aar,
             "aar_source": s.nominal_aar.source,
             "dest_disruption": dis,
@@ -251,10 +264,11 @@ def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
         },
     }
     note = (
-        f"WAKE re-derived: {c.candidate_id} wake_category={cat} ({cat_src}{cat_note}) behind a "
-        f"Heavy leader needs {_fmt(sep_nm)} NM = {_fmt(required_s)} s at {_fmt(APPROACH_KT)} kt; "
-        f"nominal_aar={_fmt(aar)} ({s.nominal_aar.source}) - dest_disruption={_fmt(dis)} "
-        f"({s.dest_disruption.source}) = {_fmt(eff)}/h gives {_fmt(avail_s)} s "
+        f"WAKE re-derived: {c.candidate_id} wake_category={cat_raw} ({cat_src}{cat_note}) behind "
+        f"an assumed Large leader needs {_fmt(sep_nm)} NM = {_fmt(required_s)} s at "
+        f"{_fmt(APPROACH_KT)} kt; nominal_aar={_fmt(aar)} ({s.nominal_aar.source}) - "
+        f"dest_disruption={_fmt(dis)} ({s.dest_disruption.source}) = {_fmt(eff)}/h over "
+        f"{ASSUMED_ARRIVAL_RUNWAYS} assumed arrival runways gives {_fmt(avail_s)} s per runway "
         f"-> {'PASS' if passed else 'FAIL'} [{CIT_WAKE}]."
     )
     return entry, note
@@ -352,10 +366,14 @@ def _supporting_agents(turns: list[Turn], chosen_id: str) -> set[str]:
     return {a for a, (_, acc) in last.items() if chosen_id in acc}
 
 
-def _cross_check(s: Scenario, turns: list[Turn], chosen_id: str) -> tuple[list[dict], list[str], int]:
+def _cross_check(
+    s: Scenario, turns: list[Turn], chosen_id: str
+) -> tuple[list[dict], list[str], int, int]:
+    """-> (mismatches, notes, citations checked, citations checked that carry "=value")."""
     mismatches: list[dict] = []
     notes: list[str] = []
     checked = 0
+    with_value = 0
     supporters = _supporting_agents(turns, chosen_id)
     for t in turns:
         for msg in t.messages:
@@ -369,6 +387,7 @@ def _cross_check(s: Scenario, turns: list[Turn], chosen_id: str) -> tuple[list[d
                 for raw in _citations(e):
                     checked += 1
                     path, sep, cited = raw.partition("=")
+                    with_value += bool(sep)
                     path, cited = path.strip(), cited.strip()
                     actual, src = _resolve(s, path)
                     base = {"agent": msg.agent, "round": msg.round, "candidate_id": cid, "path": path}
@@ -402,7 +421,7 @@ def _cross_check(s: Scenario, turns: list[Turn], chosen_id: str) -> tuple[list[d
                         f"{path}={cited}; scenario has {_fmt(actual)} ({src or 'unknown'}{tol_txt}) "
                         f"-> mismatch [{CIT_CITED}]."
                     )
-    return mismatches, notes, checked
+    return mismatches, notes, checked, with_value
 
 
 # ---- engine comparison ---------------------------------------------------------------------------
@@ -494,9 +513,11 @@ def review_detail(
 
     # 3. Cited-value cross-check among the agents that support the chosen candidate.
     cited_mismatches: list[dict] = []
-    n_cited = 0
+    n_cited = n_cited_value = 0
     if chosen is not None:
-        cited_mismatches, cnotes, n_cited = _cross_check(s, turns, chosen.candidate_id)
+        cited_mismatches, cnotes, n_cited, n_cited_value = _cross_check(
+            s, turns, chosen.candidate_id
+        )
         notes.extend(cnotes)
         if cited_mismatches:
             modify = True
@@ -543,6 +564,7 @@ def review_detail(
         "engine_disagreements": engine_disagreements,
         "derived_delay_min": derived_delay,
         "citations_checked": n_cited,
+        "citations_with_value": n_cited_value,
         "not_rederived": sorted(not_rederived),
     }
 

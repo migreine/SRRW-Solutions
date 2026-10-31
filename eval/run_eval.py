@@ -28,7 +28,14 @@ fallback_reason, verdict, n_cited_mismatch, n_invalid, top_pick_fail_ATC, top_pi
 top_pick_fail_GROUND, est_delay, est_knock_on, actual_delay, actual_chain, latency_s, cost_usd,
 then (additive, needed by the summary) n_agent_calls, n_valid_ATC, n_valid_PILOT, n_valid_GROUND,
 consensus_excluded_by_rules, n_engine_disagreements, n_candidates_reviewed,
-n_citations_with_value, reviewer_implemented, tokens_in, tokens_out, human_decision, error.
+n_citations_with_value, n_cited_value_mismatch, reviewer_rejected_id, tokens_in, tokens_out,
+human_decision, error.
+
+Reviewer columns come from the run JSON's "reviewer" section (src/reviewer/safety.review_detail,
+final review after any reviewer_reject fallback): n_engine_disagreements = distinct candidates in
+engine_disagreements; n_candidates_reviewed = candidates both re-derived by the reviewer and checked
+by the engine on an R-FUEL/R-DUTY/R-WAKE rule; n_citations_with_value = reviewer's
+citations_with_value; n_cited_value_mismatch = cited_mismatches that carry a value.
 
 | metric | definition |
 |---|---|
@@ -40,8 +47,8 @@ n_citations_with_value, reviewer_implemented, tokens_in, tokens_out, human_decis
 | agent_top_pick_rule_fail_rate (overall, per role) | valid messages whose ranking[0] fails >= 1 engine rule / valid messages |
 | consensus_excluded_by_rules_rate | runs where intersection(acceptable) != {} but intersection(acceptable) & rules_pass == {} |
 | reviewer_<verdict>_rate | verdict counts / n_completed |
-| reviewer_engine_disagreement_rate | candidates with engine != reviewer pass / candidates checked |
-| cited_value_mismatch_rate | mismatched citations / citations with a value |
+| reviewer_engine_disagreement_rate | candidates with engine != reviewer pass / candidates checked (all modes) |
+| cited_value_mismatch_rate | mismatched citations with a value / citations with a value |
 | schema_invalid_rate | invalid messages / total agent calls |
 | modelled_delay_agents_mean/median, modelled_delay_solver_mean/median, actual_delay_mean/median, actual_chain_mean | modelled vs data |
 | modelled_saving_vs_actual_mean | actual - modelled (agents); an estimate |
@@ -65,6 +72,7 @@ from pathlib import Path
 
 from src.cli import AGENT_MODES, git_sha, model_for, require_api_key, run_one
 from src.log.consensus_log import SGT, now_iso, to_jsonable
+from src.reviewer.safety import ENGINE_PREFIX
 
 ROLES = ("ATC", "PILOT", "GROUND")
 HUBS = ("ORD", "ATL", "DFW", "DEN")
@@ -72,7 +80,6 @@ FALLBACK_REASONS = ("no_consensus", "invalid_message", "monotonic_violation", "f
                     "reviewer_reject")
 VERDICTS = ("APPROVE", "REJECT", "MODIFY")
 MODELLED_NOTE = "model estimate; not comparable like-for-like with actual"
-REVIEWER_PLACEHOLDER_NOTE = "reviewer not implemented in this build; verdict is a placeholder"
 GUARD_MIN_RUNS = 10
 
 PER_SCENARIO_COLUMNS = [
@@ -83,8 +90,8 @@ PER_SCENARIO_COLUMNS = [
     # additive
     "n_agent_calls", "n_valid_ATC", "n_valid_PILOT", "n_valid_GROUND",
     "consensus_excluded_by_rules", "n_engine_disagreements", "n_candidates_reviewed",
-    "n_citations_with_value", "reviewer_implemented", "tokens_in", "tokens_out",
-    "human_decision", "error",
+    "n_citations_with_value", "n_cited_value_mismatch", "reviewer_rejected_id", "tokens_in",
+    "tokens_out", "human_decision", "error",
 ]
 SUMMARY_COLUMNS = ["metric", "value", "unit", "n", "definition", "note", "mode"]
 
@@ -194,25 +201,16 @@ def _rules_pass(rule_results: list[dict]) -> set[str]:
     return {cid for cid, ps in by_id.items() if ps and all(ps)}
 
 
-def _citations_with_value(turns: list[dict], chosen_id: str | None) -> int:
-    """Cited "path=value" entries from each agent's last valid message, if it accepts the pick
-    (the reviewer's scope in docs/plan-rohan.md 3.5)."""
-    if chosen_id is None:
-        return 0
-    last: dict[str, dict] = {}
-    for t in turns:
-        for m in t["messages"]:
-            last[m["agent"]] = m
-    n = 0
-    for m in last.values():
-        if chosen_id not in m["acceptable"]:
-            continue
-        for entry in list(m.get("ranking", [])) + list(m.get("vetoes", [])):
-            fields = list(entry.get("cited_fields") or [])
-            if isinstance(entry.get("cited_field"), str):
-                fields.append(entry["cited_field"])
-            n += sum(1 for f in fields if isinstance(f, str) and "=" in f)
-    return n
+def _engine_comparable(rule_id: str) -> bool:
+    return any(rule_id.upper().startswith(p) for p in ENGINE_PREFIX)
+
+
+def _candidates_compared(reviewer: dict, rule_results: list[dict]) -> set[str]:
+    """Candidates the reviewer re-derived AND the engine checked on a FUEL/DUTY/WAKE rule: the
+    denominator of reviewer_engine_disagreement_rate."""
+    rederived = {e["candidate_id"] for e in reviewer.get("re_derived") or []}
+    engine = {r["candidate_id"] for r in rule_results if _engine_comparable(r["rule_id"])}
+    return rederived & engine
 
 
 def row_from_result(result: dict, mode: str) -> dict:
@@ -240,7 +238,7 @@ def row_from_result(result: dict, mode: str) -> dict:
                 top_fail[m["agent"]] += 1
 
     reviewer = result["reviewer"]
-    implemented = bool(reviewer.get("implemented"))
+    mismatches = reviewer.get("cited_mismatches") or []
     legs = s.get("downstream_legs") or []
     chain = [_num(leg.get("ARRIVAL_DELAY")) for leg in legs]
     return {
@@ -253,7 +251,7 @@ def row_from_result(result: dict, mode: str) -> dict:
         "rounds_used": rec["rounds_used"],
         "fallback_reason": result["fallback"].get("reason") if result["fallback"].get("fired") else None,
         "verdict": rec["reviewer_verdict"],
-        "n_cited_mismatch": len(reviewer.get("cited_mismatches") or []),
+        "n_cited_mismatch": len(mismatches),
         "n_invalid": n_invalid,
         **{f"top_pick_fail_{r}": top_fail[r] for r in ROLES},
         "est_delay": chosen.get("est_delay_min"),
@@ -267,9 +265,10 @@ def row_from_result(result: dict, mode: str) -> dict:
         "consensus_excluded_by_rules": excluded_by_rules,
         "n_engine_disagreements": len({d.get("candidate_id")
                                        for d in reviewer.get("engine_disagreements") or []}),
-        "n_candidates_reviewed": len(result["candidates"]) if implemented else 0,
-        "n_citations_with_value": _citations_with_value(turns, chosen.get("candidate_id")),
-        "reviewer_implemented": int(implemented),
+        "n_candidates_reviewed": len(_candidates_compared(reviewer, result["rule_results"])),
+        "n_citations_with_value": reviewer.get("citations_with_value") or 0,
+        "n_cited_value_mismatch": sum(1 for m in mismatches if m.get("cited") is not None),
+        "reviewer_rejected_id": result["fallback"].get("rejected_candidate_id"),
         "tokens_in": meta.get("tokens_in"),
         "tokens_out": meta.get("tokens_out"),
         "human_decision": rec.get("human_decision", "pending"),
@@ -401,9 +400,6 @@ def summarize(rows: list[dict], modes: list[str], n_rows: int, stats: dict[str, 
         out.append({"metric": metric, "value": value, "unit": unit, "n": n,
                     "definition": definition, "note": note, "mode": mode})
 
-    def reviewer_note(rs):
-        return REVIEWER_PLACEHOLDER_NOTE if rs and not all(int(r["reviewer_implemented"] or 0) for r in rs) else ""
-
     # data: what actually happened, over every distinct completed row
     actual_rows = {i: r for (i, _), r in ok.items()}
     actual = [_num(r["actual_delay"]) for r in actual_rows.values()]
@@ -427,7 +423,11 @@ def summarize(rows: list[dict], modes: list[str], n_rows: int, stats: dict[str, 
             "runs that raised (recorded in per_scenario.csv 'error')", "", mode)
         for v in VERDICTS:
             add(f"reviewer_{v}_rate", _rate(sum(r["verdict"] == v for r in rs), n), "ratio", n,
-                f"verdict == {v} / n_completed", reviewer_note(rs), mode)
+                f"final reviewer verdict == {v} / n_completed", "", mode)
+        checked = sum(int(r["n_candidates_reviewed"]) for r in rs)
+        add("reviewer_engine_disagreement_rate", _rate(sum(int(r["n_engine_disagreements"]) for r in rs), checked),
+            "ratio", checked, "candidates where engine and reviewer pass/fail differ / candidates checked",
+            "checked = re-derived by the reviewer and checked by the engine on R-FUEL/R-DUTY/R-WAKE", mode)
         add("latency_s_mean", _mean([_num(r["latency_s"]) for r in rs]), "s", n, "mean run_one wall time", "", mode)
         add("latency_s_p95", _p95([_num(r["latency_s"]) for r in rs]), "s", n, "95th percentile run_one wall time", "", mode)
         costs = [_num(r["cost_usd"]) or 0.0 for r in rs]
@@ -442,6 +442,9 @@ def summarize(rows: list[dict], modes: list[str], n_rows: int, stats: dict[str, 
         if mode == "none":
             add("fallback_rate_solver_only", _rate(sum(r["fallback_reason"] == "solver_only" for r in rs), n),
                 "ratio", n, "solver-only runs decided by fallback_pick / n_completed", "", mode)
+            add("fallback_rate_reviewer_reject", _rate(sum(r["fallback_reason"] == "reviewer_reject" for r in rs), n),
+                "ratio", n, "solver-only runs whose pick the reviewer rejected, re-picked by fallback_pick / n_completed",
+                "", mode)
             add("modelled_delay_solver_mean", _mean([_num(r["est_delay"]) for r in rs]), "min", n,
                 "mean est_delay_min of the solver-only pick", MODELLED_NOTE, mode)
             add("modelled_delay_solver_median", _median([_num(r["est_delay"]) for r in rs]), "min", n,
@@ -470,14 +473,10 @@ def summarize(rows: list[dict], modes: list[str], n_rows: int, stats: dict[str, 
         add("consensus_excluded_by_rules_rate", _rate(sum(int(r["consensus_excluded_by_rules"]) for r in rs), n),
             "ratio", n, "runs where the acceptable intersection was non-empty but none of it passed every rule / n_completed",
             "", mode)
-        checked = sum(int(r["n_candidates_reviewed"]) for r in rs)
-        add("reviewer_engine_disagreement_rate", _rate(sum(int(r["n_engine_disagreements"]) for r in rs), checked),
-            "ratio", checked, "candidates where engine and reviewer pass/fail differ / candidates checked",
-            reviewer_note(rs), mode)
         cites = sum(int(r["n_citations_with_value"]) for r in rs)
-        add("cited_value_mismatch_rate", _rate(sum(int(r["n_cited_mismatch"]) for r in rs), cites), "ratio", cites,
-            "mismatched citations / citations with a value (supporting agents' final messages)",
-            reviewer_note(rs), mode)
+        add("cited_value_mismatch_rate", _rate(sum(int(r["n_cited_value_mismatch"]) for r in rs), cites), "ratio",
+            cites, "mismatched path=value citations / path=value citations checked by the reviewer "
+            "(every message of each agent that accepts the final pick)", "", mode)
         calls = sum(int(r["n_agent_calls"]) for r in rs)
         add("schema_invalid_rate", _rate(sum(int(r["n_invalid"]) for r in rs), calls), "ratio", calls,
             "invalid messages (schema, unknown_candidate, conflict, monotonic, exception) / agent calls", "", mode)
