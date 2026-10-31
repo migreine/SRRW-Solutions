@@ -1,0 +1,4881 @@
+{
+  "meta": {
+    "scenario_id": "2015-12-29_DL1501_N804DN",
+    "row_index": 352317,
+    "agents": "haiku",
+    "model": "claude-haiku-5-5",
+    "seed": 42,
+    "flags": {
+      "force_deadlock": false,
+      "tamper_rules": false
+    },
+    "started_at": "2026-10-31T14:19:39.470117+08:00",
+    "latency_s": 62.0276,
+    "cost_usd": 0.00771,
+    "tokens_in": 9650,
+    "tokens_out": 13243,
+    "cache_read_tokens": 12380,
+    "n_agent_calls": 6,
+    "git_sha": "ee2d30d",
+    "fixture": false,
+    "max_rounds": 2,
+    "weights": {
+      "delay": 1.0,
+      "knock_on": 1.0
+    },
+    "json_path": "runs\\_f\\2015-12-29_DL1501_N804DN.json",
+    "log_path": "runs\\_f\\2015-12-29_DL1501_N804DN.jsonl"
+  },
+  "scenario": {
+    "scenario_id": "2015-12-29_DL1501_N804DN",
+    "row_index": 352317,
+    "flight": {
+      "YEAR": 2015,
+      "MONTH": 12,
+      "DAY": 29,
+      "DAY_OF_WEEK": 2,
+      "AIRLINE": "DL",
+      "FLIGHT_NUMBER": 1501,
+      "TAIL_NUMBER": "N804DN",
+      "ORIGIN_AIRPORT": "BOS",
+      "DESTINATION_AIRPORT": "ATL",
+      "SCHEDULED_DEPARTURE": 435,
+      "DEPARTURE_TIME": 682,
+      "DEPARTURE_DELAY": 247,
+      "TAXI_OUT": 52,
+      "WHEELS_OFF": 734,
+      "SCHEDULED_TIME": 193,
+      "ELAPSED_TIME": 202,
+      "AIR_TIME": 145,
+      "DISTANCE": 946,
+      "WHEELS_ON": 879,
+      "TAXI_IN": 5,
+      "SCHEDULED_ARRIVAL": 628,
+      "ARRIVAL_TIME": 884,
+      "ARRIVAL_DELAY": 256,
+      "DIVERTED": 0,
+      "CANCELLED": 0,
+      "CANCELLATION_REASON": null,
+      "AIR_SYSTEM_DELAY": 9,
+      "SECURITY_DELAY": 0,
+      "AIRLINE_DELAY": 0,
+      "LATE_AIRCRAFT_DELAY": 0,
+      "WEATHER_DELAY": 247,
+      "sched_dep_abs": 435,
+      "sched_arr_abs": 628,
+      "actual_dep_abs": 682,
+      "actual_arr_abs": 884,
+      "date": "2015-12-29"
+    },
+    "dest_disruption": {
+      "value": 6,
+      "source": "data",
+      "note": "delayed arrivals at ATL in hour 14:00 (proxy, delayed flights only)"
+    },
+    "taxi_congestion": {
+      "value": 0.62,
+      "source": "data",
+      "note": "TAXI_IN 5 min vs ATL median 8 min"
+    },
+    "downstream_legs": [],
+    "alternates": [
+      {
+        "iata": "CSG",
+        "name": "Columbus Metropolitan Airport",
+        "distance_nm": 72.2,
+        "lat": 32.51633,
+        "lon": -84.93886
+      },
+      {
+        "iata": "CHA",
+        "name": "Chattanooga Metropolitan Airport (Lovell Field)",
+        "distance_nm": 92.2,
+        "lat": 35.03527,
+        "lon": -85.20379
+      },
+      {
+        "iata": "BHM",
+        "name": "Birmingham-Shuttlesworth International Airport",
+        "distance_nm": 116.4,
+        "lat": 33.56294,
+        "lon": -86.75355
+      }
+    ],
+    "wake_category": {
+      "value": "L",
+      "source": "assumed",
+      "note": "no registry lookup; DISTANCE 946 mi <= 2500 -> L"
+    },
+    "fuel_reserve_min": {
+      "value": 103.8,
+      "source": "estimated",
+      "note": "minutes beyond planned arrival incl. final reserve: 45 final reserve (14 CFR 121.639) + 16.6 to most distant alternate BHM (420 kt assumed) + 7.2 contingency (5% of AIR_TIME 145) + 35 discretionary (seeded)"
+    },
+    "crew_duty_remaining_min": {
+      "value": 103,
+      "source": "synthetic",
+      "note": "FDP remaining at SCHEDULED arrival (incurred delay not subtracted); report at -49 min (seeded), FDP limit 780 min assumed (Table B)"
+    },
+    "gates": {
+      "airport": "ATL",
+      "assigned_gate": "A6",
+      "min_turnaround_min": 45,
+      "turnaround_source": "assumed",
+      "occupancy": {
+        "A2": [
+          [
+            706,
+            791
+          ],
+          [
+            880,
+            935
+          ],
+          [
+            979,
+            1026
+          ],
+          [
+            1079,
+            1122
+          ],
+          [
+            1156,
+            1223
+          ]
+        ],
+        "A6": [
+          [
+            809,
+            869
+          ],
+          [
+            970,
+            1030
+          ]
+        ],
+        "A12": [
+          [
+            753,
+            834
+          ],
+          [
+            971,
+            1013
+          ],
+          [
+            1042,
+            1090
+          ],
+          [
+            1206,
+            1272
+          ]
+        ],
+        "B2": [
+          [
+            726,
+            775
+          ],
+          [
+            895,
+            970
+          ],
+          [
+            1066,
+            1143
+          ],
+          [
+            1180,
+            1224
+          ],
+          [
+            1288,
+            1356
+          ]
+        ],
+        "B6": [
+          [
+            723,
+            778
+          ],
+          [
+            894,
+            983
+          ],
+          [
+            1094,
+            1179
+          ],
+          [
+            1231,
+            1281
+          ]
+        ],
+        "B12": [
+          [
+            753,
+            817
+          ],
+          [
+            849,
+            892
+          ],
+          [
+            957,
+            1007
+          ],
+          [
+            1135,
+            1185
+          ],
+          [
+            1290,
+            1343
+          ]
+        ],
+        "C2": [
+          [
+            738,
+            823
+          ],
+          [
+            843,
+            908
+          ],
+          [
+            928,
+            968
+          ],
+          [
+            1081,
+            1134
+          ],
+          [
+            1200,
+            1268
+          ]
+        ],
+        "C6": [
+          [
+            724,
+            797
+          ],
+          [
+            900,
+            989
+          ],
+          [
+            1085,
+            1159
+          ],
+          [
+            1221,
+            1301
+          ]
+        ],
+        "C12": [
+          [
+            749,
+            838
+          ],
+          [
+            918,
+            1003
+          ],
+          [
+            1067,
+            1135
+          ],
+          [
+            1187,
+            1274
+          ]
+        ],
+        "D2": [
+          [
+            760,
+            806
+          ],
+          [
+            887,
+            977
+          ],
+          [
+            1012,
+            1101
+          ],
+          [
+            1231,
+            1314
+          ]
+        ],
+        "D6": [
+          [
+            713,
+            754
+          ],
+          [
+            805,
+            876
+          ],
+          [
+            953,
+            1021
+          ],
+          [
+            1073,
+            1123
+          ],
+          [
+            1259,
+            1342
+          ]
+        ],
+        "D12": [
+          [
+            745,
+            828
+          ],
+          [
+            887,
+            974
+          ],
+          [
+            1023,
+            1099
+          ],
+          [
+            1132,
+            1185
+          ]
+        ]
+      },
+      "source": "synthetic"
+    },
+    "connections": [
+      {
+        "row_index": 352434,
+        "flight_number": 2822,
+        "destination": "ABQ",
+        "sched_dep_abs": 1060,
+        "minutes_after_arrival": 176,
+        "est_pax": 27,
+        "source": "estimated"
+      }
+    ],
+    "nominal_aar": {
+      "value": 126,
+      "source": "assumed",
+      "note": "approximate FAA rate, unverified"
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "SLOT+15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 15
+      },
+      "est_delay_min": 15.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "SLOT+30",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 30
+      },
+      "est_delay_min": 30.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "SLOT-15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": -15
+      },
+      "est_delay_min": -15.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "SLOT-30",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": -30
+      },
+      "est_delay_min": -30.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "HOLD20",
+      "kind": "hold",
+      "params": {
+        "minutes": 20
+      },
+      "est_delay_min": 20.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "HOLD40",
+      "kind": "hold",
+      "params": {
+        "minutes": 40
+      },
+      "est_delay_min": 40.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "DIVERT_CSG",
+      "kind": "divert",
+      "params": {
+        "iata": "CSG"
+      },
+      "est_delay_min": 80.6,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "DIVERT_CHA",
+      "kind": "divert",
+      "params": {
+        "iata": "CHA"
+      },
+      "est_delay_min": 86.3,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "GATE_A12",
+      "kind": "gate_swap",
+      "params": {
+        "gate": "A12",
+        "extra_taxi_min": 2
+      },
+      "est_delay_min": 2.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "GATE_D6",
+      "kind": "gate_swap",
+      "params": {
+        "gate": "D6",
+        "extra_taxi_min": 5
+      },
+      "est_delay_min": 5.0,
+      "est_knock_on_min": 0
+    },
+    {
+      "candidate_id": "GROUND_HOLD_BOS",
+      "kind": "ground_hold",
+      "params": {
+        "minutes": 25,
+        "airport": "BOS"
+      },
+      "est_delay_min": 25.0,
+      "est_knock_on_min": 0
+    }
+  ],
+  "rule_results": [
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 130.8,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 88.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 15.0 airborne extra = 88.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT+15",
+      "passed": false,
+      "observed": -168.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 15.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [899, 944] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 82.6,
+      "threshold": 120.8,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 129.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 73.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 30.0 airborne extra = 73.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT+30",
+      "passed": false,
+      "observed": -183.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 30.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [914, 959] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 83.6,
+      "threshold": 121.5,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 130.8,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 103.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT-15",
+      "passed": false,
+      "observed": -138.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - -15.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [869, 914] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 82.6,
+      "threshold": 120.8,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 130.8,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 103.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT-30",
+      "passed": false,
+      "observed": -123.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - -30.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT-30",
+      "passed": false,
+      "observed": 15.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [854, 899] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 82.6,
+      "threshold": 120.8,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 129.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 83.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 20.0 airborne extra = 83.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "HOLD20",
+      "passed": false,
+      "observed": -173.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 20.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [904, 949] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 83.6,
+      "threshold": 121.5,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 129.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 63.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 40.0 airborne extra = 63.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "HOLD40",
+      "passed": false,
+      "observed": -193.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 40.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [924, 969] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 83.6,
+      "threshold": 121.5,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": 432.0,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); CSG 14:00 demand 25.0/h = 0.6 x AAR 40 (assumed) + 0 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": 93.5,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 10.3 airborne extra = 93.5 vs on arrival at CSG 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": false,
+      "observed": -233.6,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 80.6 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": "n/a: divert",
+      "threshold": "n/a",
+      "source": "synthetic",
+      "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": 25.0,
+      "threshold": 40.0,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 40/h (unverified) cut 25% x weather share 0.00 at CSG 14:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": 432.0,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); CHA 14:00 demand 25.0/h = 0.6 x AAR 40 (assumed) + 0 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": 90.6,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 13.2 airborne extra = 90.6 vs on arrival at CHA 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": false,
+      "observed": -239.3,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 86.3 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": "n/a: divert",
+      "threshold": "n/a",
+      "source": "synthetic",
+      "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": 25.0,
+      "threshold": 40.0,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 40/h (unverified) cut 25% x weather share 0.00 at CHA 14:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GATE_A12",
+      "passed": true,
+      "observed": 130.8,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GATE_A12",
+      "passed": true,
+      "observed": 103.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GATE_A12",
+      "passed": false,
+      "observed": -155.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 2.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GATE_A12",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A12 busy minutes in [886, 931] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GATE_A12",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GATE_A12",
+      "passed": true,
+      "observed": 82.6,
+      "threshold": 120.8,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GATE_D6",
+      "passed": true,
+      "observed": 130.8,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GATE_D6",
+      "passed": true,
+      "observed": 103.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GATE_D6",
+      "passed": false,
+      "observed": -158.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 5.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GATE_D6",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate D6 busy minutes in [889, 934] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GATE_D6",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GATE_D6",
+      "passed": true,
+      "observed": 82.6,
+      "threshold": 120.8,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GROUND_HOLD_BOS",
+      "passed": true,
+      "observed": 129.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GROUND_HOLD_BOS",
+      "passed": true,
+      "observed": 103.8,
+      "threshold": 61.6,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GROUND_HOLD_BOS",
+      "passed": false,
+      "observed": -178.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 25.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GROUND_HOLD_BOS",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [909, 954] (gate-in + 45 min assumed turnaround)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GROUND_HOLD_BOS",
+      "passed": true,
+      "observed": "n/a: no downstream leg",
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GROUND_HOLD_BOS",
+      "passed": true,
+      "observed": 83.6,
+      "threshold": 121.5,
+      "source": "assumed",
+      "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+    }
+  ],
+  "turns": [
+    {
+      "round": 1,
+      "messages": [
+        {
+          "agent": "ATC",
+          "round": 1,
+          "acceptable": [
+            "SLOT-30",
+            "SLOT-15",
+            "GROUND_HOLD_BOS",
+            "SLOT+15",
+            "SLOT+30",
+            "GATE_A12",
+            "HOLD20",
+            "GATE_D6"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.9,
+              "rationale": "Earlier slot keeps the stream regular and avoids adding taxi or airborne time; dest_disruption=6 is low against nominal_aar=126 (assumed), so no peak pressure requires a later slot.",
+              "cited_fields": [
+                "dest_disruption=6 (data)",
+                "nominal_aar=126 (assumed)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.88,
+              "rationale": "Small earlier shift disturbs the arrival stream least and adds nothing to taxiways at the peak.",
+              "cited_fields": [
+                "taxi_congestion=0.62 (data)"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_BOS",
+              "score": 0.75,
+              "rationale": "Holding at origin keeps the aircraft off the congested destination taxiways and out of the airborne stream.",
+              "cited_fields": [
+                "taxi_congestion=0.62 (data)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.68,
+              "rationale": "Small later shift keeps the stream regular, though it does not add value on final given low dest_disruption.",
+              "cited_fields": [
+                "dest_disruption=6 (data)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.58,
+              "rationale": "Larger later shift is acceptable for spacing but moves the arrival further from the planned stream.",
+              "cited_fields": [
+                "dest_disruption=6 (data)"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A12",
+              "score": 0.45,
+              "rationale": "Adds 2 min of taxi at destination during congestion, a modest cost to taxiway flow.",
+              "cited_fields": [
+                "taxi_congestion=0.62 (data)"
+              ]
+            },
+            {
+              "candidate_id": "GATE_D6",
+              "score": 0.3,
+              "rationale": "Adds 5 min of taxi at destination during congestion, which is worse for taxiway flow than GATE_A12.",
+              "cited_fields": [
+                "taxi_congestion=0.62 (data)"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.25,
+              "rationale": "Airborne hold adds traffic into the sector stream and wake-separated final approach, which is undesirable when a slot shift is available.",
+              "cited_fields": [
+                "dest_disruption=6 (data)"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.12,
+              "rationale": "Longer airborne hold disturbs the arrival stream more and adds airborne traffic into final approach.",
+              "cited_fields": [
+                "dest_disruption=6 (data)"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.05,
+              "rationale": "Diversion removes the flight from our runway sequence entirely, the largest sector disturbance; no ATC need justifies it.",
+              "cited_fields": [
+                "dest_disruption=6 (data)"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.03,
+              "rationale": "Diversion with the longest estimated delay disturbs the sector most; no ATC need justifies it.",
+              "cited_fields": [
+                "dest_disruption=6 (data)"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CSG",
+              "reason": "A diversion is the largest disturbance to sector throughput and is not needed when dest_disruption=6 is low.",
+              "cited_field": "dest_disruption=6 (data)"
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "A diversion is the largest disturbance to sector throughput and is not needed when dest_disruption=6 is low.",
+              "cited_field": "dest_disruption=6 (data)"
+            }
+          ]
+        },
+        {
+          "agent": "PILOT",
+          "round": 1,
+          "acceptable": [
+            "GROUND_HOLD_BOS",
+            "SLOT-15",
+            "SLOT-30",
+            "GATE_A12",
+            "GATE_D6",
+            "SLOT+15",
+            "HOLD20"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "GROUND_HOLD_BOS",
+              "score": 0.9,
+              "rationale": "Holding on the ground at origin adds no airborne time against the estimated fuel reserve and avoids weather exposure.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8 (estimated)",
+                "flight.WEATHER_DELAY=247 (data)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.85,
+              "rationale": "Earlier slot adds no airborne hold and keeps the duty day shorter, with no knock-on delay estimated.",
+              "cited_fields": [
+                "crew_duty_remaining_min=103 (synthetic)",
+                "fuel_reserve_min=103.8 (estimated)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.8,
+              "rationale": "Earlier slot with no airborne time protects fuel, though the magnitude relies on the estimated slot figure.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8 (estimated)",
+                "crew_duty_remaining_min=103 (synthetic)"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A12",
+              "score": 0.8,
+              "rationale": "Only 2 minutes extra taxi, negligible fuel draw and no airborne time.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8 (estimated)"
+              ]
+            },
+            {
+              "candidate_id": "GATE_D6",
+              "score": 0.72,
+              "rationale": "Five minutes extra taxi is a small fuel and duty cost, acceptable but worse than A12.",
+              "cited_fields": [
+                "crew_duty_remaining_min=103 (synthetic)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.55,
+              "rationale": "Adds 15 minutes delay that the crew would prefer to avoid; the connection is still reachable at the destination.",
+              "cited_fields": [
+                "connections[0].minutes_after_arrival=176 (estimated)",
+                "fuel_reserve_min=103.8 (estimated)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.4,
+              "rationale": "Thirty minutes later erodes duty time and the connection margin; tolerable only if nothing better is available.",
+              "cited_fields": [
+                "crew_duty_remaining_min=103 (synthetic)",
+                "connections[0].est_pax=27 (estimated)"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.3,
+              "rationale": "Airborne hold draws on the estimated fuel reserve and is exposed to weather at destination.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8 (estimated)",
+                "flight.WEATHER_DELAY=247 (data)"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.1,
+              "rationale": "Forty-minute hold near destination in weather draws heavily on an estimated fuel reserve; refused.",
+              "cited_fields": [
+                "flight.WEATHER_DELAY=247 (data)"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.15,
+              "rationale": "Diversion adds a second approach and loses the connection, though it avoids the weather; last resort.",
+              "cited_fields": [
+                "connections[0].minutes_after_arrival=176 (estimated)"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.05,
+              "rationale": "Longest diversion adds the most airborne time and loses the connection; least preferred.",
+              "cited_fields": [
+                "alternates[1].distance_nm=92.2 (data)",
+                "connections[0].est_pax=27 (estimated)"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "HOLD40",
+              "reason": "Forty minutes of airborne holding in weather draws on an estimated fuel reserve and is the most exposed place to be.",
+              "cited_field": "fuel_reserve_min=103.8 (estimated)"
+            }
+          ]
+        },
+        {
+          "agent": "GROUND",
+          "round": 1,
+          "acceptable": [
+            "SLOT-15",
+            "SLOT-30",
+            "GATE_A12",
+            "SLOT+15",
+            "HOLD20",
+            "GATE_D6",
+            "SLOT+30",
+            "HOLD40",
+            "GROUND_HOLD_BOS"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.8,
+              "rationale": "Earlier arrival keeps the gate plan closest to schedule with zero est_knock_on_min; gate fit against the synthetic occupancy is only partly checkable.",
+              "cited_fields": [
+                "flight.SCHEDULED_ARRIVAL=628",
+                "gates.assigned_gate=A6",
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A12",
+              "score": 0.8,
+              "rationale": "Gate swap is a tool we own; est_delay_min is small and est_knock_on_min is 0, though the gate model is synthetic and turnaround_source is assumed.",
+              "cited_fields": [
+                "gates.assigned_gate=A6",
+                "gates.turnaround_source=assumed",
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.7,
+              "rationale": "Larger earlier shift, knock-on 0, but feasibility of an earlier arrival against gate occupancy is uncertain on synthetic data.",
+              "cited_fields": [
+                "flight.SCHEDULED_ARRIVAL=628",
+                "gates.occupancy.A6[0][0]=809"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.65,
+              "rationale": "Modest delay with knock-on 0 and the assigned gate A6 free before the listed A6 occupancy window.",
+              "cited_fields": [
+                "gates.occupancy.A6[0][0]=809",
+                "flight.DEPARTURE_DELAY=247"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.6,
+              "rationale": "Adds ramp arrival delay but knock-on is 0; acceptable while ramp congestion is moderate.",
+              "cited_fields": [
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "GATE_D6",
+              "score": 0.55,
+              "rationale": "Larger extra taxi than A12 and est_delay_min is higher, but knock-on is still 0.",
+              "cited_fields": [
+                "gates.assigned_gate=A6",
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.5,
+              "rationale": "Longer delay pushes arrival later; knock-on 0 but turnaround delay for the tail grows.",
+              "cited_fields": [
+                "flight.DEPARTURE_DELAY=247",
+                "downstream_legs=[]"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.4,
+              "rationale": "Longest acceptable hold; adds meaningful turnaround delay with no downstream legs to offset it.",
+              "cited_fields": [
+                "downstream_legs=[]",
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_BOS",
+              "score": 0.35,
+              "rationale": "Delay is at BOS, not our hub; provides no gate benefit at ATL, so low ground value.",
+              "cited_fields": [
+                "flight.DESTINATION_AIRPORT=ATL",
+                "downstream_legs=[]"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.2,
+              "rationale": "Diversion removes the aircraft from our gate plan and adds about 80 minutes; downstream_legs is empty so harshness is reduced, but it is not preferred.",
+              "cited_fields": [
+                "downstream_legs=[]",
+                "flight.DESTINATION_AIRPORT=ATL"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.15,
+              "rationale": "Diversion removes the aircraft from our gate plan and adds the longest delay on the menu; not preferred.",
+              "cited_fields": [
+                "downstream_legs=[]",
+                "flight.DESTINATION_AIRPORT=ATL"
+              ]
+            }
+          ],
+          "vetoes": []
+        }
+      ],
+      "invalid_messages": [],
+      "intersection": [
+        "SLOT+15",
+        "SLOT-15",
+        "SLOT-30",
+        "HOLD20",
+        "GATE_A12",
+        "GATE_D6",
+        "GROUND_HOLD_BOS"
+      ]
+    },
+    {
+      "round": 2,
+      "messages": [
+        {
+          "agent": "ATC",
+          "round": 2,
+          "acceptable": [
+            "SLOT-30",
+            "SLOT-15",
+            "GROUND_HOLD_BOS",
+            "SLOT+15",
+            "SLOT+30",
+            "GATE_A12",
+            "HOLD20",
+            "GATE_D6",
+            "HOLD40"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.95,
+              "rationale": "Moves the arrival away from the destination peak and keeps aircraft off taxiways; dest_disruption is high for this hour (data).",
+              "cited_fields": [
+                "dest_disruption=6",
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.9,
+              "rationale": "Earlier slot moves the arrival off the disrupted peak with a small disturbance to the stream.",
+              "cited_fields": [
+                "dest_disruption=6",
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_BOS",
+              "score": 0.85,
+              "rationale": "Holding at origin keeps aircraft off the congested taxiways and adds no airborne holding into final.",
+              "cited_fields": [
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.6,
+              "rationale": "Later slot avoids airborne holding but places the arrival into the disrupted hour, so wake spacing on final is less favourable.",
+              "cited_fields": [
+                "dest_disruption=6",
+                "wake_category=L"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.55,
+              "rationale": "Larger later shift places the arrival into the disrupted hour; acceptable only as a fallback.",
+              "cited_fields": [
+                "dest_disruption=6"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A12",
+              "score": 0.5,
+              "rationale": "Adds a little taxi time in a congested taxiway environment, with minimal stream disturbance.",
+              "cited_fields": [
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "GATE_D6",
+              "score": 0.4,
+              "rationale": "Longer taxi route adds more aircraft time on congested taxiways than GATE_A12.",
+              "cited_fields": [
+                "taxi_congestion=0.62"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.3,
+              "rationale": "Airborne hold adds traffic into the disrupted final approach; disturbs the arrival stream.",
+              "cited_fields": [
+                "dest_disruption=6"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.15,
+              "rationale": "Longest airborne hold feeds the most traffic into the disrupted peak; accepted only as a concession to the GROUND position.",
+              "cited_fields": [
+                "dest_disruption=6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.0,
+              "rationale": "Diversion removes the arrival from the destination runway and disturbs the arrival stream most.",
+              "cited_fields": [
+                "dest_disruption=6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.0,
+              "rationale": "Diversion removes the arrival from the destination runway and disturbs the arrival stream most.",
+              "cited_fields": [
+                "dest_disruption=6"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CSG",
+              "reason": "Diversion takes the flight off the destination runway and disturbs the arrival stream most; the destination is disrupted but still the arrival point.",
+              "cited_field": "dest_disruption=6"
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Diversion takes the flight off the destination runway and disturbs the arrival stream most; the destination is disrupted but still the arrival point.",
+              "cited_field": "dest_disruption=6"
+            }
+          ]
+        },
+        {
+          "agent": "PILOT",
+          "round": 2,
+          "acceptable": [
+            "GROUND_HOLD_BOS",
+            "SLOT-15",
+            "SLOT-30",
+            "GATE_A12",
+            "GATE_D6",
+            "SLOT+15",
+            "HOLD20",
+            "SLOT+30"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.9,
+              "rationale": "Earliest arrival option with no airborne time, so it draws nothing on fuel_reserve_min=103.8 (estimated) and protects the connection.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8",
+                "crew_duty_remaining_min=103"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.85,
+              "rationale": "Earlier arrival with no holding, preserving fuel and duty time; estimated reserve is a reason to avoid airborne delay.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8",
+                "connections[0].minutes_after_arrival=176"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_BOS",
+              "score": 0.8,
+              "rationale": "Delay taken on the ground at origin, so no airborne fuel burn and no weather exposure; accepted as tolerable.",
+              "cited_fields": [
+                "flight.WEATHER_DELAY=247",
+                "fuel_reserve_min=103.8"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.6,
+              "rationale": "Small delay with no holding; acceptable but adds time against crew_duty_remaining_min=103.",
+              "cited_fields": [
+                "crew_duty_remaining_min=103"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.5,
+              "rationale": "Conceded in round 2: 30-minute delay with no knock-on and no airborne time, tolerable given fuel_reserve_min=103.8 and est_knock_on_min=0.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8",
+                "crew_duty_remaining_min=103"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A12",
+              "score": 0.55,
+              "rationale": "Only 2 minutes extra taxi; negligible fuel impact on estimated reserve.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8"
+              ]
+            },
+            {
+              "candidate_id": "GATE_D6",
+              "score": 0.5,
+              "rationale": "5 minutes extra taxi adds small fuel draw on estimated reserve; acceptable.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.35,
+              "rationale": "Airborne holding draws on estimated fuel_reserve_min=103.8 and adds weather exposure; tolerated only as a fallback.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8",
+                "flight.WEATHER_DELAY=247"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.1,
+              "rationale": "Keeping veto: 40 minutes of airborne hold draws on estimated fuel_reserve_min=103.8 and holding in weather is the most exposed option.",
+              "cited_fields": [
+                "fuel_reserve_min=103.8"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.15,
+              "rationale": "Diversion adds a second approach and loses the ABQ connection; ranked below destination arrival.",
+              "cited_fields": [
+                "alternates[0].distance_nm=72.2",
+                "connections[0].minutes_after_arrival=176"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.1,
+              "rationale": "Longer diversion than CSG, adds a second approach and loses the connection; ranked below destination arrival.",
+              "cited_fields": [
+                "alternates[1].distance_nm=92.2",
+                "connections[0].minutes_after_arrival=176"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "HOLD40",
+              "reason": "40 minutes of airborne hold draws on estimated fuel reserve and is the most exposed place in weather.",
+              "cited_field": "fuel_reserve_min=103.8"
+            }
+          ]
+        },
+        {
+          "agent": "GROUND",
+          "round": 2,
+          "acceptable": [
+            "SLOT-15",
+            "SLOT-30",
+            "GATE_A12",
+            "SLOT+15",
+            "HOLD20",
+            "GATE_D6",
+            "SLOT+30",
+            "HOLD40",
+            "GROUND_HOLD_BOS"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.9,
+              "rationale": "Earlier slot keeps the arrival nearest the scheduled gate window with zero knock-on; gate model is synthetic and turnaround_source is assumed.",
+              "cited_fields": [
+                "flight.SCHEDULED_ARRIVAL=628",
+                "est_knock_on_min=0",
+                "gates.turnaround_source=assumed"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.85,
+              "rationale": "Larger earlier shift also has zero knock-on, but moves further from the planned arrival; acceptable if the earlier slot is available.",
+              "cited_fields": [
+                "flight.SCHEDULED_ARRIVAL=628",
+                "est_knock_on_min=0"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A12",
+              "score": 0.8,
+              "rationale": "Keeps the aircraft landing on time with only a 2-minute extra taxi; zero knock-on at the current ramp level.",
+              "cited_fields": [
+                "gates.assigned_gate=A6",
+                "taxi_congestion=0.62",
+                "est_knock_on_min=0"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.7,
+              "rationale": "Modest later arrival with zero knock-on, but adds a 15-minute delay to the turnaround window.",
+              "cited_fields": [
+                "est_knock_on_min=0",
+                "flight.DEPARTURE_DELAY=247"
+              ]
+            },
+            {
+              "candidate_id": "GATE_D6",
+              "score": 0.65,
+              "rationale": "Gate swap adds 5 minutes of taxi; acceptable with zero knock-on, but less favourable than A12.",
+              "cited_fields": [
+                "gates.assigned_gate=A6",
+                "est_knock_on_min=0"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.6,
+              "rationale": "A 20-minute hold delays the gate arrival with zero knock-on; tolerable as a fallback.",
+              "cited_fields": [
+                "est_knock_on_min=0",
+                "flight.DEPARTURE_DELAY=247"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_BOS",
+              "score": 0.5,
+              "rationale": "25-minute ground hold at origin with zero knock-on; delays arrival but keeps the tail flying into ATL.",
+              "cited_fields": [
+                "est_knock_on_min=0",
+                "downstream_legs=[]"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.55,
+              "rationale": "Largest acceptable later shift; zero knock-on but pushes the turnaround furthest from plan.",
+              "cited_fields": [
+                "est_knock_on_min=0",
+                "flight.SCHEDULED_ARRIVAL=628"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.45,
+              "rationale": "40-minute hold is the longest delay on the acceptable list; ground-side acceptable with zero knock-on, but weakest of the holds for gate timing.",
+              "cited_fields": [
+                "est_knock_on_min=0",
+                "flight.DEPARTURE_DELAY=247"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.2,
+              "rationale": "Diversion strands the tail and the gate plan; downstream_legs is empty so weighed less harshly, but not acceptable to ground operations.",
+              "cited_fields": [
+                "downstream_legs=[]",
+                "est_delay_min=80.6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.15,
+              "rationale": "Diversion strands the tail and gate plan with the longest delay on the menu; not acceptable to ground operations.",
+              "cited_fields": [
+                "downstream_legs=[]",
+                "est_delay_min=86.3"
+              ]
+            }
+          ],
+          "vetoes": []
+        }
+      ],
+      "invalid_messages": [],
+      "intersection": [
+        "SLOT+15",
+        "SLOT+30",
+        "SLOT-15",
+        "SLOT-30",
+        "HOLD20",
+        "GATE_A12",
+        "GATE_D6",
+        "GROUND_HOLD_BOS"
+      ]
+    }
+  ],
+  "recommendation": {
+    "scenario_id": "2015-12-29_DL1501_N804DN",
+    "chosen": null,
+    "decided_by": "fallback",
+    "rounds_used": 2,
+    "rule_results": [
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 130.8,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 88.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 15.0 airborne extra = 88.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+15",
+        "passed": false,
+        "observed": -168.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 15.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [899, 944] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 82.6,
+        "threshold": 120.8,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 129.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 73.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 30.0 airborne extra = 73.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+30",
+        "passed": false,
+        "observed": -183.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 30.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [914, 959] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 83.6,
+        "threshold": 121.5,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 130.8,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 103.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT-15",
+        "passed": false,
+        "observed": -138.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - -15.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [869, 914] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 82.6,
+        "threshold": 120.8,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 130.8,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 103.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT-30",
+        "passed": false,
+        "observed": -123.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - -30.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT-30",
+        "passed": false,
+        "observed": 15.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [854, 899] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 82.6,
+        "threshold": 120.8,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 129.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 83.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 20.0 airborne extra = 83.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "HOLD20",
+        "passed": false,
+        "observed": -173.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 20.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [904, 949] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 83.6,
+        "threshold": 121.5,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 129.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 63.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 40.0 airborne extra = 63.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "HOLD40",
+        "passed": false,
+        "observed": -193.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 40.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [924, 969] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 83.6,
+        "threshold": 121.5,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": 432.0,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); CSG 14:00 demand 25.0/h = 0.6 x AAR 40 (assumed) + 0 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": 93.5,
+        "threshold": 45.0,
+        "source": "assumed",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 10.3 airborne extra = 93.5 vs on arrival at CSG 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": false,
+        "observed": -233.6,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 80.6 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": "n/a: divert",
+        "threshold": "n/a",
+        "source": "synthetic",
+        "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": 25.0,
+        "threshold": 40.0,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 40/h (unverified) cut 25% x weather share 0.00 at CSG 14:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": 432.0,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); CHA 14:00 demand 25.0/h = 0.6 x AAR 40 (assumed) + 0 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": 90.6,
+        "threshold": 45.0,
+        "source": "assumed",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 13.2 airborne extra = 90.6 vs on arrival at CHA 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": false,
+        "observed": -239.3,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 86.3 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": "n/a: divert",
+        "threshold": "n/a",
+        "source": "synthetic",
+        "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": 25.0,
+        "threshold": 40.0,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 40/h (unverified) cut 25% x weather share 0.00 at CHA 14:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "GATE_A12",
+        "passed": true,
+        "observed": 130.8,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "GATE_A12",
+        "passed": true,
+        "observed": 103.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GATE_A12",
+        "passed": false,
+        "observed": -155.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 2.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "GATE_A12",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A12 busy minutes in [886, 931] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "GATE_A12",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "GATE_A12",
+        "passed": true,
+        "observed": 82.6,
+        "threshold": 120.8,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "GATE_D6",
+        "passed": true,
+        "observed": 130.8,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 14:00 demand 82.6/h = 0.6 x AAR 126 (assumed) + 6 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "GATE_D6",
+        "passed": true,
+        "observed": 103.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GATE_D6",
+        "passed": false,
+        "observed": -158.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 5.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "GATE_D6",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate D6 busy minutes in [889, 934] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "GATE_D6",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "GATE_D6",
+        "passed": true,
+        "observed": 82.6,
+        "threshold": 120.8,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.17 at ATL 14:00; demand proxy 0.6 x AAR + 6 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "passed": true,
+        "observed": 129.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 5-5-4 (verify): 3 nm L behind assumed Large at 140 kt (assumed); ATL 15:00 demand 83.6/h = 0.6 x AAR 126 (assumed) + 7 delayed (data) + 1, over 3 runway(s) (assumed)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "passed": true,
+        "observed": 103.8,
+        "threshold": 61.6,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (verify): fuel_reserve_min 103.8 (estimated) - 0.0 airborne extra = 103.8 vs alternate 16.6 min + final reserve 45; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "passed": false,
+        "observed": -178.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 FDP (verify): 103 min left at scheduled arrival (synthetic) - 256 incurred ARRIVAL_DELAY (data) - 25.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [909, 954] (gate-in + 45 min assumed turnaround)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "passed": true,
+        "observed": "n/a: no downstream leg",
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround; no later leg of this tail in flights.csv (data partial)"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "passed": true,
+        "observed": 83.6,
+        "threshold": 121.5,
+        "source": "assumed",
+        "citation": "assumed: nominal AAR 126/h (unverified) cut 25% x weather share 0.14 at ATL 15:00; demand proxy 0.6 x AAR + 7 delayed + 1 (flights.csv has delayed flights only)"
+      }
+    ],
+    "reviewer_verdict": "REJECT",
+    "reviewer_notes": [
+      "REVIEWER: REJECT of no pick (decided by fallback, no_consensus); deterministic fallback re-ran excluding [] -> nothing eligible [docs/plan-rohan.md 3.4: reviewer_reject].",
+      "CHOSEN: no candidate was chosen (chosen=None), so there is nothing to execute -> REJECT [reviewer rule: no recommendation without a candidate].",
+      "no candidate passes engine and reviewer; escalate to duty manager"
+    ],
+    "human_decision": "pending",
+    "log_path": "runs/failure_showcase.jsonl",
+    "fallback": {
+      "fired": true,
+      "reason": "reviewer_reject",
+      "chosen": null,
+      "objective": null,
+      "n_eligible": 0,
+      "eligible_ids": [],
+      "excluded": [],
+      "unchecked": [],
+      "weights": {
+        "delay": 1.0,
+        "knock_on": 1.0
+      },
+      "rejected_candidate_id": null,
+      "previous_decided_by": "fallback",
+      "previous_fallback_reason": "no_consensus"
+    },
+    "reviewer_detail": {
+      "verdict": "REJECT",
+      "notes": [
+        "REVIEWER: REJECT of no pick (decided by fallback, no_consensus); deterministic fallback re-ran excluding [] -> nothing eligible [docs/plan-rohan.md 3.4: reviewer_reject].",
+        "CHOSEN: no candidate was chosen (chosen=None), so there is nothing to execute -> REJECT [reviewer rule: no recommendation without a candidate].",
+        "no candidate passes engine and reviewer; escalate to duty manager"
+      ],
+      "re_derived": [
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+15",
+          "derived": 88.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 15.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+15",
+          "derived": 88.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 15.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+15",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+30",
+          "derived": 73.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 30.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+30",
+          "derived": 73.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 30.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+30",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT-15",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT-15",
+          "derived": 118.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": -15.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT-15",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT-30",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT-30",
+          "derived": 133.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": -30.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT-30",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "HOLD20",
+          "derived": 83.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 20.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "HOLD20",
+          "derived": 83.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 20.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "HOLD20",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "HOLD40",
+          "derived": 63.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 40.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "HOLD40",
+          "derived": 63.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 40.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "HOLD40",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 93.48571428571428,
+          "threshold": 45.0,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 10.314285714285715,
+            "alternate_min": 0.0
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 32.68571428571428,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 70.31428571428572
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 90.62857142857142,
+          "threshold": 45.0,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 13.171428571428573,
+            "alternate_min": 0.0
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 29.828571428571422,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 73.17142857142858
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GATE_A12",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GATE_A12",
+          "derived": 101.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 2.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GATE_A12",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GATE_D6",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GATE_D6",
+          "derived": 98.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 5.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GATE_D6",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "derived": 78.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 25.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        }
+      ],
+      "cited_mismatches": [],
+      "engine_disagreements": [
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT+15",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT+30",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT-15",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT-30",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "HOLD20",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "HOLD40",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "DIVERT_CSG",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "DIVERT_CHA",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "GATE_A12",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "GATE_D6",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "engine_passed": false,
+          "reviewer_passed": true
+        }
+      ],
+      "derived_delay_min": null,
+      "citations_checked": 0,
+      "citations_with_value": 0,
+      "not_rederived": [],
+      "initial_review": {
+        "verdict": "REJECT",
+        "notes": [
+          "CHOSEN: no candidate was chosen (chosen=None), so there is nothing to execute -> REJECT [reviewer rule: no recommendation without a candidate].",
+          "ENGINE: R-DUTY-01 failed SLOT+15, reviewer passes it (duty left 88 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed SLOT+30, reviewer passes it (duty left 73 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed SLOT-15, reviewer passes it (duty left 118 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed SLOT-30, reviewer passes it (duty left 133 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed HOLD20, reviewer passes it (duty left 83 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed HOLD40, reviewer passes it (duty left 63 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed DIVERT_CSG, reviewer passes it (duty left 32.7 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed DIVERT_CHA, reviewer passes it (duty left 29.8 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed GATE_A12, reviewer passes it (duty left 101 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed GATE_D6, reviewer passes it (duty left 98 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+          "ENGINE: R-DUTY-01 failed GROUND_HOLD_BOS, reviewer passes it (duty left 78 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed]."
+        ],
+        "re_derived": [
+          {
+            "check": "FUEL",
+            "candidate_id": "SLOT+15",
+            "derived": 88.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 15.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "SLOT+15",
+            "derived": 88.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 15.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "SLOT+15",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "SLOT+30",
+            "derived": 73.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 30.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "SLOT+30",
+            "derived": 73.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 30.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "SLOT+30",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "SLOT-15",
+            "derived": 103.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 0.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "SLOT-15",
+            "derived": 118.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": -15.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "SLOT-15",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "SLOT-30",
+            "derived": 103.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 0.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "SLOT-30",
+            "derived": 133.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": -30.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "SLOT-30",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "HOLD20",
+            "derived": 83.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 20.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "HOLD20",
+            "derived": 83.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 20.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "HOLD20",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "HOLD40",
+            "derived": 63.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 40.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "HOLD40",
+            "derived": 63.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 40.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "HOLD40",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "DIVERT_CSG",
+            "derived": 93.48571428571428,
+            "threshold": 45.0,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 10.314285714285715,
+              "alternate_min": 0.0
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "DIVERT_CSG",
+            "derived": 32.68571428571428,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 70.31428571428572
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "DIVERT_CSG",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "DIVERT_CHA",
+            "derived": 90.62857142857142,
+            "threshold": 45.0,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 13.171428571428573,
+              "alternate_min": 0.0
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "DIVERT_CHA",
+            "derived": 29.828571428571422,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 73.17142857142858
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "DIVERT_CHA",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "GATE_A12",
+            "derived": 103.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 0.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "GATE_A12",
+            "derived": 101.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 2.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "GATE_A12",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "GATE_D6",
+            "derived": 103.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 0.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "GATE_D6",
+            "derived": 98.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 5.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "GATE_D6",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          },
+          {
+            "check": "FUEL",
+            "candidate_id": "GROUND_HOLD_BOS",
+            "derived": 103.8,
+            "threshold": 61.62857142857143,
+            "passed": true,
+            "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+            "inputs": {
+              "fuel_reserve_min": 103.8,
+              "fuel_source": "estimated",
+              "airborne_extra_min": 0.0,
+              "alternate_min": 16.62857142857143
+            }
+          },
+          {
+            "check": "DUTY",
+            "candidate_id": "GROUND_HOLD_BOS",
+            "derived": 78.0,
+            "threshold": 0.0,
+            "passed": true,
+            "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+            "inputs": {
+              "crew_duty_remaining_min": 103.0,
+              "duty_source": "synthetic",
+              "delay_min": 25.0
+            }
+          },
+          {
+            "check": "WAKE",
+            "candidate_id": "GROUND_HOLD_BOS",
+            "derived": 90.0,
+            "threshold": 77.14285714285714,
+            "passed": true,
+            "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+            "inputs": {
+              "wake_category": "L",
+              "wake_source": "assumed",
+              "leader_category": "L",
+              "sep_nm": 3.0,
+              "arrival_runways": 3,
+              "nominal_aar": 126.0,
+              "aar_source": "assumed",
+              "dest_disruption": 6.0,
+              "disruption_source": "data",
+              "effective_aar": 120.0
+            }
+          }
+        ],
+        "cited_mismatches": [],
+        "engine_disagreements": [
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "SLOT+15",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "SLOT+30",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "SLOT-15",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "SLOT-30",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "HOLD20",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "HOLD40",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "DIVERT_CSG",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "DIVERT_CHA",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "GATE_A12",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "GATE_D6",
+            "engine_passed": false,
+            "reviewer_passed": true
+          },
+          {
+            "rule_id": "R-DUTY-01",
+            "candidate_id": "GROUND_HOLD_BOS",
+            "engine_passed": false,
+            "reviewer_passed": true
+          }
+        ],
+        "derived_delay_min": null,
+        "citations_checked": 0,
+        "citations_with_value": 0,
+        "not_rederived": []
+      },
+      "escalated": true,
+      "candidate_id": null
+    }
+  },
+  "fallback": {
+    "fired": true,
+    "reason": "reviewer_reject",
+    "objective": null,
+    "n_eligible": 0,
+    "excluded": [],
+    "chosen": null,
+    "eligible_ids": [],
+    "unchecked": [],
+    "weights": {
+      "delay": 1.0,
+      "knock_on": 1.0
+    },
+    "rejected_candidate_id": null,
+    "previous_decided_by": "fallback",
+    "previous_fallback_reason": "no_consensus"
+  },
+  "reviewer": {
+    "verdict": "REJECT",
+    "notes": [
+      "REVIEWER: REJECT of no pick (decided by fallback, no_consensus); deterministic fallback re-ran excluding [] -> nothing eligible [docs/plan-rohan.md 3.4: reviewer_reject].",
+      "CHOSEN: no candidate was chosen (chosen=None), so there is nothing to execute -> REJECT [reviewer rule: no recommendation without a candidate].",
+      "no candidate passes engine and reviewer; escalate to duty manager"
+    ],
+    "re_derived": [
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT+15",
+        "derived": 88.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 15.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT+15",
+        "derived": 88.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 15.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT+15",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT+30",
+        "derived": 73.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 30.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT+30",
+        "derived": 73.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 30.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT+30",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT-15",
+        "derived": 103.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT-15",
+        "derived": 118.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": -15.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT-15",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT-30",
+        "derived": 103.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT-30",
+        "derived": 133.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": -30.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT-30",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "HOLD20",
+        "derived": 83.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 20.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "HOLD20",
+        "derived": 83.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 20.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "HOLD20",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "HOLD40",
+        "derived": 63.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 40.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "HOLD40",
+        "derived": 63.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 40.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "HOLD40",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "DIVERT_CSG",
+        "derived": 93.48571428571428,
+        "threshold": 45.0,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 10.314285714285715,
+          "alternate_min": 0.0
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "DIVERT_CSG",
+        "derived": 32.68571428571428,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 70.31428571428572
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "DIVERT_CSG",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "DIVERT_CHA",
+        "derived": 90.62857142857142,
+        "threshold": 45.0,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 13.171428571428573,
+          "alternate_min": 0.0
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "DIVERT_CHA",
+        "derived": 29.828571428571422,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 73.17142857142858
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "DIVERT_CHA",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "GATE_A12",
+        "derived": 103.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "GATE_A12",
+        "derived": 101.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 2.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "GATE_A12",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "GATE_D6",
+        "derived": 103.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "GATE_D6",
+        "derived": 98.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 5.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "GATE_D6",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "derived": 103.8,
+        "threshold": 61.62857142857143,
+        "passed": true,
+        "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+        "inputs": {
+          "fuel_reserve_min": 103.8,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "derived": 78.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 103.0,
+          "duty_source": "synthetic",
+          "delay_min": 25.0
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "derived": 90.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 3,
+          "nominal_aar": 126.0,
+          "aar_source": "assumed",
+          "dest_disruption": 6.0,
+          "disruption_source": "data",
+          "effective_aar": 120.0
+        }
+      }
+    ],
+    "cited_mismatches": [],
+    "engine_disagreements": [
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+15",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+30",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT-15",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT-30",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "HOLD20",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "HOLD40",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "DIVERT_CSG",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "DIVERT_CHA",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GATE_A12",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GATE_D6",
+        "engine_passed": false,
+        "reviewer_passed": true
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GROUND_HOLD_BOS",
+        "engine_passed": false,
+        "reviewer_passed": true
+      }
+    ],
+    "derived_delay_min": null,
+    "citations_checked": 0,
+    "citations_with_value": 0,
+    "not_rederived": [],
+    "candidate_id": null,
+    "escalated": true,
+    "initial_review": {
+      "verdict": "REJECT",
+      "notes": [
+        "CHOSEN: no candidate was chosen (chosen=None), so there is nothing to execute -> REJECT [reviewer rule: no recommendation without a candidate].",
+        "ENGINE: R-DUTY-01 failed SLOT+15, reviewer passes it (duty left 88 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed SLOT+30, reviewer passes it (duty left 73 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed SLOT-15, reviewer passes it (duty left 118 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed SLOT-30, reviewer passes it (duty left 133 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed HOLD20, reviewer passes it (duty left 83 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed HOLD40, reviewer passes it (duty left 63 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed DIVERT_CSG, reviewer passes it (duty left 32.7 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed DIVERT_CHA, reviewer passes it (duty left 29.8 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed GATE_A12, reviewer passes it (duty left 101 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed GATE_D6, reviewer passes it (duty left 98 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "ENGINE: R-DUTY-01 failed GROUND_HOLD_BOS, reviewer passes it (duty left 78 min vs >= 0 required) -> disagreement [14 CFR 117; duty remaining >= 0 at arrival: assumed]."
+      ],
+      "re_derived": [
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+15",
+          "derived": 88.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 15.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+15",
+          "derived": 88.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 15.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+15",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+30",
+          "derived": 73.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 30.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+30",
+          "derived": 73.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 30.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+30",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT-15",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT-15",
+          "derived": 118.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": -15.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT-15",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT-30",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT-30",
+          "derived": 133.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": -30.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT-30",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "HOLD20",
+          "derived": 83.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 20.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "HOLD20",
+          "derived": 83.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 20.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "HOLD20",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "HOLD40",
+          "derived": 63.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 40.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "HOLD40",
+          "derived": 63.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 40.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "HOLD40",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 93.48571428571428,
+          "threshold": 45.0,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 10.314285714285715,
+            "alternate_min": 0.0
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 32.68571428571428,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 70.31428571428572
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 90.62857142857142,
+          "threshold": 45.0,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 13.171428571428573,
+            "alternate_min": 0.0
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 29.828571428571422,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 73.17142857142858
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GATE_A12",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GATE_A12",
+          "derived": 101.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 2.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GATE_A12",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GATE_D6",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GATE_D6",
+          "derived": 98.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 5.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GATE_D6",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "derived": 103.8,
+          "threshold": 61.62857142857143,
+          "passed": true,
+          "citation": "14 CFR 121.639; 45-min final reserve: assumed",
+          "inputs": {
+            "fuel_reserve_min": 103.8,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "derived": 78.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 103.0,
+            "duty_source": "synthetic",
+            "delay_min": 25.0
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "derived": 90.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 3,
+            "nominal_aar": 126.0,
+            "aar_source": "assumed",
+            "dest_disruption": 6.0,
+            "disruption_source": "data",
+            "effective_aar": 120.0
+          }
+        }
+      ],
+      "cited_mismatches": [],
+      "engine_disagreements": [
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT+15",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT+30",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT-15",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "SLOT-30",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "HOLD20",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "HOLD40",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "DIVERT_CSG",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "DIVERT_CHA",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "GATE_A12",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "GATE_D6",
+          "engine_passed": false,
+          "reviewer_passed": true
+        },
+        {
+          "rule_id": "R-DUTY-01",
+          "candidate_id": "GROUND_HOLD_BOS",
+          "engine_passed": false,
+          "reviewer_passed": true
+        }
+      ],
+      "derived_delay_min": null,
+      "citations_checked": 0,
+      "citations_with_value": 0,
+      "not_rederived": []
+    }
+  }
+}

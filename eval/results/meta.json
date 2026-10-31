@@ -1,0 +1,56 @@
+{
+  "status": "done",
+  "started_at": "2026-10-31T14:05:13.715575+08:00",
+  "ended_at": "2026-10-31T14:19:01.553118+08:00",
+  "modes": [
+    "none",
+    "haiku"
+  ],
+  "agents": "haiku",
+  "models": {
+    "none": null,
+    "haiku": "claude-haiku-5-5"
+  },
+  "seed": 42,
+  "n": 200,
+  "n_rows": 200,
+  "workers": 8,
+  "budget_usd": 5.0,
+  "deadline": "2026-10-31T15:00:00+08:00",
+  "sample_source": "eval\\sample_ids.csv",
+  "fixture": false,
+  "resume": false,
+  "git_sha": "1f2c0ca",
+  "force_deadlock": false,
+  "tamper_rules": false,
+  "guard_stopped": false,
+  "reason": null,
+  "n_completed": 200,
+  "n_completed_by_mode": {
+    "none": 200,
+    "haiku": 200
+  },
+  "cost_usd_total": 0.893221,
+  "stats_by_mode": {
+    "none": {
+      "mode": "none",
+      "n_todo": 200,
+      "n_completed": 200,
+      "n_errors": 0,
+      "n_guard_stopped": 0,
+      "guard_stopped": false,
+      "reason": null,
+      "cost_usd": 0.0
+    },
+    "haiku": {
+      "mode": "haiku",
+      "n_todo": 200,
+      "n_completed": 200,
+      "n_errors": 0,
+      "n_guard_stopped": 0,
+      "guard_stopped": false,
+      "reason": null,
+      "cost_usd": 0.893221
+    }
+  }
+}

@@ -2,3 +2,7 @@
 __pycache__/
 *.pyc
 .venv/
+.DS_Store
+# Per-row eval run files (~60 MB); regenerate with python -m eval.run_eval
+eval/results/runs/
+eval/costtest/
