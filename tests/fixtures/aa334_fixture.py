@@ -6,7 +6,10 @@ The flight row is the real data/flights.csv row 123017 (AA334 MFE->DFW, 24 Apr 2
 hhmm times converted to minutes since midnight. Everything else is hand-picked and tagged.
 
 Designed outcomes:
-- HOLD40 fails R-FUEL-01 (78 - 40 = 38 min < 45 min reserve).
+- HOLD40 fails R-FUEL-01 (14 CFR 121.639: 105.1 - 40 = 65.1 min < 27.1 min to the most distant
+  alternate, AUS 190 NM / 7 NM per min, + 45 min final reserve = 72.1 min).
+- DIVERT_AUS passes R-FUEL-01: after a divert the alternate is the destination, so only the 45 min
+  final reserve is kept on arrival (105.1 - 27.1 = 78 min >= 45).
 - DIVERT_AUS fails R-DUTY-01 (engine's delay estimate 165 min > 150 min duty remaining).
 - Every other (rule, candidate) pair passes.
 - Fallback objective (delay + knock_on, default weights): SLOT-15 = 15 is the best passing pick,
@@ -31,9 +34,11 @@ CANDIDATE_IDS = [
     "GROUND_HOLD_MFE",
 ]
 
-FUEL_RESERVE_MIN = 78
+# 78 min of usable margin + 27.1 min to the most distant alternate (AUS 190 NM at 7 NM per min).
+ALTERNATE_MIN = round(190 / 7.0, 1)  # 27.1, as src/scenario/builder.py planned_alternate_min
+FUEL_RESERVE_MIN = 105.1
 CREW_DUTY_REMAINING_MIN = 150
-FUEL_THRESHOLD_MIN = 45
+FUEL_THRESHOLD_MIN = 45  # 14 CFR 121.639 final reserve
 
 
 def _flight_row() -> dict:
@@ -187,15 +192,17 @@ def fixture_rule_results() -> list[RuleResult]:
     results: list[RuleResult] = []
     for c in fixture_candidates():
         cid = c.candidate_id
-        fuel_left = FUEL_RESERVE_MIN - _airborne_extra_min(c)
+        fuel_left = round(FUEL_RESERVE_MIN - _airborne_extra_min(c), 1)
+        # 14 CFR 121.639: keep the most distant alternate leg unless the candidate diverts there.
+        fuel_need = FUEL_THRESHOLD_MIN + (0.0 if c.kind == "divert" else ALTERNATE_MIN)
         duty_left = CREW_DUTY_REMAINING_MIN - max(c.est_delay_min, 0)
         results += [
             RuleResult(rule_id="R-WAKE-01", candidate_id=cid, passed=True, observed=150.0,
                        threshold=129.0, source="assumed",
                        citation="FAA JO 7110.65 5-5-4 (approach speed 140 kt assumed)"),
             RuleResult(rule_id="R-FUEL-01", candidate_id=cid,
-                       passed=fuel_left >= FUEL_THRESHOLD_MIN, observed=fuel_left,
-                       threshold=float(FUEL_THRESHOLD_MIN), source="estimated",
+                       passed=fuel_left >= fuel_need, observed=fuel_left,
+                       threshold=round(fuel_need, 1), source="estimated",
                        citation="14 CFR 121.639"),
             RuleResult(rule_id="R-DUTY-01", candidate_id=cid, passed=duty_left >= 0,
                        observed=duty_left, threshold=0.0, source="synthetic",

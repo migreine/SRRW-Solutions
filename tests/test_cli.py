@@ -40,7 +40,8 @@ def test_fixture_mode_end_to_end(out_dir):
     assert rec.log_path == str(log_path) and rec.human_decision == "pending"
     assert data["fallback"]["fired"] is False
 
-    # Real reviewer: SLOT+30 passes FUEL 78-30=48, DUTY 150-30=120, WAKE 94.7 s >= 77.1 s; the
+    # Real reviewer: SLOT+30 passes FUEL 105.1-30=75.1 >= 27.1 (most distant alternate AUS) + 45 =
+    # 72.1, DUTY 150-30=120, WAKE 94.7 s >= 77.1 s; the
     # engine fails DIVERT_AUS on duty (est 165 min) but the reviewer derives 190/7+60 = 87 min.
     rv = data["reviewer"]
     assert rv["verdict"] == "MODIFY" == rec.reviewer_verdict
@@ -102,10 +103,13 @@ def _events(result, out_dir, name):
 
 
 def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkeypatch):
-    # fuel 70: consensus SLOT+30 leaves 70-30=40 < 45 -> REJECT. Reviewer also fails HOLD40
-    # (70-40=30) and DIVERT_AUS (70-27.1=42.9), so the fallback excludes those three and picks
-    # SLOT-15 (objective -15+30=15) from SLOT+15/SLOT-15/HOLD20/GATE_B12/GROUND_HOLD_MFE.
-    _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=70, source="estimated"))
+    # fuel 97.1 (old 70 + 27.1 alternate time): consensus SLOT+30 leaves 97.1-30=67.1 < 27.1 to the
+    # most distant alternate (AUS) + 45 reserve = 72.1 -> REJECT. Reviewer also fails HOLD40
+    # (97.1-40=57.1). DIVERT_AUS needs only the 45 min reserve on arrival (97.1-27.1=70 >= 45), so
+    # the reviewer passes it, but the engine still fails it on duty. The fallback excludes HOLD40
+    # and SLOT+30 and picks SLOT-15 (objective -15+30=15) from
+    # SLOT+15/SLOT-15/HOLD20/GATE_B12/GROUND_HOLD_MFE.
+    _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=97.1, source="estimated"))
     result = run_one(0, "fixture", out_dir=out_dir)
     rec = Recommendation.model_validate(result["recommendation"])
 
@@ -114,16 +118,16 @@ def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkey
     fb = result["fallback"]
     assert fb["fired"] and fb["reason"] == "reviewer_reject"
     assert fb["rejected_candidate_id"] == "SLOT+30" and fb["previous_decided_by"] == "consensus"
-    assert fb["excluded"] == ["DIVERT_AUS", "HOLD40", "SLOT+30"] and fb["n_eligible"] == 5
+    assert fb["excluded"] == ["HOLD40", "SLOT+30"] and fb["n_eligible"] == 5
     assert fb["objective"] == 15
 
-    # SLOT-15 passes the re-review; MODIFY because the engine (fuel 78) and reviewer (fuel 70)
-    # disagree on SLOT+30 and DIVERT_AUS.
+    # SLOT-15 passes the re-review; MODIFY because the engine (fuel 105.1) and reviewer (fuel 97.1)
+    # disagree on SLOT+30 fuel, and on DIVERT_AUS duty as in the base case.
     rv = result["reviewer"]
     assert rv["verdict"] == "MODIFY" == rec.reviewer_verdict and rv["candidate_id"] == "SLOT-15"
     assert rv["escalated"] is False and rv["initial_review"]["verdict"] == "REJECT"
     assert {(d["rule_id"], d["candidate_id"]) for d in rv["engine_disagreements"]} == {
-        ("R-FUEL-01", "SLOT+30"), ("R-FUEL-01", "DIVERT_AUS"), ("R-DUTY-01", "DIVERT_AUS")}
+        ("R-FUEL-01", "SLOT+30"), ("R-DUTY-01", "DIVERT_AUS")}
     assert rv["notes"][0].startswith("REVIEWER: REJECT of SLOT+30 (decided by consensus)")
     assert any(n.startswith("FUEL re-derived: SLOT+30") and "FAIL" in n for n in rv["notes"])
     assert any(n.startswith("FUEL re-derived: SLOT-15") and "PASS" in n for n in rv["notes"])

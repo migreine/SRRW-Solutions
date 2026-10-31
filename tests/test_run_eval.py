@@ -112,9 +112,10 @@ def _patch_scenario(monkeypatch, **updates):
 
 
 def test_reviewer_reject_counted_from_real_reviewer(out_dir, monkeypatch):
-    # fuel 70: the reviewer rejects consensus SLOT+30 (70-30=40 < 45); the fallback re-picks
-    # SLOT-15, which is also the solver-only pick (and passes review there).
-    _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=70, source="estimated"))
+    # fuel 97.1: the reviewer rejects consensus SLOT+30 (97.1-30=67.1 < 27.1 to the most distant
+    # alternate + 45 reserve = 72.1); the fallback re-picks SLOT-15, which is also the solver-only
+    # pick (and passes review there).
+    _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=97.1, source="estimated"))
     main(_args(out_dir, "--modes", "none,fixture"))
     rows = _csv(out_dir / "per_scenario.csv")
     fx_rows = [r for r in rows if r["mode"] == "fixture"]
@@ -131,7 +132,8 @@ def test_reviewer_reject_counted_from_real_reviewer(out_dir, monkeypatch):
     assert float(_metric(summary, "fallback_rate_reviewer_reject", "none")["value"]) == 0.0
     assert float(_metric(summary, "consensus_rate", "fixture")["value"]) == 0.0
     assert float(_metric(summary, "agents_vs_solver_same_pick_rate", "fixture")["value"]) == 1.0
-    # engine (fuel 78) vs reviewer (fuel 70): SLOT+30 and DIVERT_AUS disagree, out of 8
+    # engine (fuel 105.1) vs reviewer (fuel 97.1): SLOT+30 (fuel) and DIVERT_AUS (duty, as in the
+    # base case) disagree, out of 8
     assert float(_metric(summary, "reviewer_engine_disagreement_rate", "fixture")["value"]) == 0.25
     assert _metric(summary, "cited_value_mismatch_rate", "fixture")["value"] == ""  # 0 / 0
 

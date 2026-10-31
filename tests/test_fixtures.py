@@ -18,7 +18,7 @@ def test_scenario_validates_and_is_tagged():
     s = fixture_scenario()
     Scenario.model_validate(s.model_dump())
     assert s.flight["ARRIVAL_DELAY"] == 101 and s.flight["DEPARTURE_DELAY"] == 114
-    assert s.fuel_reserve_min == Tagged(value=78, source="estimated", note=s.fuel_reserve_min.note)
+    assert s.fuel_reserve_min == Tagged(value=105.1, source="estimated", note=s.fuel_reserve_min.note)
     assert s.crew_duty_remaining_min.source == "synthetic"
     assert s.wake_category.value == "L" and s.wake_category.source == "assumed"
     assert {"iata": "AUS", "distance_nm": 190} in s.alternates and len(s.alternates) == 3

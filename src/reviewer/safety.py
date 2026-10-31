@@ -167,30 +167,42 @@ def _motion(s: Scenario, c: Candidate) -> dict:
     return {"airborne_extra": 0.0, "delay": 0.0, "how": f"{k}, no delay modelled", "notes": notes}
 
 
+def _most_distant_alternate_min(s: Scenario) -> float:
+    """14 CFR 121.639 keeps fuel to fly on to the most distant alternate; 0 if none listed."""
+    dists = [_to_float(a.get("distance_nm")) for a in s.alternates if isinstance(a, dict)]
+    dists = [d for d in dists if d is not None]
+    return max(dists) / CRUISE_NM_PER_MIN if dists else 0.0
+
+
 def _check_fuel(s: Scenario, c: Candidate, mo: dict) -> tuple[dict, str]:
     fuel = _to_float(s.fuel_reserve_min.value)
     src = s.fuel_reserve_min.source
     extra = mo["airborne_extra"]
+    # After a divert the alternate is the destination; otherwise the alternate leg must stay covered.
+    alt_min = 0.0 if c.kind == "divert" else _most_distant_alternate_min(s)
+    threshold = alt_min + FUEL_FINAL_RESERVE_MIN
     if fuel is None or extra is None:
         derived, passed = None, False
     else:
         derived = fuel - extra
-        passed = derived >= FUEL_FINAL_RESERVE_MIN
+        passed = derived >= threshold
     entry = {
         "check": "FUEL",
         "candidate_id": c.candidate_id,
         "derived": derived,
-        "threshold": FUEL_FINAL_RESERVE_MIN,
+        "threshold": threshold,
         "passed": passed,
         "citation": CIT_FUEL,
-        "inputs": {"fuel_reserve_min": fuel, "fuel_source": src, "airborne_extra_min": extra},
+        "inputs": {"fuel_reserve_min": fuel, "fuel_source": src, "airborne_extra_min": extra,
+                   "alternate_min": alt_min},
     }
     cit = CIT_FUEL + ("; " + CIT_DIVERT if c.kind == "divert" else "")
-    need = None if extra is None else extra + FUEL_FINAL_RESERVE_MIN
+    need = None if extra is None else extra + threshold
+    alt_txt = f"{_fmt(alt_min)} min to most distant alternate + " if alt_min else ""
     note = (
-        f"FUEL re-derived: {c.candidate_id} ({mo['how']}) needs {_fmt(extra)}+"
-        f"{_fmt(FUEL_FINAL_RESERVE_MIN)}={_fmt(need)} min; fuel_reserve_min={_fmt(fuel)} ({src}) "
-        f"leaves {_fmt(derived)} min reserve -> {'PASS' if passed else 'FAIL'} [{cit}]."
+        f"FUEL re-derived: {c.candidate_id} ({mo['how']}) needs {_fmt(extra)} + {alt_txt}"
+        f"{_fmt(FUEL_FINAL_RESERVE_MIN)} reserve = {_fmt(need)} min; fuel_reserve_min={_fmt(fuel)} "
+        f"({src}) leaves {_fmt(derived)} min vs {_fmt(threshold)} -> {'PASS' if passed else 'FAIL'} [{cit}]."
     )
     return entry, note
 

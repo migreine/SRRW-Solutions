@@ -71,14 +71,14 @@ _SCRIPTS: dict[str, dict[int, dict[str, list[str]]]] = {
 # Cited fields use the "<dotted.path>=<value>" format agreed in docs/plan-rohan.md section 0.
 CITED_FIELDS = {
     "ATC": ["nominal_aar=90", "dest_disruption=14"],
-    "PILOT": ["fuel_reserve_min=78", "alternates[2].distance_nm=190"],
+    "PILOT": ["fuel_reserve_min=105.1", "alternates[2].distance_nm=190"],
     "GROUND": ["gates.assigned=C20", "downstream_legs[0].SCHEDULED_DEPARTURE=828"],
 }
 
 _DEFAULT_VETOES = {
     "ATC": [],
     "PILOT": [{"candidate_id": "HOLD40", "reason": "hold eats into reserve",
-               "cited_field": "fuel_reserve_min=78"}],
+               "cited_field": "fuel_reserve_min=105.1"}],
     "GROUND": [{"candidate_id": "DIVERT_AUS", "reason": "crew stranded at AUS",
                 "cited_field": "crew_duty_remaining_min=150"}],
 }
