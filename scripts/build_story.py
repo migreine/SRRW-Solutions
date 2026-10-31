@@ -789,7 +789,7 @@ const ICON = {
   ground_hold:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#c4b5fd" stroke-width="2"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`,
 };
 const kindLabel = {slot_shift:"Arrival slot shift", hold:"Airborne hold", divert:"Divert", gate_swap:"Gate swap", ground_hold:"Ground hold at origin"};
-const roleView = {ATC:"TRACON traffic manager · sees arrival rate, wake, taxi", PILOT:"Flight crew + dispatch · sees fuel, duty, alternates", GROUND:"Ramp / gate control · sees gates, next legs, connections"};
+const roleView = {ATC:"runway, wake, taxi", PILOT:"fuel, duty, alternates", GROUND:"gates, next legs, connections"};
 
 function ruleOf(run, cand, rule){ return run.rules.find(r => r.candidate_id===cand && r.rule_id===rule); }
 function failsOf(run, cand){ return run.rules.filter(r => r.candidate_id===cand && !r.passed).map(r => r.rule_id); }
@@ -819,50 +819,49 @@ function cascadeSVG(legs){
 
 /* ---------- chapters ---------- */
 const CH = [];
+const briefChip = b => `<span class="chip src-brief" title="${esc(b.cite)}">reported in our industry brief</span>`;
 
-CH.push({t:"The duty manager's problem", r(){
+CH.push({t:"The problem", r(){
   const legs = D.tail_day.legs, first = legs[0], last = legs[legs.length-1];
   const tot = legs.reduce((a,l)=>a+l.arr_delay,0);
-  const calls = briefFig("calls"), lag = briefFig("lag"), cost = briefFig("cost"), casc = briefFig("cascade");
+  const figs = ["calls","lag","cost"].map(briefFig).filter(Boolean);
   return `
-  <div class="kicker">Chapter 1 · the user</div>
-  <h1>An ops-control duty manager, a storm at the hub, and a phone</h1>
-  <p class="lead">When weather cuts a hub's arrival rate, the airline's duty manager has to get three parties who each own one piece of the answer to agree on one plan, today by calling them one after another.</p>
+  <div class="kicker">Chapter 1 · the problem</div>
+  <h1>A storm at the hub, three parties to agree, one phone</h1>
+  <p class="lead">Today the airline's duty manager calls each party in turn until they agree.</p>
   <div class="flow">
-    ${[["PHONE","Call 1 · TRACON / TMU","arrival slot, holding, arrival-rate cap"],["PILOT","Call 2 · Crew via dispatch","fuel, alternates, duty time (VHF / ACARS)"],["GROUND","Call 3 · Ramp / gate control","gate, ground crew, next departure"],["PHONE","Call 4… · back to TRACON","when crew or ramp says no, start again"]]
+    ${[["PHONE","TRACON","slots, holding"],["PILOT","Crew","fuel, duty time"],["GROUND","Ramp","gates, next departure"],["PHONE","TRACON again","if anyone says no"]]
       .map(([ic,a,b])=>`<div class="card step"><div class="agent">${ICON[ic]}<h3>${a}</h3></div><div class="dim small">${b}</div></div>`).join("")}
   </div>
-  <p class="small">${pain("phone")}${pain("ramp")}${pain("atc")}</p>
-  <div class="grid g3" style="margin-top:8px">
-    ${[calls,lag,cost].filter(Boolean).map(b=>`<div class="card"><div class="big mid">${esc(b.figure)}</div><div>${esc(b.label)}</div><div style="margin-top:6px">${brief()}</div><div class="cite">${esc(b.cite)}</div></div>`).join("")}
+  <div class="grid g3" style="margin-top:14px">
+    ${figs.map(b=>`<div class="card"><div class="big mid">${esc(b.figure)}</div><div class="small">${esc(b.label)}</div><div style="margin-top:6px">${briefChip(b)}</div></div>`).join("")}
   </div>
-  <h2>While the calls go on, the delay rides the aircraft all day: ${esc(D.tail_day.tail)}, ${esc(D.tail_day.date)}</h2>
+  <h2>Meanwhile the delay rides the aircraft all day · ${esc(D.tail_day.tail)}</h2>
   <div class="card svgbox">${cascadeSVG(legs)}
-    <div class="legend">dashed outline = scheduled · filled bar = actual (scheduled + reported delay) · local times · source: data/flights.csv ${chip("data")}</div></div>
-  <p class="lead" style="margin-top:12px">${esc(first.flight)} ${esc(first.origin)}→${esc(first.dest)} arrived <b class="mid mono">+${first.arr_delay} min</b> (${first.weather_delay} weather, ${first.late_aircraft_delay} late aircraft). By the last leg, ${esc(last.flight)} ${esc(last.origin)}→${esc(last.dest)}, the same aircraft was <b class="no mono">+${last.arr_delay} min</b>. Arrival delays across its ${legs.length} legs: <span class="mono">${legs.map(l=>l.arr_delay).join(" → ")}</span> (${num(tot)} min in total). ${pain("cascade")}</p>
-  ${casc?`<p class="brief-note">${brief()} ${esc(casc.figure)} ${esc(casc.label)}. <span class="cite">${esc(casc.cite)}</span></p>`:""}`;
+    <div class="legend">dashed = scheduled · bar = actual · ${chip("data")} flights.csv</div></div>
+  <p class="lead" style="margin-top:12px">${esc(first.flight)} landed <b class="mid">+${first.arr_delay} min</b>. By ${esc(last.flight)} the same aircraft was <b class="no">+${last.arr_delay} min</b>: ${num(tot)} min of delay in one day.</p>`;
 }});
 
 CH.push({t:"The disruption", r(){
   const f = S.flight;
-  const painFor = {fuel_reserve_min:"fuel", crew_duty_remaining_min:"duty", nominal_aar:"atc", dest_disruption:"atc"};
-  const labels = {dest_disruption:"Delayed arrivals at destination, that hour", taxi_congestion:"Taxi congestion index", wake_category:"Wake category", fuel_reserve_min:"Fuel beyond planned arrival (min)", crew_duty_remaining_min:"Crew duty left at sched. arrival (min)", nominal_aar:"Nominal arrival rate (per hour)"};
-  const facts = S.facts.map(x=>`<div class="card"><div class="tag">${esc(x.key)}</div><div class="big" style="font-size:34px">${esc(x.value)}</div><div>${esc(labels[x.key]||x.key)} ${chip(x.source)}</div><div class="dim small">${esc(x.note)}</div>${painFor[x.key]?`<div>${pain(painFor[x.key])}</div>`:""}</div>`).join("");
+  const labels = {dest_disruption:"Delayed arrivals that hour", taxi_congestion:"Taxi congestion", wake_category:"Wake category", fuel_reserve_min:"Spare fuel (min)", crew_duty_remaining_min:"Crew duty left (min)", nominal_aar:"Arrival rate / hour"};
+  const card = (tag, big, src, sub) => `<div class="card"><div class="tag">${tag}</div><div class="big" style="font-size:30px">${big}</div>${src}${sub?`<div class="dim small">${sub}</div>`:""}</div>`;
   return `
   <div class="kicker">Chapter 2 · the disruption</div>
-  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}, ${esc(f.date)}: flying into the storm</h1>
-  <p class="lead">One row of the US DOT 2015 file (row ${esc(S.row_index)}) becomes a scenario. Every value carries a source tag, so the duty manager can see what is real and what we had to fill in.</p>
-  <div>${chip("data")} from flights.csv / airports.csv ${chip("estimated")} derived from data ${chip("assumed")} our constant, unverified ${chip("synthetic")} seeded stand-in, no real source</div>
+  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}, ${esc(f.date)}</h1>
+  <p class="lead">One row of the US DOT 2015 data becomes a scenario. Every value is tagged with its source.</p>
+  <div class="small">${chip("data")} real ${chip("estimated")} derived ${chip("assumed")} our constant ${chip("synthetic")} stand-in</div>
   <div class="grid g4" style="margin-top:12px">
-    <div class="card"><div class="tag">TAIL_NUMBER</div><div class="big" style="font-size:34px">${esc(f.TAIL_NUMBER)}</div>${chip("data")}</div>
-    <div class="card"><div class="tag">SCHEDULED → ACTUAL ARRIVAL</div><div class="big" style="font-size:34px">${hhmmInt(f.SCHEDULED_ARRIVAL)} → ${hhmmInt(f.ARRIVAL_TIME)}</div>${chip("data")}</div>
-    <div class="card"><div class="tag">ARRIVAL_DELAY</div><div class="big mid" style="font-size:34px">+${esc(f.ARRIVAL_DELAY)} min</div>${chip("data")}<div class="dim small">WEATHER ${esc(f.WEATHER_DELAY)} · LATE_AIRCRAFT ${esc(f.LATE_AIRCRAFT_DELAY)}</div></div>
-    <div class="card"><div class="tag">NEXT LEGS SAME TAIL</div><div class="big" style="font-size:34px">${S.downstream.length}</div>${chip("data")}<div class="dim small">${S.downstream.length?`next: ${esc(S.downstream[0].airline)}${esc(S.downstream[0].flight_number)} ${esc(S.downstream[0].origin)}→${esc(S.downstream[0].destination)}, turn gap ${esc(S.downstream[0].gap_after_actual_arrival_min)} min`:""}</div>${pain("cascade")}</div>
+    ${card("Aircraft", esc(f.TAIL_NUMBER), chip("data"))}
+    ${card("Sched → actual arrival", `${hhmmInt(f.SCHEDULED_ARRIVAL)} → ${hhmmInt(f.ARRIVAL_TIME)}`, chip("data"))}
+    ${card("Arrival delay", `<span class="mid">+${esc(f.ARRIVAL_DELAY)} min</span>`, chip("data"), `weather ${esc(f.WEATHER_DELAY)} · late aircraft ${esc(f.LATE_AIRCRAFT_DELAY)}`)}
+    ${card("Later legs today", S.downstream.length, chip("data"))}
   </div>
-  <div class="grid g3" style="margin-top:14px">${facts}
-    <div class="card"><div class="tag">gates</div><div class="big" style="font-size:34px">${esc(S.gates.assigned_gate)}</div><div>Assigned gate at ${esc(S.gates.airport)} ${chip(S.gates.source)}</div><div class="dim small">min turnaround ${esc(S.gates.min_turnaround_min)} min ${chip(S.gates.turnaround_source)}</div>${pain("ramp")}</div>
-    <div class="card"><div class="tag">connections</div><div class="big" style="font-size:34px">${S.connections.n} flights · ${S.connections.pax} pax</div><div>Onward connections at risk ${chip(S.connections.source)}</div><div class="dim small">tightest leaves ${esc(S.connections.first_min_after)} min after arrival</div></div>
-    <div class="card"><div class="tag">alternates</div><div class="big" style="font-size:30px">${S.alternates.map(a=>esc(a.iata)).join(" · ")}</div><div>Nearest alternates ${chip("data")}</div><div class="dim small">${S.alternates.map(a=>`${esc(a.iata)} ${num(a.distance_nm,1)} nm`).join(" · ")} (airports.csv lat/long)</div></div>
+  <div class="grid g3" style="margin-top:14px">
+    ${S.facts.map(x=>card(esc(labels[x.key]||x.key), esc(x.value), chip(x.source))).join("")}
+    ${card("Gate", esc(S.gates.assigned_gate), chip(S.gates.source), `turnaround ${esc(S.gates.min_turnaround_min)} min`)}
+    ${card("Connections at risk", `${S.connections.n} · ${S.connections.pax} pax`, chip(S.connections.source))}
+    ${card("Alternates", S.alternates.map(a=>esc(a.iata)).join(" · "), chip("data"), S.alternates.map(a=>`${esc(a.iata)} ${num(a.distance_nm)} nm`).join(" · "))}
   </div>`;
 }});
 
@@ -870,48 +869,47 @@ CH.push({t:"The menu", r(){
   const maxK = Math.max(...S.candidates.map(c=>c.est_knock_on_min));
   return `
   <div class="kicker">Chapter 3 · the menu</div>
-  <h1>Code writes the menu: ${S.candidates.length} options, no free-text plans</h1>
-  <p class="lead">The agents may only rank, accept or veto options from this fixed list. Every delay and knock-on number below is a deterministic model estimate, not an LLM guess and not a measured outcome.</p>
+  <h1>${S.candidates.length} options, written by code</h1>
+  <p class="lead">Agents can only rank or veto these. Delays are model estimates.</p>
   <div class="grid g4">${S.candidates.map(c=>`<div class="card cand">
-    <div class="agent" style="margin:0">${ICON[c.kind]||""}<span class="mono" style="font-size:22px;font-weight:700">${esc(c.candidate_id)}</span></div>
+    <div class="agent" style="margin:0">${ICON[c.kind]||""}<span style="font-size:19px;font-weight:700">${esc(c.candidate_id)}</span></div>
     <div class="dim small">${esc(kindLabel[c.kind]||c.kind)}</div>
-    <div class="mono">delay <b class="${c.est_delay_min<0?"ok":"mid"}">${signed(c.est_delay_min)} min</b></div>
-    <div class="mono small">knock-on ${num(c.est_knock_on_min,1)} min</div>
+    <div>delay <b class="${c.est_delay_min<0?"ok":"mid"}">${signed(c.est_delay_min)} min</b></div>
+    <div class="small dim">knock-on ${num(c.est_knock_on_min)} min</div>
     <div class="bar"><i style="width:${(c.est_knock_on_min/maxK*100).toFixed(1)}%"></i></div></div>`).join("")}</div>
-  <p class="small dim" style="margin-top:12px">Knock-on = estimated added delay carried into the aircraft's later legs that day (model estimate). ${pain("cascade")}</p>`;
+  <p class="legend">Knock-on = delay carried into the aircraft's later legs.</p>`;
 }});
 
 function agentCard(m, run){
-  const top = m.ranking.slice(0,3);
+  const [top, ...rest] = m.ranking;
   return `<div class="card comms" style="--ac:${AC[m.agent]}">
-    <div class="agent">${ICON[m.agent]}<div><h3 style="margin:0">${esc(m.agent)} <span class="pm">→ MEDIATOR</span></h3><div class="dim small">${esc(roleView[m.agent]||"")}</div></div></div>
-    <div class="small">Accepts <b class="mono">${m.acceptable.length}/${run.candidates.length}</b>: ${m.acceptable.map(a=>`<span class="pencil tick">${esc(a)}</span>`).join("")}</div>
-    ${top.map((r,i)=>`<div class="bubble"><span class="mono">#${i+1} <b>${esc(r.candidate_id)}</b></span> <span class="score">${esc(r.score)}</span><br>${esc(r.rationale)}<br>${(r.cited_fields||[]).map(c=>`<span class="chip src-estimated">${esc(c)}</span>`).join("")}</div>`).join("")}
-    ${m.vetoes.map(v=>`<div class="bubble veto"><span class="pencil strike">${esc(v.candidate_id)}</span> <span class="no mono">VETO</span><br>${esc(v.reason)}<br><span class="chip src-estimated">${esc(v.cited_field)}</span></div>`).join("")}
+    <div class="agent">${ICON[m.agent]}<div><h3 style="margin:0">${esc(m.agent)}</h3><div class="dim small">${esc(roleView[m.agent]||"")}</div></div></div>
+    <div class="small">Accepts <b>${m.acceptable.length}/${run.candidates.length}</b></div>
+    ${top?`<div class="bubble"><b>${esc(top.candidate_id)}</b> <span class="score">${esc(top.score)}</span><br>${esc(top.rationale)}<br>${(top.cited_fields||[]).map(c=>`<span class="chip src-estimated">${esc(c)}</span>`).join("")}</div>`:""}
+    ${rest.length?`<div class="small dim" style="margin-top:8px">then ${rest.slice(0,3).map(r=>`${esc(r.candidate_id)} <span class="ok">${esc(r.score)}</span>`).join(" · ")}</div>`:""}
+    ${m.vetoes.length?`<div class="small" style="margin-top:8px">Vetoes ${m.vetoes.map(v=>`<span class="pencil strike" title="${esc(v.reason)}">${esc(v.candidate_id)}</span>`).join("")}</div>`:""}
   </div>`;
 }
 
-CH.push({t:"Three agents negotiate", r(){
+CH.push({t:"Agents negotiate", r(){
   const rounds = S.turns.map(t=>`
-    <h2>Round ${t.round}${t.invalid?` · <span class="no">${t.invalid} invalid message(s)</span>`:""}</h2>
+    <h2>Round ${t.round}${t.invalid?` · <span class="no">${t.invalid} invalid</span>`:""}</h2>
     <div class="grid g3">${t.messages.map(m=>agentCard(m,S)).join("")}</div>
-    <div class="banner green" style="margin-top:12px">All three accept (${t.intersection.length}): <span class="mono">${t.intersection.map(esc).join(" · ")}</span></div>`).join("");
-  const liveBlock = L ? `<h2>Same flight, Sonnet agents (${esc(L.meta.model)})</h2>
-    <div class="card small">${L.turns.map(t=>`Round ${t.round}: top picks ${t.messages.map(m=>`<b>${esc(m.agent)}</b> <span class="mono">${esc(m.ranking[0]&&m.ranking[0].candidate_id)}</span>`).join(" · ")}; all accept <span class="mono">${t.intersection.map(esc).join(", ")}</span>`).join("<br>")}
-    <br>Decision: <b class="mono">${esc(L.recommendation.chosen&&L.recommendation.chosen.candidate_id)}</b> by ${esc(L.recommendation.decided_by)}, reviewer <b class="${verdictCls(L.recommendation.reviewer_verdict)}">${esc(L.recommendation.reviewer_verdict)}</b> · $${num(L.meta.cost_usd,4)} · ${num(L.meta.latency_s,1)} s. A different model, a narrower agreement, the same final pick.</div>` : "";
+    <div class="banner green" style="margin-top:12px">All three accept: ${t.intersection.map(esc).join(" · ")}</div>`).join("");
+  const LC = L && L.recommendation.chosen;
   return `
-  <div class="kicker">Chapter 4 · negotiation (${esc(S.meta.model)})</div>
-  <h1>Three separate agents, each seeing only its own domain</h1>
-  <p class="lead">Instead of sequential calls, ATC, PILOT and GROUND answer in structured JSON: what they accept, their ranking with the data fields they relied on, and what they veto and why. None of them sees the rule results.</p>
-  <p class="small">${pain("phone")}${pain("ramp")}</p>
-  ${rounds}${liveBlock}`;
+  <div class="kicker">Chapter 4 · negotiation · ${esc(S.meta.model)}</div>
+  <h1>Three agents, each seeing only its own data</h1>
+  <p class="lead">They rank, accept and veto in structured JSON. None of them sees the rule results.</p>
+  ${rounds}
+  ${L?`<p class="small dim" style="margin-top:14px">Same flight with ${esc(L.meta.model)}: also picked <b class="ok">${esc(LC&&LC.candidate_id)}</b> (${esc(L.recommendation.decided_by)}, reviewer ${esc(L.recommendation.reviewer_verdict)}).</p>`:""}`;
 }});
 
 function matrix(run, opts){
   opts = opts || {};
   const chosen = run.recommendation.chosen && run.recommendation.chosen.candidate_id;
   const agreed = new Set((run.turns[run.turns.length-1]||{intersection:[]}).intersection);
-  let h = `<table class="mono" id="${opts.id||"mx"}"><tr><th>candidate</th>${run.rule_ids.map(r=>`<th class="c">${esc(r)}<br>${chip(run.rule_source[r])}</th>`).join("")}</tr>`;
+  let h = `<table id="${opts.id||"mx"}"><tr><th>option</th>${run.rule_ids.map(r=>`<th class="c">${esc(r)}<br>${chip(run.rule_source[r])}</th>`).join("")}</tr>`;
   run.candidates.forEach(c=>{
     h += `<tr><td>${chosen===c.candidate_id?"★ ":""}${esc(c.candidate_id)} ${agreed.has(c.candidate_id)?'<span class="pencil ring" title="all three agents accept">agreed</span>':""}</td>`;
     run.rule_ids.forEach(r=>{ const x = ruleOf(run,c.candidate_id,r);
@@ -920,15 +918,12 @@ function matrix(run, opts){
   });
   return h + `</table>`;
 }
-function topPickList(run, label){
-  return `<div class="card"><h3>${esc(label)}</h3>${run.top_picks.map(p=>`<div class="small mono">r${p.round} ${esc(p.agent)} → <b>${esc(p.candidate_id)}</b> ${p.fails.length?`<span class="no">FAIL ${p.fails.map(esc).join(", ")}</span>`:`<span class="ok">passes all</span>`}</div>`).join("")}</div>`;
-}
 function wireMatrix(run, id, detailId){
   const tbl = document.getElementById(id), det = document.getElementById(detailId);
   if (!tbl) return;
   const show = (c,r) => { const x = ruleOf(run,c,r); if(!x) return;
     tbl.querySelectorAll(".cell").forEach(e=>e.classList.toggle("sel", e.dataset.c===c && e.dataset.r===r));
-    det.innerHTML = `<div class="mono"><b>${esc(x.rule_id)}</b> × <b>${esc(x.candidate_id)}</b>: <b class="${x.passed?"ok":"no"}">${x.passed?"PASS":"FAIL"}</b> · observed ${esc(x.observed)} vs threshold ${esc(x.threshold)} ${chip(x.source)}</div><div class="small" style="margin-top:6px">${esc(x.citation)}</div>`; };
+    det.innerHTML = `<div><b>${esc(x.rule_id)}</b> × <b>${esc(x.candidate_id)}</b>: <b class="${x.passed?"ok":"no"}">${x.passed?"PASS":"FAIL"}</b></div><div class="small" style="margin-top:4px">observed ${esc(x.observed)} vs limit ${esc(x.threshold)} ${chip(x.source)}</div><div class="small dim" style="margin-top:6px">${esc(x.citation)}</div>`; };
   tbl.addEventListener("click", e=>{ const td = e.target.closest(".cell"); if (td) show(td.dataset.c, td.dataset.r); });
   tbl.addEventListener("keydown", e=>{ if (e.key!=="Enter" && e.key!==" ") return; const td = e.target.closest && e.target.closest(".cell"); if (td){ e.preventDefault(); show(td.dataset.c, td.dataset.r); } });
   const firstFail = run.rules.find(r=>!r.passed) || run.rules[0];
@@ -937,75 +932,64 @@ function wireMatrix(run, id, detailId){
 
 CH.push({t:"Code checks the rules", r(){
   const tf = metric("agent_top_pick_rule_fail_rate");
-  const byA = ["ATC","PILOT","GROUND"].map(a=>metric("agent_top_pick_rule_fail_rate_"+a)).map((m,i)=>m?`${["ATC","PILOT","GROUND"][i]} ${pct(m.value)} (n=${m.n})`:"").filter(Boolean).join(" · ");
   const nFail = S.rules.filter(r=>!r.passed).length;
   return `
-  <div class="kicker">Chapter 5 · the rules engine (deterministic)</div>
-  <h1>${S.candidates.length} options × ${S.rule_ids.length} rules = ${S.rules.length} checks, ${nFail} FAIL</h1>
-  <p class="lead">Consensus means all three agents accept an option <b>and</b> it passes every rule. Click any cell for the rule's citation and the data it used. ★ = recommended · ∩ = all three agents accept.</p>
-  <p class="small">${pain("fuel")}${pain("duty")}${pain("ramp")}${pain("atc")}</p>
+  <div class="kicker">Chapter 5 · rules engine · deterministic</div>
+  <h1>${S.rules.length} checks, ${nFail} fail</h1>
+  <p class="lead">Consensus = all three agents accept <b>and</b> it passes every rule. Click a cell for its source.</p>
   <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
     <div class="card">${matrix(S,{id:"mx1"})}</div>
     <div><div class="card hl" id="mx1d"></div>
-      <h2>Top picks vs rules they could not see</h2>
-      ${topPickList(S, `${fl(S.flight)} · ${S.meta.model}`)}
-      ${L?topPickList(L, `${fl(L.flight)} · ${L.meta.model}`):""}
-      ${topPickList(F, `${fl(F.flight)} (Chapter 8) · ${F.meta.model}`)}
-      ${tf?`<div class="card warn" style="margin-top:10px"><div class="big mid">${pct(tf.value)}</div><div>of ${num(tf.n)} valid agent messages across 200 flights had a top pick that breaks ≥1 rule; every one was caught by the engine.</div><div class="dim small">${esc(byA)}</div></div>`:""}
+      <h2>Agents' top picks</h2>
+      <div class="card">${S.top_picks.map(p=>`<div class="small">${esc(p.agent)} → <b>${esc(p.candidate_id)}</b> ${p.fails.length?`<span class="no">fails ${p.fails.map(esc).join(", ")}</span>`:`<span class="ok">passes</span>`}</div>`).join("")}</div>
+      ${tf?`<div class="card warn" style="margin-top:12px"><div class="big mid">${pct(tf.value)}</div><div class="small">of agent top picks across 200 flights broke a rule they could not see. The engine caught every one.</div></div>`:""}
     </div></div>`;
 }, after(){ wireMatrix(S,"mx1","mx1d"); }});
 
-CH.push({t:"The independent reviewer", r(){
+CH.push({t:"Independent reviewer", r(){
   const R = S.reviewer, cid = R.candidate_id;
-  const mine = R.re_derived.filter(x=>x.candidate_id===cid);
   const cands = [...new Set(R.re_derived.map(x=>x.candidate_id))];
   const checks = [...new Set(R.re_derived.map(x=>x.check))];
   const cell = (c,k) => { const x = R.re_derived.find(y=>y.candidate_id===c && y.check===k); return x?`<td class="c ${x.passed?"ok":"no"}">${num(x.derived,1)} / ${num(x.threshold,1)}</td>`:"<td></td>"; };
   return `
-  <div class="kicker">Chapter 6 · second pair of eyes (deterministic, written separately)</div>
-  <h1>The reviewer redoes the fuel, duty and wake arithmetic from the raw scenario</h1>
-  <div class="grid" style="grid-template-columns:auto 1fr;align-items:center">
-    <div class="agent">${ICON.REVIEW}</div>
-    <div><span class="stamp ${verdictCls(R.verdict)}">${esc(R.verdict)}</span> <span class="mono" style="margin-left:16px">on ${esc(cid)}</span></div></div>
+  <div class="kicker">Chapter 6 · reviewer · written separately</div>
+  <h1>A second check redoes the fuel, duty and wake maths</h1>
+  <div class="agent" style="margin-top:6px">${ICON.REVIEW}<span class="stamp ${verdictCls(R.verdict)}">${esc(R.verdict)}</span><span style="margin-left:8px">${esc(cid)}</span></div>
   <div class="grid g3" style="margin-top:14px">
-    <div class="card"><div class="big">${R.engine_disagreements.length}</div>engine disagreements</div>
-    <div class="card"><div class="big">${esc(R.citations_checked)}</div>agent citations checked against the scenario</div>
-    <div class="card"><div class="big ${R.cited_mismatches.length?"no":"ok"}">${R.cited_mismatches.length}</div>cited values that did not match the data</div>
+    <div class="card"><div class="big">${R.engine_disagreements.length}</div><div class="small">disagreements with the rules engine</div></div>
+    <div class="card"><div class="big">${esc(R.citations_checked)}</div><div class="small">agent citations checked</div></div>
+    <div class="card"><div class="big ${R.cited_mismatches.length?"no":"ok"}">${R.cited_mismatches.length}</div><div class="small">citations that did not match the data</div></div>
   </div>
-  <h2>Reviewer notes for ${esc(cid)}</h2>
-  ${R.notes.map(n=>`<div class="bubble mono small">${esc(n).replace(/PASS/g,'<b class="ok">PASS</b>').replace(/FAIL/g,'<b class="no">FAIL</b>')}</div>`).join("")}
-  <p class="small">${pain("fuel")}${pain("duty")}${pain("atc")}</p>
-  <h2>Re-derived for every option (derived / threshold)</h2>
-  <div class="card"><table class="mono"><tr><th>candidate</th>${checks.map(k=>`<th class="c">${esc(k)}</th>`).join("")}</tr>
+  <h2>Re-derived per option · value / limit</h2>
+  <div class="card"><table><tr><th>option</th>${checks.map(k=>`<th class="c">${esc(k)}</th>`).join("")}</tr>
     ${cands.map(c=>`<tr><td>${c===cid?"★ ":""}${esc(c)}</td>${checks.map(k=>cell(c,k)).join("")}</tr>`).join("")}</table>
-    <div class="legend">FUEL: minutes of fuel left vs alternate + 45-min reserve · DUTY: minutes of duty left at arrival vs 0 · WAKE: seconds per runway vs wake spacing needed</div></div>`;
+    <div class="legend">FUEL min left · DUTY min left · WAKE seconds per runway</div></div>`;
 }});
 
 function timeline(run){
-  return `<div class="tl">${run.timeline.map(e=>`<div class="ev e-${esc(e.event)} ${e.event==="reviewer_verdict"&&/REJECT/.test(e.text)?"rej":""}"><span class="tag">${esc((e.ts||"").slice(11,23))}</span> <b class="mono">${esc(e.event)}</b> <span class="small">${esc(e.text)}</span></div>`).join("")}</div>`;
+  return `<div class="tl">${run.timeline.map(e=>`<div class="ev e-${esc(e.event)} ${e.event==="reviewer_verdict"&&/REJECT/.test(e.text)?"rej":""}"><span class="tag">${esc((e.ts||"").slice(11,19))}</span> <b>${esc(e.event)}</b> <span class="small">${esc(e.text)}</span></div>`).join("")}</div>`;
 }
 
 CH.push({t:"The human decides", r(){
   const R = S.recommendation, c = R.chosen || {};
   return `
-  <div class="kicker">Chapter 7 · management by exception</div>
-  <h1>One recommendation, its reasons, and two buttons</h1>
+  <div class="kicker">Chapter 7 · human approval</div>
+  <h1>One recommendation, two buttons</h1>
   <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
     <div class="card hl">
-      <div class="agent">${ICON.HUMAN}<h3 style="margin:0">Recommendation for ${esc(fl(S.flight))} · ${esc(S.scenario_id)}</h3></div>
-      <div class="big ok" style="font-size:58px">${esc(c.candidate_id)}</div>
-      <div class="mono">${esc(kindLabel[c.kind]||c.kind)} · delay ${signed(c.est_delay_min)} min · knock-on ${num(c.est_knock_on_min,1)} min <span class="dim">(model estimates)</span></div>
-      <div style="margin-top:10px" class="mono small">decided by <b>${esc(R.decided_by)}</b> in round ${esc(R.rounds_used)} · reviewer <b class="${verdictCls(R.reviewer_verdict)}">${esc(R.reviewer_verdict)}</b> · passes ${S.rule_ids.length}/${S.rule_ids.length} rules · ${esc(S.meta.n_agent_calls)} agent calls · $${num(S.meta.cost_usd,4)} · ${num(S.meta.latency_s,1)} s</div>
-      <div class="small" style="margin-top:8px">Ramp gets the revised plan at the same moment as ATC and the crew. ${pain("ramp")}</div>
+      <div class="agent">${ICON.HUMAN}<h3 style="margin:0">${esc(fl(S.flight))} · recommended</h3></div>
+      <div class="big ok" style="font-size:56px">${esc(c.candidate_id)}</div>
+      <div>${esc(kindLabel[c.kind]||c.kind)} · delay ${signed(c.est_delay_min)} min</div>
+      <div class="small dim" style="margin-top:8px">${esc(R.decided_by)} · reviewer <b class="${verdictCls(R.reviewer_verdict)}">${esc(R.reviewer_verdict)}</b> · ${S.rule_ids.length}/${S.rule_ids.length} rules · $${num(S.meta.cost_usd,4)} · ${num(S.meta.latency_s,0)} s</div>
       <div style="margin-top:16px;display:flex;gap:12px"><button class="btn primary" id="appr">✔ Approve</button><button class="btn" id="rej" style="border-color:var(--red);color:var(--red)">✖ Reject</button></div>
-      <div class="toast" id="toast">human_decision: <b class="mono">${esc(R.human_decision)}</b></div>
-      <div class="dim small">Illustrative only: these buttons are not wired. In the Streamlit app the click is appended to the log as a <span class="mono">human_decision</span> event. The tool never executes anything.</div>
+      <div class="toast" id="toast">human_decision: <b>${esc(R.human_decision)}</b></div>
+      <div class="small dim">Demo only. The tool never executes anything.</div>
     </div>
-    <div class="card"><h3>Consensus log: ${esc(S.scenario_id)}.jsonl</h3>${timeline(S)}<div class="legend">Append-only, timestamped. ${S.rules.length} rule_check events are collapsed into one line.</div></div>
+    <div class="card"><h3>Consensus log</h3>${timeline(S)}<div class="legend">Append-only. ${S.rules.length} rule checks shown as one line.</div></div>
   </div>`;
 }, after(){
   const t = document.getElementById("toast");
-  const say = d => { t.innerHTML = `<span class="mid">Illustrative:</span> would append <span class="mono">{"event":"human_decision","decision":"${d}"}</span> to the log. Nothing is executed.`; };
+  const say = d => { t.innerHTML = `Would log <b>human_decision: ${d}</b>. Nothing is executed.`; };
   document.getElementById("appr").onclick = () => say("approve");
   document.getElementById("rej").onclick = () => say("reject");
 }});
@@ -1013,88 +997,70 @@ CH.push({t:"The human decides", r(){
 CH.push({t:"When nothing is safe", r(){
   const f = F.flight, fd = D.failure_doc;
   const duty = F.facts.find(x=>x.key==="crew_duty_remaining_min");
-  const dutyRows = F.candidates.map(c=>({c, r: ruleOf(F,c.candidate_id,"R-DUTY-01"), other: failsOf(F,c.candidate_id).filter(x=>x!=="R-DUTY-01")}));
-  const allFailDuty = dutyRows.every(x=>x.r && !x.r.passed);
+  const dutyRows = F.candidates.map(c=>({c, r: ruleOf(F,c.candidate_id,"R-DUTY-01")}));
+  const agreed = (F.turns[F.turns.length-1]||{intersection:[]}).intersection.length;
   return `
   <div class="kicker">Chapter 8 · the honest failure</div>
-  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}, ${esc(f.date)}: every option times out the crew</h1>
-  <div class="banner red">No option passes engine and reviewer: escalate to the duty manager. Reviewer <b>${esc(F.reviewer.verdict)}</b> · fallback reason <span class="mono">${esc(F.fallback.reason)}</span> · eligible ${esc(F.fallback.n_eligible)} · decided by ${esc(F.recommendation.decided_by)}</div>
+  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}: every option times out the crew</h1>
+  <div class="banner red">No legal option. Escalated to the duty manager.</div>
   <div class="grid g3" style="margin-top:14px">
-    <div class="card"><div class="tag">ARRIVAL_DELAY</div><div class="big no">+${esc(f.ARRIVAL_DELAY)}</div>${chip("data")} <span class="dim small">weather ${esc(f.WEATHER_DELAY)}</span></div>
-    <div class="card"><div class="tag">crew_duty_remaining_min</div><div class="big mid">${esc(duty&&duty.value)}</div>${chip(duty&&duty.source)}<div class="dim small">${esc(duty&&duty.note)}</div></div>
-    <div class="card"><div class="tag">AGENTS</div>${F.turns.map(t=>`<div class="small">Round ${t.round}: ${t.intersection.length} options all three accept; top picks ${t.messages.map(m=>`${esc(m.agent)} <span class="mono">${esc(m.ranking[0]&&m.ranking[0].candidate_id)}</span>`).join(", ")}</div>`).join("")}<div class="dim small">${F.meta.n_agent_calls} calls · $${num(F.meta.cost_usd,4)} · ${num(F.meta.latency_s,1)} s</div></div>
+    <div class="card"><div class="tag">Arrival delay</div><div class="big no">+${esc(f.ARRIVAL_DELAY)} min</div>${chip("data")}</div>
+    <div class="card"><div class="tag">Crew duty left</div><div class="big mid">${esc(duty&&duty.value)} min</div>${chip(duty&&duty.source)}<span class="small dim">no real rosters</span></div>
+    <div class="card"><div class="tag">Agents</div><div class="big">${agreed}</div><div class="small">options all three accepted · reviewer <b class="no">${esc(F.reviewer.verdict)}</b></div></div>
   </div>
-  <div class="grid g2" style="margin-top:6px">
-    <div class="card"><h3>R-DUTY-01 on every option ${allFailDuty?'<span class="no">(all FAIL)</span>':""} ${pain("duty")}</h3>
-      <table class="mono small"><tr><th>candidate</th><th>duty left at arrival (min)</th><th>other fails</th></tr>
-      ${dutyRows.map(x=>`<tr><td>${esc(x.c.candidate_id)}</td><td class="${x.r&&x.r.passed?"ok":"no"}">${x.r?num(x.r.observed,1):"–"}</td><td>${x.other.map(esc).join(", ")}</td></tr>`).join("")}</table>
-      <div class="small" style="margin-top:6px">${esc((dutyRows[0]&&dutyRows[0].r||{}).citation||"")}</div></div>
-    <div>
-      <div class="card"><h3>Reviewer</h3>${F.reviewer.notes.map(n=>`<div class="bubble mono small">${esc(n)}</div>`).join("")}</div>
-      <div class="card warn" style="margin-top:12px"><h3>The bug this case exposed in our own reviewer (fixed)</h3>
-        <div class="small">On the first run${fd.bug_commit?` (commit <span class="mono">${esc(fd.bug_commit)}</span>)`:""}, the reviewer's own duty check passed every option: it computed <span class="mono">${esc(fd.bug_example||"duty − added")}</span>, subtracting only the option's added delay and forgetting the delay already incurred${fd.bug_disagreements?`, which showed up as ${esc(fd.bug_disagreements)} engine disagreements`:""}. The outcome was still safe because nothing could be picked, but the "independent" check had not caught it on its own.
-        ${fd.fix_commit?`Commit <span class="mono">${esc(fd.fix_commit)}</span>`:"The fix"} applies duty − incurred − added${fd.fix_example?` (<span class="mono">${esc(fd.fix_example)}</span>)`:""}. Reviewer-engine disagreement over 200 flights fell${fd.disagree_before_pct?` from ${esc(fd.disagree_before_pct)}%`:""} to ${pct(metric("reviewer_engine_disagreement_rate").value)}.</div>
-        <div class="cite">source: docs/failure_case.md; current rate: eval/results/summary.csv</div></div>
-      <div class="card" style="margin-top:12px"><h3>Honest caveat</h3><div class="small">The deciding value is ${chip(duty&&duty.source)}: we have no real crew rosters, so this may be a crew shortage that does not exist. The source tag says so, and the human makes the call.</div></div>
-    </div>
-  </div>
-  <h2>Its consensus log</h2><div class="card">${timeline(F)}</div>`;
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3>R-DUTY-01 · duty left at arrival (min)</h3>
+      <table><tr><th>option</th><th class="c">min</th></tr>
+      ${dutyRows.map(x=>`<tr><td>${esc(x.c.candidate_id)}</td><td class="c ${x.r&&x.r.passed?"ok":"no"}">${x.r?num(x.r.observed,0):"–"}</td></tr>`).join("")}</table></div>
+    <div class="card warn"><h3>It also caught a bug in our own reviewer</h3>
+      <div class="small">The reviewer forgot delay already incurred, so its duty check passed.${fd.fix_commit?` Fixed in ${esc(fd.fix_commit)}.`:""} Reviewer-engine disagreement over 200 flights fell${fd.disagree_before_pct?` from ${esc(fd.disagree_before_pct)}%`:""} to ${pct(metric("reviewer_engine_disagreement_rate").value)}.</div></div>
+  </div>`;
 }});
 
 CH.push({t:"The evidence", r(){
   const tiles = [];
-  const add = (big, title, m, extra, cls) => { if (!m) return; tiles.push(`<div class="card tile"><div class="big ${cls||""}">${big}</div><div><b>${title}</b></div><div class="def">n = ${esc(m.n)} · ${esc(m.definition)}${m.note?` · ${esc(m.note)}`:""}${extra?`<br>${extra}`:""}</div></div>`); };
-  const c = metric("consensus_rate"); add(c&&pct(c.value), "Consensus rate (agents agree on a rule-passing option)", c, null, "ok");
-  const tf = metric("agent_top_pick_rule_fail_rate"); add(tf&&pct(tf.value), "Agent top picks breaking a rule they could not see", tf, "every one caught by the rules engine", "mid");
-  const ex = metric("consensus_excluded_by_rules_rate"); add(ex&&pct(ex.value), "Agreed options all excluded by the rules", ex);
-  const ph = PS.haiku, pn = PS.none;
-  if (ph) tiles.push(`<div class="card tile"><div class="big no">${ph.escalated} / ${ph.n}</div><div><b>Escalated to a human: no legal option</b></div><div class="def">n = ${ph.n} · rows with no recommended candidate (per_scenario.csv, agents)${pn?` · solver-only: ${pn.escalated} / ${pn.n}`:""}</div></div>`);
+  const add = (big, title, m, cls) => { if (m) tiles.push(`<div class="card tile"><div class="big ${cls||""}">${big}</div><div class="small">${title}</div><div class="def">n = ${esc(m.n)}</div></div>`); };
+  const c = metric("consensus_rate"); add(c&&pct(c.value), "agents agree on a rule-passing option", c, "ok");
+  const tf = metric("agent_top_pick_rule_fail_rate"); add(tf&&pct(tf.value), "agent top picks broke a rule, all caught", tf, "mid");
+  const ph = PS.haiku;
+  if (ph) tiles.push(`<div class="card tile"><div class="big no">${ph.escalated} / ${ph.n}</div><div class="small">escalated to a human: no legal option</div><div class="def">n = ${ph.n}</div></div>`);
   const a = metric("reviewer_APPROVE_rate"), mo = metric("reviewer_MODIFY_rate"), rj = metric("reviewer_REJECT_rate");
-  if (a&&mo&&rj) tiles.push(`<div class="card tile"><div class="big"><span class="ok">${pct(a.value,1)}</span> <span class="mid">${pct(mo.value,1)}</span> <span class="no">${pct(rj.value,1)}</span></div><div><b>Reviewer APPROVE / MODIFY / REJECT</b></div><div class="def">n = ${esc(a.n)} · ${esc(a.definition)}</div></div>`);
-  const si = metric("schema_invalid_rate"); add(si&&pct(si.value,2), "Invalid agent replies (rejected, logged, never repaired)", si);
-  const fi = metric("fallback_rate_invalid_message"); add(fi&&pct(fi.value), "Fallback after an invalid reply", fi);
-  const rd = metric("reviewer_engine_disagreement_rate"); add(rd&&pct(rd.value,2), "Reviewer-engine disagreement", rd);
-  const cm = metric("cited_value_mismatch_rate"); add(cm&&pct(cm.value,2), "Agent cited a value that does not match the data", cm);
-  const sp = metric("agents_vs_solver_same_pick_rate"); add(sp&&pct(sp.value), "Agents + rules vs solver-only: same pick", sp);
-  const cu = metric("cost_usd_mean"), ct = metric("cost_usd_total"); add(cu&&("$"+num(cu.value,4)), "Cost per decision", cu, ct?`whole run $${num(ct.value,2)}`:null);
-  const lm = metric("latency_s_mean"), lp = metric("latency_s_p95"); add(lm&&(num(lm.value,0)+" s"), "Latency per decision (mean)", lm, lp?`p95 ${num(lp.value,0)} s (three sequential agent calls)`:null);
-  const ad = DATA.actual_delay_mean, ac = DATA.actual_chain_mean;
+  if (a&&mo&&rj) tiles.push(`<div class="card tile"><div class="big"><span class="ok">${pct(a.value,0)}</span> <span class="mid">${pct(mo.value,0)}</span> <span class="no">${pct(rj.value,0)}</span></div><div class="small">reviewer approve / modify / reject</div><div class="def">n = ${esc(a.n)}</div></div>`);
+  const si = metric("schema_invalid_rate"); add(si&&pct(si.value,1), "invalid agent replies, logged, never repaired", si);
+  const cu = metric("cost_usd_mean"); add(cu&&("$"+num(cu.value,4)), "cost per decision", cu);
+  const lm = metric("latency_s_mean"); add(lm&&(num(lm.value,0)+" s"), "time per decision", lm);
+  const cm = metric("cited_value_mismatch_rate"); add(cm&&pct(cm.value,1), "agent citations that did not match the data", cm);
   return `
   <div class="kicker">Chapter 9 · the evidence</div>
-  <h1>200 real delayed flights, the same pipeline, every number with its n</h1>
-  <p class="lead">Seeded sample of US DOT 2015 delayed arrivals, run with ${esc(S.meta.model)} agents and again solver-only. Values read from eval/results/summary.csv and per_scenario.csv at build time.</p>
-  <div class="grid g3">${tiles.join("")}</div>
-  ${ad?`<p class="small dim" style="margin-top:12px">For context (data): mean real arrival delay in the sample ${num(ad.value,1)} min${ac?`; mean ${num(ac.value,1)} min of delay on the same aircraft's later delayed legs that day (${esc(ac.note)})`:""}. Our modelled delays are estimates and are not compared like-for-like with these; no saving is claimed as measured.</p>`:""}`;
+  <h1>200 real delayed flights, same pipeline</h1>
+  <p class="lead">Seeded sample from US DOT 2015, run with ${esc(S.meta.model)} agents.</p>
+  <div class="grid g4">${tiles.join("")}</div>`;
 }});
 
-CH.push({t:"Real vs assumed, and what's next", r(){
+CH.push({t:"Real vs assumed", r(){
   const groups = {data:[],estimated:[],assumed:[],synthetic:[]};
-  S.facts.forEach(x=>{ (groups[x.source]=groups[x.source]||[]).push(`<span class="mono">${esc(x.key)}</span>`); });
-  groups.data.push("flight times &amp; delays, later legs, delayed arrivals per hour (flights.csv)", "alternates (airports.csv)");
-  groups.synthetic.push(`gates at ${esc(S.gates.airport)}`);
-  groups.assumed.push(`turnaround ${esc(S.gates.min_turnaround_min)} min`);
-  Object.entries(S.rule_source).forEach(([r,src])=>{ if (groups[src]) groups[src].push(`rule basis <span class="mono">${esc(r)}</span>`); });
+  S.facts.forEach(x=>{ (groups[x.source]=groups[x.source]||[]).push(esc(x.key)); });
+  groups.data.push("flight times and delays", "alternates");
+  groups.synthetic.push("gates");
+  groups.assumed.push("turnaround times");
   if (S.connections.source && groups[S.connections.source]) groups[S.connections.source].push("connecting passengers");
   return `
-  <div class="kicker">Chapter 10 · honesty and the road to production</div>
-  <h1>What is real, what is assumed, and what would make it production-ready</h1>
+  <div class="kicker">Chapter 10 · honesty and next steps</div>
+  <h1>What is real, what is assumed, what comes next</h1>
   <div class="grid g4">${Object.entries(groups).map(([k,v])=>`<div class="card"><h3>${chip(k)}</h3><ul class="tight small">${v.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
   <div class="grid g2" style="margin-top:14px">
-    <div class="card"><h3>To be production-ready</h3><ul class="tight">
-      <li>Real crew tracking (report time, legs flown, rest) instead of synthetic duty state: the main driver of escalations. ${pain("duty")}</li>
-      <li>Crew-swap and tail-swap options; the Part 117.19 extension as an explicit "requires PIC agreement" choice.</li>
-      <li>Aircraft type from the FAA registry for wake class; verified runway configurations and arrival rates.</li>
-      <li>A live, read-only feed from the airline's gate system, so the ramp sees the same plan as ATC and crew. ${pain("ramp")}</li>
-      <li>Fuel on board from dispatch instead of an estimate from distance and air time. ${pain("fuel")}</li>
-      <li>Shadow-mode trial alongside a real duty manager before any reliance.</li></ul></div>
-    <div class="card"><h3>What does not change</h3><ul class="tight">
-      <li>LLMs only rank, veto and explain; they never compute legality.</li>
-      <li>Every rule result cites its rule ID, the data field and its source tag.</li>
-      <li>A deterministic fallback and an independent reviewer sit behind every pick.</li>
-      <li>The tool recommends; a human approves. It never executes.</li></ul>
-      <div class="brief-note small" style="margin-top:8px">Industry figures in this story (${D.brief.map(b=>esc(b.figure)).join(", ")}) are ${brief()}, not our measurements.</div></div>
+    <div class="card"><h3>To reach production</h3><ul class="tight">
+      <li>Real crew rosters</li>
+      <li>Crew and tail swaps as options</li>
+      <li>Live gate and fuel feeds</li>
+      <li>Shadow trial with a duty manager</li></ul></div>
+    <div class="card"><h3>What never changes</h3><ul class="tight">
+      <li>LLMs rank and explain, never judge legality</li>
+      <li>Every result cites a rule and a source</li>
+      <li>A fallback and a reviewer behind every pick</li>
+      <li>A human approves; the tool never executes</li></ul></div>
   </div>
-  <div class="thesis">LLMs negotiate, code decides, every decision traces to a rule and a data field, and a human approves.</div>
+  <div class="thesis">LLMs negotiate, code decides, a human approves.</div>
   <div style="display:flex;justify-content:center"><div class="mandatory" role="img" aria-label="Mandatory sign: human approves">Hold short &middot; human approves</div></div>`;
 }});
 
@@ -1170,7 +1136,7 @@ function scopeSVG(run, mode){
   s += `<rect x="${C-3}" y="${C-3}" width="6" height="6" fill="#e6edf7"/><text x="${C}" y="${C+15}" fill="#e6edf7" font-size="10" font-weight="600" text-anchor="middle">${esc(g.dest.iata)}</text>`;
   for (let k = 1; k <= 3; k++){ const [tx, ty] = P(ob, range*(0.52 + k*0.05)); s += `<circle cx="${fx(tx)}" cy="${fx(ty)}" r="1.6" fill="${blipCol}" opacity="${(0.55 - k*0.15).toFixed(2)}"/>`; }
   s += `<g class="${mode==="escalate"?"blinking":""}"><g transform="translate(${fx(bx)},${fx(by)}) rotate(${heading}) scale(.75) translate(-12,-12)"><path d="${PLANE}" fill="${blipCol}"/></g></g>`;
-  const tag = mode==="escalate" ? "NO LEGAL OPTION" : (mode==="chosen" && chosen) ? chosen.candidate_id : `+${f.ARRIVAL_DELAY} MIN`;
+  const tag = mode==="escalate" ? "ESCALATE" : (mode==="chosen" && chosen) ? chosen.candidate_id : `+${f.ARRIVAL_DELAY} MIN`;
   const tx = Math.min(Math.max(bx + nx*20, 26), 254), ty = by + ny*20;
   s += `<text x="${fx(tx)}" y="${fx(ty-5)}" fill="${blipCol}" font-size="9.5" font-weight="600" text-anchor="${anchorFor(tx)}">${esc(fl(f))}</text>`;
   s += `<text x="${fx(tx)}" y="${fx(ty+6)}" fill="${blipCol}" font-size="8.5" text-anchor="${anchorFor(tx)}">${esc(tag)}</text>`;
