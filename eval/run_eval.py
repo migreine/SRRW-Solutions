@@ -26,6 +26,8 @@ Never runs with force_deadlock or tamper_rules; a run carrying either flag is no
 per_scenario.csv columns: row_index, scenario_id, mode, chosen_id, kind, decided_by, rounds_used,
 fallback_reason, verdict, n_cited_mismatch, n_invalid, top_pick_fail_ATC, top_pick_fail_PILOT,
 top_pick_fail_GROUND, est_delay, est_knock_on, actual_delay, actual_chain, latency_s, cost_usd,
+(actual_chain = sum of the downstream legs' arrival delay, key "arrival_delay" from the builder or
+"ARRIVAL_DELAY"; read from data/flights.csv by tail and date if the Scenario omits it),
 then (additive, needed by the summary) n_agent_calls, n_valid_ATC, n_valid_PILOT, n_valid_GROUND,
 consensus_excluded_by_rules, n_engine_disagreements, n_candidates_reviewed,
 n_citations_with_value, n_cited_value_mismatch, reviewer_rejected_id, tokens_in, tokens_out,
@@ -194,6 +196,86 @@ def _num(x):
     return v if math.isfinite(v) else None
 
 
+# actual_chain (data, partial). The builder's downstream_legs carry the leg's arrival delay as
+# "arrival_delay" (src/scenario/builder.py); the test fixture uses the flights.csv column name
+# "ARRIVAL_DELAY". Reading only "ARRIVAL_DELAY" made actual_chain 0 on every real row (eval run
+# 1f2c0ca). The agents never see either key: src/agents/views.py drops ARRIVAL_DELAY at any depth.
+LEG_ARRIVAL_DELAY_KEYS = ("ARRIVAL_DELAY", "arrival_delay")
+FLIGHTS_PATH = Path(__file__).resolve().parents[1] / "data" / "flights.csv"
+
+
+def _leg_arrival_delay(leg: dict) -> float | None:
+    for key in LEG_ARRIVAL_DELAY_KEYS:
+        if key in leg:
+            return _num(leg[key])
+    return None
+
+
+def _hhmm_to_min(v) -> int | None:
+    f = _num(v)
+    if f is None:
+        return None
+    v = int(f)
+    return 0 if v == 2400 else (v // 100) * 60 + v % 100
+
+
+_TAIL_DAY_CACHE: dict[str, dict] = {}
+_TAIL_DAY_LOCK = threading.Lock()
+
+
+def _tail_day_index(path: Path) -> dict:
+    """(TAIL_NUMBER, YEAR, MONTH, DAY) -> [(row_index, sched_dep_min, ARRIVAL_DELAY)], read once."""
+    key = str(Path(path).resolve())
+    with _TAIL_DAY_LOCK:
+        if key not in _TAIL_DAY_CACHE:
+            import pandas as pd
+
+            cols = ["YEAR", "MONTH", "DAY", "TAIL_NUMBER", "SCHEDULED_DEPARTURE", "ARRIVAL_DELAY"]
+            d = pd.read_csv(path, usecols=cols, keep_default_na=True)
+            index: dict = {}
+            for i, r in zip(d.index, d.itertuples(index=False)):
+                index.setdefault((r.TAIL_NUMBER, int(r.YEAR), int(r.MONTH), int(r.DAY)), []).append(
+                    (int(i), _hhmm_to_min(r.SCHEDULED_DEPARTURE), _num(r.ARRIVAL_DELAY)))
+            _TAIL_DAY_CACHE[key] = index
+        return _TAIL_DAY_CACHE[key]
+
+
+def chain_from_flights(row_index: int, flight: dict, path: str | Path | None = None) -> float | None:
+    """sum(ARRIVAL_DELAY) over the same tail's later legs that day, read from data/flights.csv.
+
+    Same selection as the builder's downstream_legs: same TAIL_NUMBER and YEAR/MONTH/DAY, a
+    different row, scheduled departure strictly later. None if the file or a key is missing.
+    flight["SCHEDULED_DEPARTURE"] is in minutes of day (the Scenario normalises hhmm).
+    """
+    path = Path(path or FLIGHTS_PATH)
+    try:
+        key = (flight["TAIL_NUMBER"], int(flight["YEAR"]), int(flight["MONTH"]), int(flight["DAY"]))
+        dep = _num(flight["SCHEDULED_DEPARTURE"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if dep is None or not path.exists():
+        return None
+    legs = [a for i, d, a in _tail_day_index(path).get(key, [])
+            if i != row_index and d is not None and d > dep]
+    return float(sum(a for a in legs if a is not None))
+
+
+def actual_chain(scenario: dict, flights_path: str | Path | None = None) -> float | None:
+    """sum(ARRIVAL_DELAY) over Scenario.downstream_legs (data, partial; 0 if there are none).
+
+    If any leg does not carry its arrival delay (a Scenario that deliberately omits outcomes),
+    the whole sum is read from data/flights.csv by tail and date instead, so it is never a
+    silent partial sum. None if that lookup is impossible.
+    """
+    legs = [leg for leg in scenario.get("downstream_legs") or [] if isinstance(leg, dict)]
+    if not legs:
+        return 0.0
+    values = [_leg_arrival_delay(leg) for leg in legs]
+    if all(v is not None for v in values):
+        return float(sum(values))
+    return chain_from_flights(scenario.get("row_index"), scenario.get("flight") or {}, flights_path)
+
+
 def _rules_pass(rule_results: list[dict]) -> set[str]:
     by_id: dict[str, list[bool]] = {}
     for r in rule_results:
@@ -239,8 +321,6 @@ def row_from_result(result: dict, mode: str) -> dict:
 
     reviewer = result["reviewer"]
     mismatches = reviewer.get("cited_mismatches") or []
-    legs = s.get("downstream_legs") or []
-    chain = [_num(leg.get("ARRIVAL_DELAY")) for leg in legs]
     return {
         "row_index": meta["row_index"],
         "scenario_id": meta["scenario_id"],
@@ -257,7 +337,7 @@ def row_from_result(result: dict, mode: str) -> dict:
         "est_delay": chosen.get("est_delay_min"),
         "est_knock_on": chosen.get("est_knock_on_min"),
         "actual_delay": _num(s.get("flight", {}).get("ARRIVAL_DELAY")),
-        "actual_chain": sum(v for v in chain if v is not None),
+        "actual_chain": actual_chain(s),
         "latency_s": meta.get("latency_s"),
         "cost_usd": meta.get("cost_usd"),
         "n_agent_calls": n_calls,

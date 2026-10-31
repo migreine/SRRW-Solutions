@@ -1,6 +1,9 @@
 """Tests for src/reviewer/safety.py. Owner: Rohan (L).
 
-Hand-built scenario, independent of tests/fixtures and src/rules. All expected numbers worked by hand:
+Hand-built scenario, independent of tests/fixtures and src/rules (the one exception is
+test_duty_agrees_with_engine_on_real_rows, which compares the two implementations on real rows
+after the fact; the reviewer module itself imports nothing from src/rules, options or scenario).
+All expected numbers worked by hand:
 
   fuel_reserve_min 105.1 (estimated), crew_duty_remaining_min 150 (synthetic), wake L (assumed),
   nominal_aar 90 (assumed), dest_disruption 14 (data), alternate AUS 190 NM.
@@ -9,7 +12,10 @@ Hand-built scenario, independent of tests/fixtures and src/rules. All expected n
         190 / 7 = 27.14 min + 45 = 72.14 min; a divert keeps only the 45 min reserve on arrival.
         SLOT+15: 105.1 - 15 = 90.1 >= 72.14 pass | HOLD40: 105.1 - 40 = 65.1 < 72.14 FAIL
         DIVERT_AUS: 190 / 7 = 27.14 min airborne, 105.1 - 27.14 = 77.96 >= 45 pass
-  DUTY  SLOT+15: 150 - 15 = 135 | HOLD40: 150 - 40 = 110 | DIVERT_AUS: 150 - (27.14 + 60) = 62.86
+  DUTY  crew_duty_remaining_min is at SCHEDULED arrival, so the incurred delay is consumed too.
+        make_scenario has no actual_arr_abs/sched_arr_abs, so incurred = flight.ARRIVAL_DELAY = 101.
+        SLOT+15: 150 - 101 - 15 = 34 | HOLD40: 150 - 101 - 40 = 9
+        DIVERT_AUS: 150 - 101 - (27.14 + 60) = -38.14 FAIL (with duty 250: 61.86 pass)
   WAKE  any follower behind an assumed Large leader = 3 NM; required = 3 / (140 / 3600) = 77.14 s
         3 assumed arrival runways (reconciled with the rules engine, docs/calibration.md)
         available per runway = 3600 * 3 runways / (90 - 14) = 142.11 s -> pass (every candidate)
@@ -38,6 +44,8 @@ DIVERT_AIR = 190 / 7  # 27.142857...
 DIVERT_DELAY = DIVERT_AIR + 60  # 87.142857...
 FUEL = 105.1  # 78 min of margin under the old 45-min-only rule + 27.1 min AUS alternate time
 FUEL_NEED = DIVERT_AIR + 45  # 72.142857... non-divert threshold (most distant alternate + reserve)
+INCURRED = 101  # make_scenario flight.ARRIVAL_DELAY
+DUTY_OK = Tagged(value=250, source="synthetic")  # enough duty for DIVERT_AUS after the incurred delay
 
 
 def make_scenario(**over) -> Scenario:
@@ -207,7 +215,7 @@ def test_approve_slot15_with_correct_citations():
     assert d["derived_delay_min"] == pytest.approx(15)
     assert entry(d, "FUEL", "SLOT+15")["derived"] == pytest.approx(90.1)
     assert entry(d, "FUEL", "SLOT+15")["threshold"] == pytest.approx(FUEL_NEED)
-    assert entry(d, "DUTY", "SLOT+15")["derived"] == pytest.approx(135)
+    assert entry(d, "DUTY", "SLOT+15")["derived"] == pytest.approx(150 - INCURRED - 15)
     assert entry(d, "WAKE", "SLOT+15")["derived"] == pytest.approx(AVAIL)
     assert all("[" in n and "]" in n for n in notes)  # every note cites a source
     assert any("assumed" in n for n in notes if n.startswith("FUEL"))
@@ -229,7 +237,7 @@ def test_reject_hold40_fuel():
     d = review_detail(make_scenario(), rec(HOLD40), [])
     assert entry(d, "FUEL", "HOLD40")["derived"] == pytest.approx(65.1)
     assert entry(d, "FUEL", "HOLD40")["threshold"] == pytest.approx(FUEL_NEED)
-    assert entry(d, "DUTY", "HOLD40")["passed"] is True  # 150 - 40 = 110
+    assert entry(d, "DUTY", "HOLD40")["passed"] is True  # 150 - 101 - 40 = 9
 
 
 def test_engine_pass_does_not_rescue_reviewer_fail():
@@ -271,8 +279,8 @@ def test_non_divert_fails_when_most_distant_alternate_leg_not_covered():
 def test_divert_needs_only_final_reserve_on_arrival():
     # fuel 75: DIVERT_AUS flies 27.14 min and lands with 75 - 27.14 = 47.86 >= 45 -> PASS (no
     # alternate leg after a divert). SLOT+15 flies less (15 min) but must keep the AUS leg:
-    # 75 - 15 = 60 < 72.14 -> FAIL.
-    s = make_scenario(fuel_reserve_min=Tagged(value=75, source="estimated"))
+    # 75 - 15 = 60 < 72.14 -> FAIL. Duty 250 so DIVERT_AUS passes DUTY (250 - 101 - 87.14).
+    s = make_scenario(fuel_reserve_min=Tagged(value=75, source="estimated"), crew_duty_remaining_min=DUTY_OK)
     d = review_detail(s, rec(DIVERT), [], candidates=MENU)
     f = entry(d, "FUEL", "DIVERT_AUS")
     assert f["derived"] == pytest.approx(75 - DIVERT_AIR) and f["derived"] < FUEL_NEED
@@ -285,34 +293,127 @@ def test_divert_needs_only_final_reserve_on_arrival():
     assert slot["passed"] is False
 
 
+# ---- DUTY: incurred delay is consumed (crew_duty_remaining_min is at SCHEDULED arrival) -----------
+def _flight(**over):
+    base = {"AIRLINE": "AA", "FLIGHT_NUMBER": 334, "DESTINATION_AIRPORT": "DFW"}
+    return {**base, **over}
+
+
+def test_duty_uses_projected_minus_scheduled_arrival():
+    # projected gate-in 895 vs scheduled 775 = 120 min incurred; takes precedence over the raw column
+    s = make_scenario(flight=_flight(sched_arr_abs=775, actual_arr_abs=895, ARRIVAL_DELAY=101))
+    d = review_detail(s, rec(SLOT15), [], candidates=MENU)
+    duty = entry(d, "DUTY", "SLOT+15")
+    assert duty["derived"] == pytest.approx(150 - 120 - 15) and duty["passed"] is True
+    assert duty["inputs"]["incurred_delay_min"] == 120
+    assert duty["inputs"]["incurred_from"] == "flight.actual_arr_abs - flight.sched_arr_abs"
+    assert entry(d, "DUTY", "HOLD40")["derived"] == pytest.approx(-10)  # 150 - 120 - 40
+    assert entry(d, "DUTY", "HOLD40")["passed"] is False
+    note = next(n for n in d["notes"] if n.startswith("DUTY re-derived: SLOT+15"))
+    assert "adds 15 min to 120 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data)" in note
+    assert "crew_duty_remaining_min=150 (synthetic, at scheduled arrival) leaves 15 min" in note
+    assert "PASS" in note and "14 CFR 117" in note and "incurred" in note
+
+
+def test_duty_falls_back_to_arrival_delay_column():
+    d = review_detail(make_scenario(), rec(SLOT15), [])
+    duty = entry(d, "DUTY", "SLOT+15")
+    assert duty["inputs"]["incurred_delay_min"] == INCURRED
+    assert duty["inputs"]["incurred_from"] == "flight.ARRIVAL_DELAY"
+
+
+@pytest.mark.parametrize("duty,passed", [(116, True), (115, False)])
+def test_duty_boundary_includes_incurred_delay(duty, passed):
+    # 116 - 101 - 15 = 0 -> pass (>= 0); 115 -> -1 FAIL. Before the fix both passed (101 and 100 left).
+    s = make_scenario(crew_duty_remaining_min=Tagged(value=duty, source="synthetic"))
+    d = review_detail(s, rec(SLOT15), [])
+    assert entry(d, "DUTY", "SLOT+15")["passed"] is passed
+    assert d["verdict"] == ("APPROVE" if passed else "REJECT")
+
+
+def test_duty_early_projected_arrival_gives_duty_back():
+    s = make_scenario(flight=_flight(sched_arr_abs=775, actual_arr_abs=765))  # 10 min early
+    assert entry(review_detail(s, rec(SLOT15), []), "DUTY", "SLOT+15")["derived"] == pytest.approx(145)
+
+
+def test_duty_unknown_incurred_delay_fails_closed():
+    s = make_scenario(flight=_flight())  # no arrival fields at all
+    d = review_detail(s, rec(SLOT15), [])
+    duty = entry(d, "DUTY", "SLOT+15")
+    assert duty["derived"] is None and duty["passed"] is False and d["verdict"] == "REJECT"
+    assert any(n.startswith("DUTY re-derived: SLOT+15") and "fail closed" in n and "FAIL" in n for n in d["notes"])
+
+
+def test_reviewer_imports_nothing_from_rules_options_or_scenario():
+    import ast
+    import inspect
+
+    import src.reviewer.safety as safety
+
+    tree = ast.parse(inspect.getsource(safety))
+    mods = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
+    mods += [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
+    assert not [m for m in mods if m and m.startswith(("src.rules", "src.options", "src.scenario"))]
+
+
+def test_duty_agrees_with_engine_on_real_rows():
+    # Integration (needs data/flights.csv, as tests/test_rules.py does). The reviewer derives the
+    # incurred delay itself; the engine's R-DUTY-01 must now agree on every non-divert candidate
+    # (diverts differ by design: the engine adds the return leg). Row 0 (+300 min) fails everywhere.
+    from src.options.menu import generate_candidates
+    from src.rules.engine import check_all
+    from src.scenario.builder import DATA_DIR, build_scenario
+
+    if not (DATA_DIR / "flights.csv").exists():
+        pytest.skip("data/flights.csv not present")
+    for row in (123017, 0):
+        s = build_scenario(row)
+        cands = generate_candidates(s)
+        engine = {r.candidate_id: r.passed for r in check_all(s, cands) if r.rule_id == "R-DUTY-01"}
+        d = review_detail(s, rec(cands[0], decided_by="fallback"), [], candidates=cands)
+        for c in cands:
+            if c.kind != "divert":
+                assert entry(d, "DUTY", c.candidate_id)["passed"] == engine[c.candidate_id], (row, c.candidate_id)
+        if row == 0:
+            assert not any(entry(d, "DUTY", c.candidate_id)["passed"] for c in cands)
+
+
 # ---- (3) DIVERT_AUS and the engine-disagreement path ----------------------------------------------
 def test_divert_aus_numbers():
     d = review_detail(make_scenario(), rec(DIVERT), [])
     assert entry(d, "FUEL", "DIVERT_AUS")["derived"] == pytest.approx(FUEL - DIVERT_AIR)
     assert entry(d, "FUEL", "DIVERT_AUS")["threshold"] == pytest.approx(45)
     assert entry(d, "FUEL", "DIVERT_AUS")["passed"] is True
-    assert entry(d, "DUTY", "DIVERT_AUS")["derived"] == pytest.approx(150 - DIVERT_DELAY)
-    assert entry(d, "DUTY", "DIVERT_AUS")["passed"] is True
+    # 150 - 101 incurred - 87.14 = -38.14: the incurred delay has used the crew's buffer
+    assert entry(d, "DUTY", "DIVERT_AUS")["derived"] == pytest.approx(150 - INCURRED - DIVERT_DELAY)
+    assert entry(d, "DUTY", "DIVERT_AUS")["passed"] is False
     assert d["derived_delay_min"] == pytest.approx(DIVERT_DELAY)
+    assert d["verdict"] == "REJECT"
+    d = review_detail(make_scenario(crew_duty_remaining_min=DUTY_OK), rec(DIVERT), [])
+    assert entry(d, "DUTY", "DIVERT_AUS")["derived"] == pytest.approx(250 - INCURRED - DIVERT_DELAY)
     assert d["verdict"] == "APPROVE"  # est 87 vs 87.14 agrees
 
 
 def test_engine_disagreement_on_non_chosen_is_modify():
     rules = [
-        rr("R-DUTY-01", "DIVERT_AUS", False),  # reviewer passes it (62.86 min left) -> disagreement
+        rr("R-DUTY-01", "DIVERT_AUS", True),  # reviewer fails it (-38.14 min left) -> disagreement
         rr("R-FUEL-01", "HOLD40", False),  # reviewer agrees (65.1 < 72.14)
         rr("R-FUEL-01", "SLOT+15", True),
     ]
     d = review_detail(make_scenario(), rec(SLOT15, rules), consensus_turns(), candidates=MENU)
     assert d["verdict"] == "MODIFY"
     assert d["engine_disagreements"] == [
-        {"rule_id": "R-DUTY-01", "candidate_id": "DIVERT_AUS", "engine_passed": False, "reviewer_passed": True}
+        {"rule_id": "R-DUTY-01", "candidate_id": "DIVERT_AUS", "engine_passed": True, "reviewer_passed": False}
     ]
-    assert any(n.startswith("ENGINE: R-DUTY-01 failed DIVERT_AUS, reviewer passes it") for n in d["notes"])
+    assert any(
+        n.startswith("ENGINE: R-DUTY-01 passed DIVERT_AUS, reviewer fails it") and "duty left -38.1 min" in n
+        for n in d["notes"]
+    )
 
 
 def test_engine_failing_chosen_is_reject():
-    d = review_detail(make_scenario(), rec(DIVERT, [rr("R-DUTY-01", "DIVERT_AUS", False)]), [])
+    s = make_scenario(crew_duty_remaining_min=DUTY_OK)  # reviewer passes DIVERT_AUS duty (61.86)
+    d = review_detail(s, rec(DIVERT, [rr("R-DUTY-01", "DIVERT_AUS", False)]), [])
     assert d["verdict"] == "REJECT"
     assert any("ENGINE: R-DUTY-01 failed chosen DIVERT_AUS" in n and "REJECT" in n for n in d["notes"])
     assert len(d["engine_disagreements"]) == 1
@@ -369,6 +470,113 @@ def test_cited_string_mismatch_and_veto_field():
     assert d["verdict"] == "MODIFY"
     assert d["cited_mismatches"][0]["path"] == "wake_category"
     assert any(n.startswith("CITED: ATC vetoed HOLD40") for n in d["notes"])
+
+
+# ---- cited values in the display forms of src/agents/views.py (false alarms before the fix) -------
+# Each class below was a mismatch although the agent quoted exactly what its view printed. Exact
+# comparisons only: the numeric tolerance is unchanged and genuine errors still mismatch.
+CONNS = [{"flight_number": 1389, "destination": "MEM", "est_pax": 30, "source": "estimated"},
+         {"flight_number": 2210, "destination": "ORD", "est_pax": 12, "source": "estimated"}]
+
+
+@pytest.mark.parametrize(
+    "cite,ok",
+    [
+        ("connections.count=2", True),  # GROUND's aggregate line "connections.count=N (estimated)"
+        ("connections.count=2 (estimated)", True),
+        ("connections.count", True),  # existence only
+        ("connections.count=4", False),  # genuine: wrong count (outside the unchanged 1.0 tolerance)
+    ],
+)
+def test_cited_list_count_aggregate(cite, ok):
+    d = review_detail(make_scenario(connections=CONNS), rec(SLOT15), consensus_turns(extra_cite=cite))
+    assert (d["cited_mismatches"] == []) is ok, d["cited_mismatches"]
+
+
+def test_count_only_resolves_on_a_list_and_only_at_the_end():
+    for cite in ("connections.count.x=1", "connections[0].count=1", "fuel_reserve_min.count=1"):
+        d = review_detail(make_scenario(connections=CONNS), rec(SLOT15), consensus_turns(extra_cite=cite))
+        assert [m["reason"] for m in d["cited_mismatches"]] == ["unknown_field"], cite
+
+
+@pytest.mark.parametrize(
+    "cite,ok",
+    [
+        ("downstream_legs=[]", True),  # views.flatten prints an empty list as "path=[] (source)"
+        ("downstream_legs=[] (data)", True),
+        ("alternates=[]", False),  # genuine: alternates is not empty
+        ("alternates=1", False),  # a list is still not a scalar
+    ],
+)
+def test_cited_empty_list_display(cite, ok):
+    d = review_detail(make_scenario(), rec(SLOT15), consensus_turns(extra_cite=cite))
+    assert (d["cited_mismatches"] == []) is ok, d["cited_mismatches"]
+
+
+@pytest.mark.parametrize("cite,ok", [("flight.WEATHER_DELAY=null", True), ("flight.WEATHER_DELAY=NULL (data)", True),
+                                     ("flight.WEATHER_DELAY=0", False), ("flight.ARRIVAL_DELAY=null", False)])
+def test_cited_null_display(cite, ok):
+    # views.fmt_value prints None (a NaN cell, cleaned by the builder) as "null"
+    s = make_scenario(flight={"AIRLINE": "AA", "ARRIVAL_DELAY": 101, "WEATHER_DELAY": None})
+    d = review_detail(s, rec(SLOT15), consensus_turns(extra_cite=cite))
+    assert (d["cited_mismatches"] == []) is ok, d["cited_mismatches"]
+
+
+@pytest.mark.parametrize(
+    "cite,ok,reason",
+    [
+        ("params.shift_min=15", True, None),  # candidate JSON line: {"params": {"shift_min": 15}}
+        ("candidate_id=SLOT+15", True, None),
+        ("kind=slot_shift", True, None),
+        ("params.shift_min=30", False, "value"),  # genuine: wrong number
+        ("params.minutes=15", False, "unknown_field"),  # not a param of SLOT+15
+    ],
+)
+def test_cited_candidate_json_paths(cite, ok, reason):
+    d = review_detail(make_scenario(), rec(SLOT15), consensus_turns(extra_cite=cite), candidates=MENU)
+    assert (d["cited_mismatches"] == []) is ok
+    if not ok:
+        assert [m["reason"] for m in d["cited_mismatches"]] == [reason]
+
+
+def test_veto_citation_resolves_on_the_vetoed_candidate():
+    t = [turn(msg("ATC", ["SLOT+15"], [], vetoes=[
+        {"candidate_id": "HOLD40", "reason": "x", "cited_field": "params.minutes=40"}]))]
+    assert review_detail(make_scenario(), rec(SLOT15), t, candidates=MENU)["cited_mismatches"] == []
+
+
+def _cite_every_view_line(s, cands):
+    """Every DATA line an agent is shown, cited verbatim by a supporter of the pick."""
+    from src.agents.views import data_lines
+
+    msgs = []
+    for role in ("ATC", "PILOT", "GROUND"):
+        lines = [ln for ln in data_lines(s, role) if "...(" not in ln]  # cap markers carry no value
+        msgs.append(msg(role, [cands[0].candidate_id], lines, cid=cands[0].candidate_id))
+    return [turn(*msgs)]
+
+
+def test_every_view_line_resolves_on_hand_built_scenario():
+    s = make_scenario(
+        connections=CONNS,
+        flight={"AIRLINE": "AA", "FLIGHT_NUMBER": 334, "DESTINATION_AIRPORT": "DFW", "ARRIVAL_DELAY": 101,
+                "WEATHER_DELAY": None, "DEPARTURE_DELAY": 114.0, "DISTANCE": 469},
+    )
+    d = review_detail(s, rec(SLOT15), _cite_every_view_line(s, MENU), candidates=MENU)
+    assert d["citations_with_value"] > 20 and d["cited_mismatches"] == [], d["cited_mismatches"]
+
+
+def test_every_view_line_resolves_on_real_rows():
+    from src.options.menu import generate_candidates
+    from src.scenario.builder import DATA_DIR, build_scenario
+
+    if not (DATA_DIR / "flights.csv").exists():
+        pytest.skip("data/flights.csv not present")
+    for row in (123017, 0):
+        s = build_scenario(row)
+        cands = generate_candidates(s)
+        d = review_detail(s, rec(cands[0], decided_by="fallback"), _cite_every_view_line(s, cands), candidates=cands)
+        assert d["citations_with_value"] > 30 and d["cited_mismatches"] == [], (row, d["cited_mismatches"])
 
 
 # ---- (5) unknown path -----------------------------------------------------------------------------
@@ -430,7 +638,7 @@ def test_negative_slot_shift_and_gate_swap():
     early = Candidate(candidate_id="SLOT-10", kind="slot_shift", params={"shift_min": -10}, est_delay_min=-10, est_knock_on_min=0)
     d = review_detail(make_scenario(), rec(early), [])
     assert entry(d, "FUEL", "SLOT-10")["derived"] == pytest.approx(FUEL)  # max(shift, 0) airborne
-    assert entry(d, "DUTY", "SLOT-10")["derived"] == pytest.approx(160)
+    assert entry(d, "DUTY", "SLOT-10")["derived"] == pytest.approx(150 - INCURRED + 10)
     gate = Candidate(candidate_id="GATE_B12", kind="gate_swap", params={"gate": "B12", "extra_taxi_min": 6}, est_delay_min=6, est_knock_on_min=0)
     d = review_detail(make_scenario(), rec(gate), [])
     assert d["derived_delay_min"] == pytest.approx(6) and d["verdict"] == "APPROVE"

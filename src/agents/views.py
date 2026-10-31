@@ -29,6 +29,11 @@ DICT_CAP = 15  # lines shown per dict before "...(n more)"
 
 # Outcome fields: never shown to any agent, at any depth.
 OUTCOME_KEYS = frozenset({"ARRIVAL_DELAY", "ARRIVAL_TIME", "WHEELS_ON", "TAXI_IN"})
+# Later legs have not flown yet at decision time: every actual-outcome field on them is hidden.
+LEG_OUTCOME_KEYS = OUTCOME_KEYS | frozenset({
+    "DEPARTURE_DELAY", "DEPARTURE_TIME", "WHEELS_OFF", "TAXI_OUT", "ELAPSED_TIME", "AIR_TIME",
+    "AIR_SYSTEM_DELAY", "SECURITY_DELAY", "AIRLINE_DELAY", "LATE_AIRCRAFT_DELAY", "WEATHER_DELAY",
+})
 
 # Keys shown for each downstream leg (when the leg dict uses flights.csv column names).
 DOWNSTREAM_KEYS = (
@@ -148,7 +153,7 @@ def _downstream_view(legs: list) -> list:
         elif any(k in leg for k in DOWNSTREAM_KEYS):
             out.append({k: leg[k] for k in DOWNSTREAM_KEYS if k in leg})
         else:
-            out.append({k: v for k, v in leg.items() if str(k).upper() not in OUTCOME_KEYS})
+            out.append({k: v for k, v in leg.items() if str(k).upper() not in LEG_OUTCOME_KEYS})
     return out
 
 

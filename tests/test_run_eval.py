@@ -8,9 +8,12 @@ import pytest
 
 import src.cli as cli
 from eval.run_eval import (
+    FLIGHTS_PATH,
     MODELLED_NOTE,
     PER_SCENARIO_COLUMNS,
     SUMMARY_COLUMNS,
+    actual_chain,
+    chain_from_flights,
     guard_check,
     main,
     parse_deadline,
@@ -67,21 +70,22 @@ def test_none_and_fixture_modes_write_all_outputs(out_dir):
     assert _metric(summary, "human_decision", "fixture")["value"] == "pending"
     assert all(r["definition"] for r in summary)
 
-    # Reviewer metrics come from the real reviewer: every run is MODIFY (engine fails DIVERT_AUS
-    # on duty, the reviewer passes it), i.e. 1 of 8 candidates disagrees per row; the fixture
-    # agents cite 34 path=value fields per run, all matching the scenario.
-    assert {r["verdict"] for r in rows} == {"MODIFY"}
+    # Reviewer metrics come from the real reviewer: every run is APPROVE. Engine and reviewer
+    # agree on all 8 candidates (both fail HOLD40 on fuel and DIVERT_AUS on duty, the reviewer now
+    # subtracting the 101 min incurred delay); the fixture agents cite 34 path=value fields per
+    # run, all matching the scenario.
+    assert {r["verdict"] for r in rows} == {"APPROVE"}
     assert {r["n_candidates_reviewed"] for r in rows} == {"8"}
-    assert {r["n_engine_disagreements"] for r in rows} == {"1"}
+    assert {r["n_engine_disagreements"] for r in rows} == {"0"}
     assert {r["n_citations_with_value"] for r in fx_rows} == {"34"}
     assert {r["n_cited_value_mismatch"] for r in fx_rows} == {"0"}
     assert {r["reviewer_rejected_id"] for r in rows} == {""}
     for mode in ("none", "fixture"):
-        assert float(_metric(summary, "reviewer_MODIFY_rate", mode)["value"]) == 1.0
-        assert float(_metric(summary, "reviewer_APPROVE_rate", mode)["value"]) == 0.0
+        assert float(_metric(summary, "reviewer_MODIFY_rate", mode)["value"]) == 0.0
+        assert float(_metric(summary, "reviewer_APPROVE_rate", mode)["value"]) == 1.0
         assert float(_metric(summary, "reviewer_REJECT_rate", mode)["value"]) == 0.0
         dis = _metric(summary, "reviewer_engine_disagreement_rate", mode)
-        assert float(dis["value"]) == 0.125 and dis["n"] == "24"
+        assert float(dis["value"]) == 0.0 and dis["n"] == "24"
         assert "placeholder" not in dis["note"]
     cited = _metric(summary, "cited_value_mismatch_rate", "fixture")
     assert float(cited["value"]) == 0.0 and cited["n"] == "102"
@@ -132,9 +136,8 @@ def test_reviewer_reject_counted_from_real_reviewer(out_dir, monkeypatch):
     assert float(_metric(summary, "fallback_rate_reviewer_reject", "none")["value"]) == 0.0
     assert float(_metric(summary, "consensus_rate", "fixture")["value"]) == 0.0
     assert float(_metric(summary, "agents_vs_solver_same_pick_rate", "fixture")["value"]) == 1.0
-    # engine (fuel 105.1) vs reviewer (fuel 97.1): SLOT+30 (fuel) and DIVERT_AUS (duty, as in the
-    # base case) disagree, out of 8
-    assert float(_metric(summary, "reviewer_engine_disagreement_rate", "fixture")["value"]) == 0.25
+    # engine (fuel 105.1) vs reviewer (fuel 97.1): only SLOT+30 (fuel) disagrees, out of 8
+    assert float(_metric(summary, "reviewer_engine_disagreement_rate", "fixture")["value"]) == 0.125
     assert _metric(summary, "cited_value_mismatch_rate", "fixture")["value"] == ""  # 0 / 0
 
 
@@ -190,6 +193,72 @@ def test_guard_check():
     assert guard_check(10, 200, 0.5, 10, 15.0, None, now) is None  # $10 projected
     assert guard_check(10, 200, 0.1, 600, 15.0, late, now).startswith("deadline")  # 3.2 h left
     assert guard_check(10, 200, 0.1, 60, 15.0, late, now) is None  # 19 min left
+
+
+# ---- actual_chain (data, partial) ---------------------------------------------------------------
+# Regression: the eval at 1f2c0ca reported actual_chain_mean = 0 on all 200 rows because the
+# harness read leg["ARRIVAL_DELAY"] while src/scenario/builder.py names the key "arrival_delay".
+
+
+def test_actual_chain_reads_the_builder_leg_key():
+    builder_shape = {"downstream_legs": [{"row_index": 5, "arrival_delay": 30, "departure_delay": 25},
+                                         {"row_index": 6, "arrival_delay": 12, "departure_delay": 0}]}
+    assert actual_chain(builder_shape) == 42.0
+    fixture_shape = {"downstream_legs": [{"ARRIVAL_DELAY": 102}, {"ARRIVAL_DELAY": 264}]}
+    assert actual_chain(fixture_shape) == 366.0
+    assert actual_chain({"downstream_legs": []}) == 0.0  # no later leg in the extract
+
+
+def _flights_csv(path):
+    cols = ["YEAR", "MONTH", "DAY", "TAIL_NUMBER", "SCHEDULED_DEPARTURE", "ARRIVAL_DELAY"]
+    rows = [
+        (2015, 4, 24, "N1", 900, 50),   # 0: earlier leg, same tail and day: excluded
+        (2015, 4, 24, "N1", 1116, 101),  # 1: the scenario's own row: excluded
+        (2015, 4, 24, "N1", 1348, 102),  # 2: later
+        (2015, 4, 24, "N1", 2400, 7),    # 3: hhmm 2400 = 0 min (midnight), not later: excluded
+        (2015, 4, 24, "N1", 1835, 256),  # 4: later
+        (2015, 4, 24, "N2", 1500, 999),  # 5: other tail
+        (2015, 4, 25, "N1", 1500, 999),  # 6: other day
+    ]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        w.writerows(rows)
+    return path
+
+
+def test_actual_chain_reads_flights_csv_when_scenario_omits_delays(out_dir):
+    path = _flights_csv(out_dir / "flights_mini.csv")
+    flight = {"TAIL_NUMBER": "N1", "YEAR": 2015, "MONTH": 4, "DAY": 24,
+              "SCHEDULED_DEPARTURE": 11 * 60 + 16}  # Scenario keeps hhmm as minutes of day
+    assert chain_from_flights(1, flight, path) == 102 + 256
+    # legs without any arrival-delay key (outcomes deliberately omitted) -> flights.csv lookup
+    s = {"row_index": 1, "flight": flight,
+         "downstream_legs": [{"row_index": 2, "departure_delay": 90}, {"row_index": 4}]}
+    assert actual_chain(s, path) == 358.0
+    # missing tail/date keys or file -> None, never a silent 0
+    assert chain_from_flights(1, {"YEAR": 2015}, path) is None
+    assert actual_chain({**s, "flight": {}}, path) is None
+    assert chain_from_flights(1, flight, out_dir / "absent.csv") is None
+
+
+@pytest.mark.skipif(not FLIGHTS_PATH.exists(), reason="data/flights.csv not present")
+def test_actual_chain_on_real_builder_scenario_matches_flights_csv():
+    from src.agents.views import data_lines
+    from src.scenario.builder import build_scenario
+
+    s = build_scenario(123017)  # AA334 MFE->DFW 2015-04-24 N469AA, later legs exist
+    d = s.model_dump()
+    assert d["downstream_legs"] and all("arrival_delay" in leg for leg in d["downstream_legs"])
+    from_scenario = actual_chain(d)
+    from_csv = chain_from_flights(s.row_index, d["flight"])
+    assert from_scenario > 0 and from_scenario == from_csv
+    # the agents still never see an actual arrival delay, at any depth
+    for role in ("ATC", "PILOT", "GROUND"):
+        assert not [ln for ln in data_lines(s, role) if "arrival_delay" in ln.lower()]
+    # later legs have not flown yet: none of their actual-outcome fields reach an agent either
+    leg_lines = [ln for ln in data_lines(s, "GROUND") if ln.startswith("downstream_legs")]
+    assert leg_lines and not [ln for ln in leg_lines if "departure_delay" in ln.lower()]
 
 
 def test_parse_deadline():

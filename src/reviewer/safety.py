@@ -11,6 +11,11 @@ safety-conservative: if the engine failed the chosen candidate on any rule, the 
 
 Every constant below is ASSUMED: docs/regulatory_sources.md did not exist when this was written.
 Reconcile against that doc when it lands, never against src/rules/.
+
+DUTY (2026-10-31): crew_duty_remaining_min is FDP left at the SCHEDULED arrival, so the delay the
+flight has already incurred (projected minus scheduled gate-in, from Scenario.flight) is consumed
+too: duty - incurred - added >= 0. Derived here from the Scenario's flight fields; nothing is
+imported from src/rules/ (docs/calibration.md "Open issues": R-DUTY-01 vs reviewer DUTY).
 """
 
 from __future__ import annotations
@@ -49,7 +54,10 @@ CITE_REL_TOL = 0.02
 
 CIT_FUEL = "14 CFR 121.639; 45-min final reserve: assumed"
 CIT_DIVERT = "assumed: 420 kt cruise = 7 NM/min, 60 min ground time at alternate"
-CIT_DUTY = "14 CFR 117; duty remaining >= 0 at arrival: assumed"
+CIT_DUTY = (
+    "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at "
+    "arrival: assumed"
+)
 CIT_WAKE_LEADER = (
     "assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category"
 )
@@ -212,14 +220,34 @@ def _check_fuel(s: Scenario, c: Candidate, mo: dict) -> tuple[dict, str]:
     return entry, note
 
 
+def _incurred_delay(s: Scenario) -> tuple[float | None, str]:
+    """Delay the flight has already incurred at the destination, from Scenario.flight (data).
+
+    crew_duty_remaining_min is defined at the SCHEDULED arrival, so the crew also spends the
+    delay between the scheduled and the projected gate-in. Preferred: projected gate-in minus
+    scheduled gate-in (flight.actual_arr_abs - flight.sched_arr_abs, same date axis); else the
+    raw flight.ARRIVAL_DELAY column. Signed: a projected early arrival leaves more duty.
+    Returns (minutes or None, which fields were used).
+    """
+    f = s.flight if isinstance(s.flight, dict) else {}
+    proj, sched = _to_float(f.get("actual_arr_abs")), _to_float(f.get("sched_arr_abs"))
+    if proj is not None and sched is not None:
+        return proj - sched, "flight.actual_arr_abs - flight.sched_arr_abs"
+    raw = _to_float(f.get("ARRIVAL_DELAY"))
+    if raw is not None:
+        return raw, "flight.ARRIVAL_DELAY"
+    return None, "no projected/scheduled arrival or ARRIVAL_DELAY in flight"
+
+
 def _check_duty(s: Scenario, c: Candidate, mo: dict) -> tuple[dict, str]:
     duty = _to_float(s.crew_duty_remaining_min.value)
     src = s.crew_duty_remaining_min.source
     delay = mo["delay"]
-    if duty is None or delay is None:
-        derived, passed = None, False
+    incurred, incurred_how = _incurred_delay(s)
+    if duty is None or delay is None or incurred is None:
+        derived, passed = None, False  # fail closed: the remaining duty cannot be derived
     else:
-        derived = duty - delay
+        derived = duty - incurred - delay
         passed = derived >= 0
     entry = {
         "check": "DUTY",
@@ -228,14 +256,20 @@ def _check_duty(s: Scenario, c: Candidate, mo: dict) -> tuple[dict, str]:
         "threshold": 0.0,
         "passed": passed,
         "citation": CIT_DUTY,
-        "inputs": {"crew_duty_remaining_min": duty, "duty_source": src, "delay_min": delay},
+        "inputs": {"crew_duty_remaining_min": duty, "duty_source": src, "delay_min": delay,
+                   "incurred_delay_min": incurred, "incurred_from": incurred_how},
     }
     how = mo["how"] + (f" + {_fmt(DIVERT_GROUND_MIN)} min ground" if c.kind == "divert" else "")
     cit = CIT_DUTY + ("; " + CIT_DIVERT if c.kind == "divert" else "")
+    incurred_txt = (
+        f"{_fmt(incurred)} min already incurred ({incurred_how}, data)"
+        if incurred is not None
+        else f"an unknown incurred delay ({incurred_how}; fail closed)"
+    )
     note = (
-        f"DUTY re-derived: {c.candidate_id} ({how}) adds {_fmt(delay)} min; "
-        f"crew_duty_remaining_min={_fmt(duty)} ({src}) leaves {_fmt(derived)} min, >= 0 required "
-        f"-> {'PASS' if passed else 'FAIL'} [{cit}]."
+        f"DUTY re-derived: {c.candidate_id} ({how}) adds {_fmt(delay)} min to {incurred_txt}; "
+        f"crew_duty_remaining_min={_fmt(duty)} ({src}, at scheduled arrival) leaves "
+        f"{_fmt(derived)} min, >= 0 required -> {'PASS' if passed else 'FAIL'} [{cit}]."
     )
     return entry, note
 
@@ -309,13 +343,16 @@ def _resolve(s: Scenario, path: str) -> tuple[Any, str]:
     """Resolve a dotted path with [i] indexes against the Scenario -> (value, source tag).
 
     value is _MISSING when the path does not resolve. A Tagged resolves to its .value.
+    A final ".count" on a list resolves to its length: src/agents/views.py shows GROUND the
+    aggregate line "connections.count=N", so the reviewer must be able to check it.
     """
     path = path.strip()
     if not path:
         return _MISSING, ""
     obj: Any = s
     source = ""
-    for depth, part in enumerate(path.split(".")):
+    parts = path.split(".")
+    for depth, part in enumerate(parts):
         m = _PART.match(part.strip())
         if not m:
             return _MISSING, ""
@@ -328,6 +365,8 @@ def _resolve(s: Scenario, path: str) -> tuple[Any, str]:
             if name not in obj:
                 return _MISSING, ""
             obj = obj[name]
+        elif isinstance(obj, list) and name == "count" and not m.group(2) and depth == len(parts) - 1:
+            obj = len(obj)
         else:
             return _MISSING, ""
         if depth == 0:
@@ -348,10 +387,24 @@ def _resolve(s: Scenario, path: str) -> tuple[Any, str]:
 _SOURCE_SUFFIX = re.compile(r"\s*\((?:data|estimated|assumed|synthetic)\)\s*$", re.IGNORECASE)
 
 
+# How src/agents/views.fmt_value / flatten print values the reviewer holds as None or [].
+_NULL_TOKENS = ("null", "none")
+_EMPTY_LIST_TOKEN = "[]"
+
+
 def _compare(cited: str, actual: Any) -> tuple[bool, float | None, str]:
-    """-> (match, tolerance, reason)."""
+    """-> (match, tolerance, reason).
+
+    Display forms from src/agents/views.py are compared exactly, never with a numeric tolerance:
+    an empty list is shown as "[]" and a None value as "null".
+    """
+    c = cited.strip()
+    if isinstance(actual, list) and c == _EMPTY_LIST_TOKEN:
+        return len(actual) == 0, None, "value"
     if isinstance(actual, (dict, list, BaseModel)):
         return False, None, "non_scalar"
+    if actual is None:
+        return c.lower() in _NULL_TOKENS, None, "value"
     a_num = _to_float(actual)
     if a_num is not None:
         tol = max(CITE_ABS_TOL, CITE_REL_TOL * abs(a_num))
@@ -387,7 +440,19 @@ def _supporting_agents(turns: list[Turn], chosen_id: str) -> set[str]:
     return {a for a, (_, acc) in last.items() if chosen_id in acc}
 
 
-_CANDIDATE_FIELDS = {"est_delay_min", "est_knock_on_min", "kind"}
+_CANDIDATE_FIELDS = {"est_delay_min", "est_knock_on_min", "kind", "candidate_id"}
+
+
+def _resolve_candidate(c: Candidate, path: str) -> tuple[Any, str]:
+    """Paths of the candidate JSON line an agent is shown (src/agents/views.candidate_lines):
+    est_delay_min, est_knock_on_min, kind, candidate_id and params.<key>, resolved on the
+    candidate the citation is attached to. -> (value or _MISSING, source tag)."""
+    if path in _CANDIDATE_FIELDS:
+        return getattr(c, path), "estimated" if path.startswith("est_") else "candidate menu"
+    head, _, key = path.partition(".")
+    if head == "params" and key and "." not in key and key in c.params:
+        return c.params[key], "candidate menu"
+    return _MISSING, ""
 
 
 def _cross_check(
@@ -415,9 +480,9 @@ def _cross_check(
                     with_value += bool(sep)
                     path, cited = path.strip(), _SOURCE_SUFFIX.sub("", cited.strip())
                     actual, src = _resolve(s, path)
-                    if actual is _MISSING and path in _CANDIDATE_FIELDS and cid in cand_by_id:
+                    if actual is _MISSING and cid in cand_by_id:
                         # Agents also cite fields of the option they are ranking, not just the Scenario.
-                        actual, src = getattr(cand_by_id[cid], path), "estimated"
+                        actual, src = _resolve_candidate(cand_by_id[cid], path)
                     base = {"agent": msg.agent, "round": msg.round, "candidate_id": cid, "path": path}
                     if actual is _MISSING:
                         mismatches.append(

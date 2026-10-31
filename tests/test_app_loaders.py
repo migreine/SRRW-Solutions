@@ -222,11 +222,13 @@ def test_ranking_for_sorted_and_tolerant():
 
 def test_resolve_log_path(tmp_path):
     run = load(SHOWCASE)
-    # recorded runs/<id>.jsonl does not exist in the repo -> sibling of the run file
+    # the sibling log wins, even when a real run elsewhere shares the recorded runs/<id>.jsonl
     assert L.resolve_log_path(run, SHOWCASE) == SHOWCASE.with_suffix(".jsonl")
     recorded = tmp_path / "r.jsonl"
     recorded.write_text("", encoding="utf-8")
-    assert L.resolve_log_path({"recommendation": {"log_path": str(recorded)}}, SHOWCASE) == recorded
+    assert L.resolve_log_path({"recommendation": {"log_path": str(recorded)}}, SHOWCASE) == SHOWCASE.with_suffix(".jsonl")
+    # no sibling -> the recorded log_path
+    assert L.resolve_log_path({"recommendation": {"log_path": str(recorded)}}, tmp_path / "y.json") == recorded
     target = L.resolve_log_path({"recommendation": {"log_path": str(tmp_path / "new.jsonl")}},
                                 tmp_path / "x.json")
     assert target == tmp_path / "new.jsonl"
