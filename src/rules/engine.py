@@ -17,7 +17,10 @@ synthetic). docs/regulatory_sources.md is not written yet, so regulation values 
     divert:     fuel_reserve_min - extra >= 45 on arrival at the alternate
   Stricter than the reviewer (which only keeps the 45 min) for non-diverts.
 - R-DUTY-01  14 CFR 117. crew_duty_remaining_min (at scheduled arrival) - incurred ARRIVAL_DELAY
-  - added delay (divert = full disruption) >= 0.
+  - added delay (divert = full disruption) >= -DUTY_EXTENSION_MIN. DUTY_EXTENSION_MIN = 0 by
+  default (no extension assumed: a 14 CFR 117.19 extension of up to 2 h needs PIC concurrence, a
+  human decision). Setting it to 120 roughly halves the all-candidates-fail rows on the eval sample
+  (74 -> 35 of 200).
 - R-GATE-01  synthetic gate model. The assigned (or swapped) gate must be free over
   [new arrival, new arrival + min turnaround]. ARRIVAL_TIME is gate-in, so TAXI_IN is already in
   the arrival time; a swap's extra_taxi_min is in the new arrival. n/a for diverts.
@@ -62,6 +65,7 @@ ARRIVAL_RUNWAYS = {
 DEFAULT_RUNWAYS = 1
 BASE_LOAD = 0.6  # assumed share of nominal AAR filled by on-time arrivals in any hour
 WX_CAP_REDUCTION = 0.4  # assumed: AAR cut by up to 40% when all delayed arrivals are weather
+DUTY_EXTENSION_MIN = 0  # 14 CFR 117.19 allows up to 120 with PIC concurrence; not assumed
 TURN_ADDED_MAX_MIN = 30  # assumed: max extra next-leg delay an option may add
 
 
@@ -125,7 +129,8 @@ def duty(s: Scenario, c: Candidate) -> RuleResult:
     added = added_delay_min(s, c)
     left = float(s.crew_duty_remaining_min.value) - incurred - added
     return _r(
-        "R-DUTY-01", c, left >= 0, left, 0.0, _weakest(s.crew_duty_remaining_min.source, "data"),
+        "R-DUTY-01", c, left >= -DUTY_EXTENSION_MIN, left, 0.0 - DUTY_EXTENSION_MIN,
+        _weakest(s.crew_duty_remaining_min.source, "data"),
         f"14 CFR Part 117 FDP (verify): {s.crew_duty_remaining_min.value} min left at scheduled "
         f"arrival (synthetic) - {incurred:g} incurred ARRIVAL_DELAY (data) - {added:.1f} added",
     )
