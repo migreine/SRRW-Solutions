@@ -327,6 +327,10 @@ def _resolve(s: Scenario, path: str) -> tuple[Any, str]:
     return obj, source
 
 
+# Agents see values as "path=value (source)" and often copy the source tag into their citation.
+_SOURCE_SUFFIX = re.compile(r"\s*\((?:data|estimated|assumed|synthetic)\)\s*$", re.IGNORECASE)
+
+
 def _compare(cited: str, actual: Any) -> tuple[bool, float | None, str]:
     """-> (match, tolerance, reason)."""
     if isinstance(actual, (dict, list, BaseModel)):
@@ -366,10 +370,14 @@ def _supporting_agents(turns: list[Turn], chosen_id: str) -> set[str]:
     return {a for a, (_, acc) in last.items() if chosen_id in acc}
 
 
+_CANDIDATE_FIELDS = {"est_delay_min", "est_knock_on_min", "kind"}
+
+
 def _cross_check(
-    s: Scenario, turns: list[Turn], chosen_id: str
+    s: Scenario, turns: list[Turn], chosen_id: str, cand_by_id: dict[str, Candidate] | None = None
 ) -> tuple[list[dict], list[str], int, int]:
     """-> (mismatches, notes, citations checked, citations checked that carry "=value")."""
+    cand_by_id = cand_by_id or {}
     mismatches: list[dict] = []
     notes: list[str] = []
     checked = 0
@@ -388,8 +396,11 @@ def _cross_check(
                     checked += 1
                     path, sep, cited = raw.partition("=")
                     with_value += bool(sep)
-                    path, cited = path.strip(), cited.strip()
+                    path, cited = path.strip(), _SOURCE_SUFFIX.sub("", cited.strip())
                     actual, src = _resolve(s, path)
+                    if actual is _MISSING and path in _CANDIDATE_FIELDS and cid in cand_by_id:
+                        # Agents also cite fields of the option they are ranking, not just the Scenario.
+                        actual, src = getattr(cand_by_id[cid], path), "estimated"
                     base = {"agent": msg.agent, "round": msg.round, "candidate_id": cid, "path": path}
                     if actual is _MISSING:
                         mismatches.append(
@@ -515,8 +526,10 @@ def review_detail(
     cited_mismatches: list[dict] = []
     n_cited = n_cited_value = 0
     if chosen is not None:
+        cand_by_id = {c.candidate_id: c for c in candidates or []}
+        cand_by_id.setdefault(chosen.candidate_id, chosen)
         cited_mismatches, cnotes, n_cited, n_cited_value = _cross_check(
-            s, turns, chosen.candidate_id
+            s, turns, chosen.candidate_id, cand_by_id
         )
         notes.extend(cnotes)
         if cited_mismatches:

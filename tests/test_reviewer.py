@@ -295,6 +295,20 @@ def test_cited_numeric_tolerance(value, ok):
     assert (d["cited_mismatches"] == []) is ok
 
 
+@pytest.mark.parametrize("value,ok", [("78 (estimated)", True), ("78(Estimated)", True), ("95 (estimated)", False)])
+def test_cited_source_tag_suffix_is_ignored(value, ok):
+    # Agents see "path=value (source)" and copy the tag into their citation.
+    d = review_detail(make_scenario(), rec(SLOT15), consensus_turns(extra_cite=f"fuel_reserve_min={value}"))
+    assert (d["cited_mismatches"] == []) is ok
+
+
+@pytest.mark.parametrize("value,ok", [("15.0", True), ("40", False)])
+def test_cited_candidate_field_resolves_on_ranked_candidate(value, ok):
+    # est_delay_min is a Candidate field, not a Scenario path; SLOT+15's estimate is 15.
+    d = review_detail(make_scenario(), rec(SLOT15), consensus_turns(extra_cite=f"est_delay_min={value}"))
+    assert (d["cited_mismatches"] == []) is ok
+
+
 def test_cited_string_mismatch_and_veto_field():
     t = [turn(msg("ATC", ["SLOT+15"], [], vetoes=[{"candidate_id": "HOLD40", "reason": "x", "cited_field": "wake_category=H"}]))]
     d = review_detail(make_scenario(), rec(SLOT15), t)
