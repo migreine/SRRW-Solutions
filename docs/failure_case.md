@@ -1,13 +1,47 @@
 # Failure case: no legal option, escalate to the duty manager
 
-**Status: final.** The showcase is a real run with Claude Haiku 5.5 agents, saved in
-`runs/failure_showcase.json` with its consensus log `runs/failure_showcase.jsonl`. It was recorded
-on 31 Oct 2026 at 14:19 SGT from commit `ee2d30d`, after the recalibration in
-[calibration.md](calibration.md). Waseem's other draft candidates are kept further down as
-secondary examples. They were written before the recalibration, so they are marked stale and
-updated with their current outcomes.
+**Status: final.** The showcase is a real run with Claude Haiku 5.5 agents under the organisers'
+workbook limits ([constraints.md](constraints.md)), saved in `runs/failure_showcase.json` with its
+consensus log `runs/failure_showcase.jsonl`. The earlier showcase, DL1501, is kept below: it is how
+we found a bug in our own reviewer, and the workbook's crew rule later showed its escalation rested
+on a synthetic value. Waseem's other draft candidates are further down as secondary examples.
 
-## Showcase: DL1501 BOS→ATL, 29 Dec 2015 (row 352317)
+## Showcase: F9782 LAS→DEN, 15 Dec 2015 (row 331503)
+
+| Field | Value |
+|---|---|
+| Scenario | `2015-12-15_F9782_N218FR`, eval stratum `weather_DEN` |
+| Schedule (local) | dep LAS 06:00, arr DEN 08:50 |
+| What happened (data) | departed +367 min, `ARRIVAL_DELAY` **+390** (of which `WEATHER_DELAY` 367) |
+| Later legs, same aircraft (data) | DEN→LAS +210, LAS→DEN +337, DEN→SFO +246 |
+| Crew duty left at scheduled arrival | **183 min** (**synthetic**: seeded report time and duty limit) |
+
+**What the agents did.** Three separate Haiku calls per round, 2 rounds, $0.0086, 63 s, no invalid
+replies. All three agents' top pick was `SLOT-30` in both rounds. They agreed on 8 options in
+round 1 and 9 in round 2 (sets only grow).
+
+**Why every option fails.** `R-DUTY-01` checks `duty left − incurred delay − added delay ≥ 0`. The
+crew is 207 min over before any option is applied (183 − 390), so every option fails, from −177 min
+(`SLOT-30`) to −294 min (`DIVERT_PUB`). `R-TURN-01` and `R-GATE-01` also fail a few options.
+
+**What the pipeline did.** The agents agreed, but `rules_pass_intersection` was empty in both rounds.
+The deterministic fallback found 0 eligible options, the independent reviewer re-derived the duty
+check itself and returned **REJECT**, and the recommendation is "no candidate passes engine and
+reviewer; escalate to duty manager". The tool does not guess; a human decides (in operations: a
+fresh crew, or a duty extension agreed with the captain).
+
+**How the user knows.** In the UI and the story demo, the run shows `decided by: fallback`, a red
+REJECT, every option failing `R-DUTY-01`, and the `synthetic` tag on the crew-duty input that drives
+it.
+
+**Reproduce:** `python -m src.cli --row-id 331503 --agents stub --pretty` (no API key needed; the
+escalation does not depend on the agents).
+
+## Earlier showcase: DL1501 BOS→ATL, 29 Dec 2015 (row 352317)
+
+> Under the organisers' crew rule (13 h from report time) this flight now has legal options and is
+> approved. That confirms the caution below: its escalation rested on a synthetic duty value. It is
+> kept because it is how we found and fixed a bug in our own reviewer.
 
 ### The flight (data)
 

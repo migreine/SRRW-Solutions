@@ -1,0 +1,3778 @@
+{
+  "meta": {
+    "scenario_id": "2015-06-27_WN2632_N637SW",
+    "row_index": 201761,
+    "agents": "stub",
+    "model": "stub",
+    "seed": 42,
+    "flags": {
+      "force_deadlock": true,
+      "tamper_rules": false
+    },
+    "started_at": "2026-10-31T15:23:16.767740+08:00",
+    "latency_s": 4.3079,
+    "cost_usd": 0.0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "cache_read_tokens": 0,
+    "n_agent_calls": 0,
+    "git_sha": "288b69f",
+    "fixture": false,
+    "max_rounds": 2,
+    "weights": {
+      "delay": 1.0,
+      "knock_on": 1.0
+    },
+    "json_path": "C:\\Users\\rohan\\Desktop\\Claude hackathon\\runs\\_tmp\\2015-06-27_WN2632_N637SW.json",
+    "log_path": "C:\\Users\\rohan\\Desktop\\Claude hackathon\\runs\\_tmp\\2015-06-27_WN2632_N637SW.jsonl"
+  },
+  "scenario": {
+    "scenario_id": "2015-06-27_WN2632_N637SW",
+    "row_index": 201761,
+    "flight": {
+      "YEAR": 2015,
+      "MONTH": 6,
+      "DAY": 27,
+      "DAY_OF_WEEK": 6,
+      "AIRLINE": "WN",
+      "FLIGHT_NUMBER": 2632,
+      "TAIL_NUMBER": "N637SW",
+      "ORIGIN_AIRPORT": "HOU",
+      "DESTINATION_AIRPORT": "ATL",
+      "SCHEDULED_DEPARTURE": 700,
+      "DEPARTURE_TIME": 822,
+      "DEPARTURE_DELAY": 122,
+      "TAXI_OUT": 7,
+      "WHEELS_OFF": 829,
+      "SCHEDULED_TIME": 120,
+      "ELAPSED_TIME": 115,
+      "AIR_TIME": 101,
+      "DISTANCE": 696,
+      "WHEELS_ON": 990,
+      "TAXI_IN": 7,
+      "SCHEDULED_ARRIVAL": 880,
+      "ARRIVAL_TIME": 997,
+      "ARRIVAL_DELAY": 117,
+      "DIVERTED": 0,
+      "CANCELLED": 0,
+      "CANCELLATION_REASON": null,
+      "AIR_SYSTEM_DELAY": 0,
+      "SECURITY_DELAY": 0,
+      "AIRLINE_DELAY": 0,
+      "LATE_AIRCRAFT_DELAY": 0,
+      "WEATHER_DELAY": 117,
+      "sched_dep_abs": 700,
+      "sched_arr_abs": 880,
+      "actual_dep_abs": 822,
+      "actual_arr_abs": 997,
+      "date": "2015-06-27"
+    },
+    "dest_disruption": {
+      "value": 9,
+      "source": "data",
+      "note": "delayed arrivals at ATL in hour 16:00 (proxy, delayed flights only)"
+    },
+    "taxi_congestion": {
+      "value": 0.88,
+      "source": "data",
+      "note": "TAXI_IN 7 min vs ATL median 8 min"
+    },
+    "downstream_legs": [
+      {
+        "row_index": 201760,
+        "airline": "WN",
+        "flight_number": 2632,
+        "origin": "ATL",
+        "destination": "DTW",
+        "sched_dep_abs": 925,
+        "sched_arr_abs": 1050,
+        "departure_delay": 116,
+        "arrival_delay": 180,
+        "gap_after_actual_arrival_min": -72
+      },
+      {
+        "row_index": 201641,
+        "airline": "WN",
+        "flight_number": 1843,
+        "origin": "DTW",
+        "destination": "ATL",
+        "sched_dep_abs": 1115,
+        "sched_arr_abs": 1230,
+        "departure_delay": 151,
+        "arrival_delay": 150,
+        "gap_after_actual_arrival_min": 118
+      },
+      {
+        "row_index": 201919,
+        "airline": "WN",
+        "flight_number": 4512,
+        "origin": "ATL",
+        "destination": "CMH",
+        "sched_dep_abs": 1285,
+        "sched_arr_abs": 1380,
+        "departure_delay": 148,
+        "arrival_delay": 135,
+        "gap_after_actual_arrival_min": 288
+      }
+    ],
+    "alternates": [
+      {
+        "iata": "CSG",
+        "name": "Columbus Metropolitan Airport",
+        "distance_nm": 72.2,
+        "lat": 32.51633,
+        "lon": -84.93886
+      },
+      {
+        "iata": "CHA",
+        "name": "Chattanooga Metropolitan Airport (Lovell Field)",
+        "distance_nm": 92.2,
+        "lat": 35.03527,
+        "lon": -85.20379
+      },
+      {
+        "iata": "BHM",
+        "name": "Birmingham-Shuttlesworth International Airport",
+        "distance_nm": 116.4,
+        "lat": 33.56294,
+        "lon": -86.75355
+      }
+    ],
+    "wake_category": {
+      "value": "L",
+      "source": "assumed",
+      "note": "no registry lookup; DISTANCE 696 mi <= 2500 -> L"
+    },
+    "fuel_reserve_min": {
+      "value": 91.6,
+      "source": "estimated",
+      "note": "minutes beyond planned arrival incl. final reserve: 30 final reserve + 16.6 to most distant alternate BHM (420 kt assumed) + 45 spare fuel on arrival, which includes 5.1 unburnt contingency (5% of AIR_TIME 101); organiser workbook (synthetic planning limit)"
+    },
+    "crew_duty_remaining_min": {
+      "value": 108,
+      "source": "synthetic",
+      "note": "FDP remaining at SCHEDULED arrival (incurred delay not subtracted); report at 208 min (seeded), max duty 780 min from report (organiser workbook (synthetic planning limit))"
+    },
+    "gates": {
+      "airport": "ATL",
+      "assigned_gate": "C2",
+      "min_turnaround_min": 45,
+      "turnaround_source": "assumed",
+      "occupancy": {
+        "A2": [
+          [
+            829,
+            887
+          ],
+          [
+            909,
+            969
+          ],
+          [
+            999,
+            1052
+          ],
+          [
+            1140,
+            1213
+          ],
+          [
+            1321,
+            1401
+          ]
+        ],
+        "A6": [
+          [
+            829,
+            879
+          ],
+          [
+            937,
+            994
+          ],
+          [
+            1088,
+            1178
+          ],
+          [
+            1198,
+            1268
+          ],
+          [
+            1323,
+            1370
+          ]
+        ],
+        "A12": [
+          [
+            825,
+            876
+          ],
+          [
+            969,
+            1036
+          ],
+          [
+            1164,
+            1229
+          ],
+          [
+            1261,
+            1336
+          ],
+          [
+            1414,
+            1499
+          ]
+        ],
+        "B2": [
+          [
+            836,
+            892
+          ],
+          [
+            963,
+            1035
+          ],
+          [
+            1089,
+            1154
+          ],
+          [
+            1225,
+            1287
+          ]
+        ],
+        "B6": [
+          [
+            830,
+            881
+          ],
+          [
+            948,
+            1002
+          ],
+          [
+            1137,
+            1189
+          ],
+          [
+            1222,
+            1265
+          ],
+          [
+            1404,
+            1473
+          ]
+        ],
+        "B12": [
+          [
+            860,
+            943
+          ],
+          [
+            989,
+            1076
+          ],
+          [
+            1143,
+            1222
+          ],
+          [
+            1257,
+            1341
+          ],
+          [
+            1403,
+            1478
+          ]
+        ],
+        "C2": [
+          [
+            917,
+            977
+          ],
+          [
+            1095,
+            1155
+          ]
+        ],
+        "C6": [
+          [
+            852,
+            912
+          ],
+          [
+            986,
+            1033
+          ],
+          [
+            1161,
+            1203
+          ],
+          [
+            1345,
+            1391
+          ]
+        ],
+        "C12": [
+          [
+            857,
+            928
+          ],
+          [
+            1013,
+            1097
+          ],
+          [
+            1162,
+            1224
+          ],
+          [
+            1329,
+            1384
+          ]
+        ],
+        "D2": [
+          [
+            839,
+            890
+          ],
+          [
+            1033,
+            1091
+          ],
+          [
+            1178,
+            1224
+          ],
+          [
+            1314,
+            1367
+          ]
+        ],
+        "D6": [
+          [
+            866,
+            913
+          ],
+          [
+            1021,
+            1102
+          ],
+          [
+            1195,
+            1244
+          ],
+          [
+            1328,
+            1382
+          ]
+        ],
+        "D12": [
+          [
+            850,
+            929
+          ],
+          [
+            1042,
+            1086
+          ],
+          [
+            1111,
+            1164
+          ],
+          [
+            1255,
+            1332
+          ]
+        ]
+      },
+      "source": "synthetic"
+    },
+    "connections": [
+      {
+        "row_index": 201709,
+        "flight_number": 2257,
+        "destination": "MDW",
+        "sched_dep_abs": 1090,
+        "minutes_after_arrival": 93,
+        "est_pax": 26,
+        "source": "estimated"
+      },
+      {
+        "row_index": 201741,
+        "flight_number": 2364,
+        "destination": "LAS",
+        "sched_dep_abs": 1100,
+        "minutes_after_arrival": 103,
+        "est_pax": 35,
+        "source": "estimated"
+      },
+      {
+        "row_index": 201508,
+        "flight_number": 1144,
+        "destination": "HOU",
+        "sched_dep_abs": 1105,
+        "minutes_after_arrival": 108,
+        "est_pax": 19,
+        "source": "estimated"
+      },
+      {
+        "row_index": 201755,
+        "flight_number": 2551,
+        "destination": "LGA",
+        "sched_dep_abs": 1130,
+        "minutes_after_arrival": 133,
+        "est_pax": 24,
+        "source": "estimated"
+      },
+      {
+        "row_index": 201493,
+        "flight_number": 1037,
+        "destination": "MCO",
+        "sched_dep_abs": 1135,
+        "minutes_after_arrival": 138,
+        "est_pax": 13,
+        "source": "estimated"
+      },
+      {
+        "row_index": 201880,
+        "flight_number": 4338,
+        "destination": "FLL",
+        "sched_dep_abs": 1140,
+        "minutes_after_arrival": 143,
+        "est_pax": 28,
+        "source": "estimated"
+      }
+    ],
+    "nominal_aar": {
+      "value": 45.0,
+      "source": "assumed",
+      "note": "organiser workbook (synthetic planning limit): 90 runway ops/h x 0.5 arrival share (assumed)"
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "SLOT+15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 15
+      },
+      "est_delay_min": 15.0,
+      "est_knock_on_min": 346.0
+    },
+    {
+      "candidate_id": "SLOT+30",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 30
+      },
+      "est_delay_min": 30.0,
+      "est_knock_on_min": 391.0
+    },
+    {
+      "candidate_id": "SLOT-15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": -15
+      },
+      "est_delay_min": -15.0,
+      "est_knock_on_min": 256.0
+    },
+    {
+      "candidate_id": "SLOT-30",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": -30
+      },
+      "est_delay_min": -30.0,
+      "est_knock_on_min": 211.0
+    },
+    {
+      "candidate_id": "HOLD20",
+      "kind": "hold",
+      "params": {
+        "minutes": 20
+      },
+      "est_delay_min": 20.0,
+      "est_knock_on_min": 361.0
+    },
+    {
+      "candidate_id": "HOLD40",
+      "kind": "hold",
+      "params": {
+        "minutes": 40
+      },
+      "est_delay_min": 40.0,
+      "est_knock_on_min": 421.0
+    },
+    {
+      "candidate_id": "DIVERT_CSG",
+      "kind": "divert",
+      "params": {
+        "iata": "CSG"
+      },
+      "est_delay_min": 80.6,
+      "est_knock_on_min": 542.9
+    },
+    {
+      "candidate_id": "DIVERT_CHA",
+      "kind": "divert",
+      "params": {
+        "iata": "CHA"
+      },
+      "est_delay_min": 86.3,
+      "est_knock_on_min": 560.0
+    },
+    {
+      "candidate_id": "GATE_A6",
+      "kind": "gate_swap",
+      "params": {
+        "gate": "A6",
+        "extra_taxi_min": 5
+      },
+      "est_delay_min": 5.0,
+      "est_knock_on_min": 316.0
+    },
+    {
+      "candidate_id": "GATE_B6",
+      "kind": "gate_swap",
+      "params": {
+        "gate": "B6",
+        "extra_taxi_min": 5
+      },
+      "est_delay_min": 5.0,
+      "est_knock_on_min": 316.0
+    },
+    {
+      "candidate_id": "GROUND_HOLD_HOU",
+      "kind": "ground_hold",
+      "params": {
+        "minutes": 30,
+        "airport": "HOU"
+      },
+      "est_delay_min": 30.0,
+      "est_knock_on_min": 391.0
+    }
+  ],
+  "rule_results": [
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 389.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 76.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 15.0 airborne extra = 76.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT+15",
+      "passed": false,
+      "observed": -24.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 15.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1012, 1057] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 15.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 132 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 37.0,
+      "threshold": 37.5,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 342.9,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 17:00 demand 42.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 14 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 61.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 30.0 airborne extra = 61.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT+30",
+      "passed": false,
+      "observed": -39.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 30.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1027, 1072] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 30.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 147 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT+30",
+      "passed": false,
+      "observed": 42.0,
+      "threshold": 41.8,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.29 at ATL 17:00; demand proxy 0.6 x AAR + 14 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 389.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 91.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 6.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - -15.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [982, 1027] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": -15.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 102 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 37.0,
+      "threshold": 37.5,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 389.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 91.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 21.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - -30.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT-30",
+      "passed": false,
+      "observed": 10.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [967, 1012] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": -30.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 87 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT-30",
+      "passed": true,
+      "observed": 37.0,
+      "threshold": 37.5,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 389.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 71.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 20.0 airborne extra = 71.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "HOLD20",
+      "passed": false,
+      "observed": -29.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 20.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1017, 1062] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 20.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 137 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 37.0,
+      "threshold": 37.5,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 342.9,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 17:00 demand 42.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 14 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 51.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 40.0 airborne extra = 51.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "HOLD40",
+      "passed": false,
+      "observed": -49.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 40.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1037, 1082] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "HOLD40",
+      "passed": false,
+      "observed": 40.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 157 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "HOLD40",
+      "passed": false,
+      "observed": 42.0,
+      "threshold": 41.8,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.29 at ATL 17:00; demand proxy 0.6 x AAR + 14 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": 514.3,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); CSG 16:00 demand 7.0/h = 0.6 x AAR 10 (workbook ops/h x 0.5) + 0 delayed (data) + 1, over 1 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": 81.3,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 10.3 airborne extra = 81.3 vs on arrival at CSG 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": false,
+      "observed": -89.6,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 80.6 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": "n/a: divert",
+      "threshold": "n/a",
+      "source": "synthetic",
+      "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": false,
+      "observed": 80.6,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 198 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "DIVERT_CSG",
+      "passed": true,
+      "observed": 7.0,
+      "threshold": 10.0,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 10/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.00 at CSG 16:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": 514.3,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); CHA 16:00 demand 7.0/h = 0.6 x AAR 10 (workbook ops/h x 0.5) + 0 delayed (data) + 1, over 1 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": 78.4,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 13.2 airborne extra = 78.4 vs on arrival at CHA 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": false,
+      "observed": -95.3,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 86.3 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": "n/a: divert",
+      "threshold": "n/a",
+      "source": "synthetic",
+      "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": false,
+      "observed": 86.3,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 203 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "DIVERT_CHA",
+      "passed": true,
+      "observed": 7.0,
+      "threshold": 10.0,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 10/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.00 at CHA 16:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GATE_A6",
+      "passed": true,
+      "observed": 389.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GATE_A6",
+      "passed": true,
+      "observed": 91.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GATE_A6",
+      "passed": false,
+      "observed": -14.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 5.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GATE_A6",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate A6 busy minutes in [1002, 1047] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "GATE_A6",
+      "passed": true,
+      "observed": 35.0,
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook: gate change notice at least 20 min before arrival; swap to A6 decided at 967 (projected gate-in - 30 min, assumed), gate-in 1002"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GATE_A6",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 122 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GATE_A6",
+      "passed": true,
+      "observed": 37.0,
+      "threshold": 37.5,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GATE_B6",
+      "passed": true,
+      "observed": 389.2,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GATE_B6",
+      "passed": true,
+      "observed": 91.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GATE_B6",
+      "passed": false,
+      "observed": -14.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 5.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GATE_B6",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate B6 busy minutes in [1002, 1047] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "GATE_B6",
+      "passed": true,
+      "observed": 35.0,
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook: gate change notice at least 20 min before arrival; swap to B6 decided at 967 (projected gate-in - 30 min, assumed), gate-in 1002"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GATE_B6",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 122 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GATE_B6",
+      "passed": true,
+      "observed": 37.0,
+      "threshold": 37.5,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": true,
+      "observed": 342.9,
+      "threshold": 77.1,
+      "source": "assumed",
+      "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 17:00 demand 42.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 14 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": true,
+      "observed": 91.6,
+      "threshold": 46.6,
+      "source": "estimated",
+      "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": false,
+      "observed": -39.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 30.0 added"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": true,
+      "observed": 0.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1027, 1072] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+    },
+    {
+      "rule_id": "R-GATE-02",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": true,
+      "observed": "n/a: no gate change",
+      "threshold": 20.0,
+      "source": "assumed",
+      "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": true,
+      "observed": 30.0,
+      "threshold": 30.0,
+      "source": "assumed",
+      "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 147 min vs 117 unmitigated; max 30 min added assumed"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GROUND_HOLD_HOU",
+      "passed": false,
+      "observed": 42.0,
+      "threshold": 41.8,
+      "source": "assumed",
+      "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.29 at ATL 17:00; demand proxy 0.6 x AAR + 14 delayed + 1 (flights.csv has delayed flights only)"
+    }
+  ],
+  "turns": [
+    {
+      "round": 1,
+      "messages": [
+        {
+          "agent": "ATC",
+          "round": 1,
+          "acceptable": [
+            "SLOT+15",
+            "SLOT-30",
+            "DIVERT_CSG",
+            "GATE_B6"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 1.0,
+              "rationale": "ATC preference for slot_shift given est_delay_min=-30 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.948,
+              "rationale": "ATC preference for slot_shift given est_delay_min=-15 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.845,
+              "rationale": "ATC preference for slot_shift given est_delay_min=15 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.794,
+              "rationale": "ATC preference for slot_shift given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_HOU",
+              "score": 0.734,
+              "rationale": "ATC preference for ground_hold given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A6",
+              "score": 0.7,
+              "rationale": "ATC preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "GATE_B6",
+              "score": 0.7,
+              "rationale": "ATC preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.468,
+              "rationale": "ATC preference for hold given est_delay_min=20 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.399,
+              "rationale": "ATC preference for hold given est_delay_min=40 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.2,
+              "rationale": "ATC preference for divert given est_delay_min=80.6 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.18,
+              "rationale": "ATC preference for divert given est_delay_min=86.3 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Least preferred option for ATC on this menu.",
+              "cited_field": "dest_disruption=9"
+            }
+          ]
+        },
+        {
+          "agent": "PILOT",
+          "round": 1,
+          "acceptable": [
+            "SLOT+30",
+            "HOLD20",
+            "DIVERT_CHA",
+            "GROUND_HOLD_HOU"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 1.0,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=-30 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.948,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=-15 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.845,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=15 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A6",
+              "score": 0.82,
+              "rationale": "PILOT preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "GATE_B6",
+              "score": 0.82,
+              "rationale": "PILOT preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.794,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_HOU",
+              "score": 0.614,
+              "rationale": "PILOT preference for ground_hold given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.528,
+              "rationale": "PILOT preference for hold given est_delay_min=20 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.459,
+              "rationale": "PILOT preference for hold given est_delay_min=40 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.14,
+              "rationale": "PILOT preference for divert given est_delay_min=80.6 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.12,
+              "rationale": "PILOT preference for divert given est_delay_min=86.3 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Least preferred option for PILOT on this menu.",
+              "cited_field": "fuel_reserve_min=91.6"
+            }
+          ]
+        },
+        {
+          "agent": "GROUND",
+          "round": 1,
+          "acceptable": [
+            "SLOT-15",
+            "HOLD40",
+            "GATE_A6"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.94,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=-30 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.888,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=-15 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A6",
+              "score": 0.88,
+              "rationale": "GROUND preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "GATE_B6",
+              "score": 0.88,
+              "rationale": "GROUND preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.785,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=15 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.734,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.588,
+              "rationale": "GROUND preference for hold given est_delay_min=20 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.519,
+              "rationale": "GROUND preference for hold given est_delay_min=40 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_HOU",
+              "score": 0.494,
+              "rationale": "GROUND preference for ground_hold given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.08,
+              "rationale": "GROUND preference for divert given est_delay_min=80.6 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.06,
+              "rationale": "GROUND preference for divert given est_delay_min=86.3 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Least preferred option for GROUND on this menu.",
+              "cited_field": "taxi_congestion=0.88"
+            }
+          ]
+        }
+      ],
+      "invalid_messages": [],
+      "intersection": []
+    },
+    {
+      "round": 2,
+      "messages": [
+        {
+          "agent": "ATC",
+          "round": 2,
+          "acceptable": [
+            "SLOT+15",
+            "SLOT-30",
+            "DIVERT_CSG",
+            "GATE_B6"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 1.0,
+              "rationale": "ATC preference for slot_shift given est_delay_min=-30 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.948,
+              "rationale": "ATC preference for slot_shift given est_delay_min=-15 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.845,
+              "rationale": "ATC preference for slot_shift given est_delay_min=15 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.794,
+              "rationale": "ATC preference for slot_shift given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_HOU",
+              "score": 0.734,
+              "rationale": "ATC preference for ground_hold given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A6",
+              "score": 0.7,
+              "rationale": "ATC preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "GATE_B6",
+              "score": 0.7,
+              "rationale": "ATC preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.468,
+              "rationale": "ATC preference for hold given est_delay_min=20 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.399,
+              "rationale": "ATC preference for hold given est_delay_min=40 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.2,
+              "rationale": "ATC preference for divert given est_delay_min=80.6 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.18,
+              "rationale": "ATC preference for divert given est_delay_min=86.3 on this menu.",
+              "cited_fields": [
+                "dest_disruption=9"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Least preferred option for ATC on this menu.",
+              "cited_field": "dest_disruption=9"
+            }
+          ]
+        },
+        {
+          "agent": "PILOT",
+          "round": 2,
+          "acceptable": [
+            "SLOT+30",
+            "HOLD20",
+            "DIVERT_CHA",
+            "GROUND_HOLD_HOU"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 1.0,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=-30 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.948,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=-15 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.845,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=15 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A6",
+              "score": 0.82,
+              "rationale": "PILOT preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "GATE_B6",
+              "score": 0.82,
+              "rationale": "PILOT preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.794,
+              "rationale": "PILOT preference for slot_shift given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_HOU",
+              "score": 0.614,
+              "rationale": "PILOT preference for ground_hold given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.528,
+              "rationale": "PILOT preference for hold given est_delay_min=20 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.459,
+              "rationale": "PILOT preference for hold given est_delay_min=40 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.14,
+              "rationale": "PILOT preference for divert given est_delay_min=80.6 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.12,
+              "rationale": "PILOT preference for divert given est_delay_min=86.3 on this menu.",
+              "cited_fields": [
+                "fuel_reserve_min=91.6"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Least preferred option for PILOT on this menu.",
+              "cited_field": "fuel_reserve_min=91.6"
+            }
+          ]
+        },
+        {
+          "agent": "GROUND",
+          "round": 2,
+          "acceptable": [
+            "SLOT-15",
+            "HOLD40",
+            "GATE_A6"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT-30",
+              "score": 0.94,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=-30 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.888,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=-15 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "GATE_A6",
+              "score": 0.88,
+              "rationale": "GROUND preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "GATE_B6",
+              "score": 0.88,
+              "rationale": "GROUND preference for gate_swap given est_delay_min=5 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.785,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=15 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.734,
+              "rationale": "GROUND preference for slot_shift given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.588,
+              "rationale": "GROUND preference for hold given est_delay_min=20 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.519,
+              "rationale": "GROUND preference for hold given est_delay_min=40 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "GROUND_HOLD_HOU",
+              "score": 0.494,
+              "rationale": "GROUND preference for ground_hold given est_delay_min=30 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CSG",
+              "score": 0.08,
+              "rationale": "GROUND preference for divert given est_delay_min=80.6 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_CHA",
+              "score": 0.06,
+              "rationale": "GROUND preference for divert given est_delay_min=86.3 on this menu.",
+              "cited_fields": [
+                "taxi_congestion=0.88"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_CHA",
+              "reason": "Least preferred option for GROUND on this menu.",
+              "cited_field": "taxi_congestion=0.88"
+            }
+          ]
+        }
+      ],
+      "invalid_messages": [],
+      "intersection": []
+    }
+  ],
+  "recommendation": {
+    "scenario_id": "2015-06-27_WN2632_N637SW",
+    "chosen": {
+      "candidate_id": "SLOT-15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": -15
+      },
+      "est_delay_min": -15.0,
+      "est_knock_on_min": 256.0
+    },
+    "decided_by": "fallback",
+    "rounds_used": 2,
+    "rule_results": [
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 389.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 76.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 15.0 airborne extra = 76.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+15",
+        "passed": false,
+        "observed": -24.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 15.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1012, 1057] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 15.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 132 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 37.0,
+        "threshold": 37.5,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 342.9,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 17:00 demand 42.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 14 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 61.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 30.0 airborne extra = 61.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+30",
+        "passed": false,
+        "observed": -39.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 30.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1027, 1072] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT+30",
+        "passed": true,
+        "observed": 30.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 147 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT+30",
+        "passed": false,
+        "observed": 42.0,
+        "threshold": 41.8,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.29 at ATL 17:00; demand proxy 0.6 x AAR + 14 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 389.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 91.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 6.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - -15.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [982, 1027] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": -15.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 102 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT-15",
+        "passed": true,
+        "observed": 37.0,
+        "threshold": 37.5,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 389.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 91.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 21.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - -30.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT-30",
+        "passed": false,
+        "observed": 10.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [967, 1012] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": -30.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 87 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT-30",
+        "passed": true,
+        "observed": 37.0,
+        "threshold": 37.5,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 389.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 71.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 20.0 airborne extra = 71.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "HOLD20",
+        "passed": false,
+        "observed": -29.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 20.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1017, 1062] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 20.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 137 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "HOLD20",
+        "passed": true,
+        "observed": 37.0,
+        "threshold": 37.5,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 342.9,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 17:00 demand 42.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 14 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 51.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 40.0 airborne extra = 51.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "HOLD40",
+        "passed": false,
+        "observed": -49.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 40.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1037, 1082] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "HOLD40",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "HOLD40",
+        "passed": false,
+        "observed": 40.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 157 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "HOLD40",
+        "passed": false,
+        "observed": 42.0,
+        "threshold": 41.8,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.29 at ATL 17:00; demand proxy 0.6 x AAR + 14 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": 514.3,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); CSG 16:00 demand 7.0/h = 0.6 x AAR 10 (workbook ops/h x 0.5) + 0 delayed (data) + 1, over 1 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": 81.3,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 10.3 airborne extra = 81.3 vs on arrival at CSG 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": false,
+        "observed": -89.6,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 80.6 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": "n/a: divert",
+        "threshold": "n/a",
+        "source": "synthetic",
+        "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": false,
+        "observed": 80.6,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 198 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "DIVERT_CSG",
+        "passed": true,
+        "observed": 7.0,
+        "threshold": 10.0,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 10/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.00 at CSG 16:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": 514.3,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); CHA 16:00 demand 7.0/h = 0.6 x AAR 10 (workbook ops/h x 0.5) + 0 delayed (data) + 1, over 1 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": 78.4,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 13.2 airborne extra = 78.4 vs on arrival at CHA 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": false,
+        "observed": -95.3,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 86.3 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": "n/a: divert",
+        "threshold": "n/a",
+        "source": "synthetic",
+        "citation": "synthetic gate model: not applicable, the aircraft does not use its gate on this arrival"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": false,
+        "observed": 86.3,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 203 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "DIVERT_CHA",
+        "passed": true,
+        "observed": 7.0,
+        "threshold": 10.0,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 10/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.00 at CHA 16:00; demand proxy 0.6 x AAR + 0 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "GATE_A6",
+        "passed": true,
+        "observed": 389.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "GATE_A6",
+        "passed": true,
+        "observed": 91.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GATE_A6",
+        "passed": false,
+        "observed": -14.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 5.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "GATE_A6",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate A6 busy minutes in [1002, 1047] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "GATE_A6",
+        "passed": true,
+        "observed": 35.0,
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook: gate change notice at least 20 min before arrival; swap to A6 decided at 967 (projected gate-in - 30 min, assumed), gate-in 1002"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "GATE_A6",
+        "passed": true,
+        "observed": 5.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 122 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "GATE_A6",
+        "passed": true,
+        "observed": 37.0,
+        "threshold": 37.5,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "GATE_B6",
+        "passed": true,
+        "observed": 389.2,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 16:00 demand 37.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 9 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "GATE_B6",
+        "passed": true,
+        "observed": 91.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GATE_B6",
+        "passed": false,
+        "observed": -14.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 5.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "GATE_B6",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate B6 busy minutes in [1002, 1047] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "GATE_B6",
+        "passed": true,
+        "observed": 35.0,
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook: gate change notice at least 20 min before arrival; swap to B6 decided at 967 (projected gate-in - 30 min, assumed), gate-in 1002"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "GATE_B6",
+        "passed": true,
+        "observed": 5.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 122 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "GATE_B6",
+        "passed": true,
+        "observed": 37.0,
+        "threshold": 37.5,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.67 at ATL 16:00; demand proxy 0.6 x AAR + 9 delayed + 1 (flights.csv has delayed flights only)"
+      },
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": true,
+        "observed": 342.9,
+        "threshold": 77.1,
+        "source": "assumed",
+        "citation": "organiser workbook wake_separation (from FAA JO 7110.65): 3 nm L behind assumed Large at 140 kt (assumed); ATL 17:00 demand 42.0/h = 0.6 x AAR 45 (workbook ops/h x 0.5) + 14 delayed (data) + 1, over 4 active runway(s) (organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": true,
+        "observed": 91.6,
+        "threshold": 46.6,
+        "source": "estimated",
+        "citation": "organiser workbook final reserve 30 min holding (alternate leg kept per 14 CFR 121.639, verify): fuel_reserve_min 91.6 (estimated) - 0.0 airborne extra = 91.6 vs alternate 16.6 min + final reserve 30; 420 kt assumed"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": false,
+        "observed": -39.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "organiser workbook crew max duty 13 h from report (simplified 14 CFR 117): 108 min left at scheduled arrival (synthetic) - 117 incurred ARRIVAL_DELAY (data) - 30.0 added"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": true,
+        "observed": 0.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "synthetic gate model (seeded): gate C2 busy minutes in [1027, 1072] (gate-in + 45 min min turnaround, organiser workbook (synthetic planning limit))"
+      },
+      {
+        "rule_id": "R-GATE-02",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": true,
+        "observed": "n/a: no gate change",
+        "threshold": 20.0,
+        "source": "assumed",
+        "citation": "organiser workbook gate change notice: not applicable, the assigned gate is kept"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": true,
+        "observed": 30.0,
+        "threshold": 30.0,
+        "source": "assumed",
+        "citation": "assumed: airline turnaround 45 min per class; next leg WN2632 sched dep 925 (data): knock-on 147 min vs 117 unmitigated; max 30 min added assumed"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "passed": false,
+        "observed": 42.0,
+        "threshold": 41.8,
+        "source": "assumed",
+        "citation": "organiser workbook: AAR 45/h = max_runway_ops_per_hour x 0.5 arrival share (assumed), cut 25% x weather share 0.29 at ATL 17:00; demand proxy 0.6 x AAR + 14 delayed + 1 (flights.csv has delayed flights only)"
+      }
+    ],
+    "reviewer_verdict": "APPROVE",
+    "reviewer_notes": [
+      "FUEL re-derived: SLOT-15 (slot shift -15 min) needs 0 + 16.6 min to most distant alternate + 30 reserve = 46.6 min; fuel_reserve_min=91.6 (estimated) leaves 91.6 min vs 46.6 -> PASS [organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed].",
+      "DUTY re-derived: SLOT-15 (slot shift -15 min) adds -15 min to 117 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=108 (synthetic, at scheduled arrival) leaves 6 min, >= 0 required -> PASS [organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
+      "WAKE re-derived: SLOT-15 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=45 (assumed) - dest_disruption=9 (data) = 36/h over 4 ATL active runways (workbook) gives 400 s per runway -> PASS [organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed]."
+    ],
+    "human_decision": "pending",
+    "log_path": "runs/deadlock/showcase.jsonl",
+    "fallback": {
+      "fired": true,
+      "reason": "forced_deadlock",
+      "chosen": "SLOT-15",
+      "objective": 241.0,
+      "n_eligible": 1,
+      "eligible_ids": [
+        "SLOT-15"
+      ],
+      "excluded": [],
+      "unchecked": [],
+      "weights": {
+        "delay": 1.0,
+        "knock_on": 1.0
+      }
+    },
+    "reviewer_detail": {
+      "verdict": "APPROVE",
+      "notes": [
+        "FUEL re-derived: SLOT-15 (slot shift -15 min) needs 0 + 16.6 min to most distant alternate + 30 reserve = 46.6 min; fuel_reserve_min=91.6 (estimated) leaves 91.6 min vs 46.6 -> PASS [organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed].",
+        "DUTY re-derived: SLOT-15 (slot shift -15 min) adds -15 min to 117 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=108 (synthetic, at scheduled arrival) leaves 6 min, >= 0 required -> PASS [organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
+        "WAKE re-derived: SLOT-15 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=45 (assumed) - dest_disruption=9 (data) = 36/h over 4 ATL active runways (workbook) gives 400 s per runway -> PASS [organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed]."
+      ],
+      "re_derived": [
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+15",
+          "derived": 76.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 15.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+15",
+          "derived": -24.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 15.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+15",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+30",
+          "derived": 61.599999999999994,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 30.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+30",
+          "derived": -39.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 30.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+30",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT-15",
+          "derived": 91.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT-15",
+          "derived": 6.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": -15.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT-15",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT-30",
+          "derived": 91.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT-30",
+          "derived": 21.0,
+          "threshold": 0.0,
+          "passed": true,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": -30.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT-30",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "HOLD20",
+          "derived": 71.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 20.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "HOLD20",
+          "derived": -29.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 20.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "HOLD20",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "HOLD40",
+          "derived": 51.599999999999994,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 40.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "HOLD40",
+          "derived": -49.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 40.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "HOLD40",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 81.28571428571428,
+          "threshold": 30.0,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 10.314285714285715,
+            "alternate_min": 0.0
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "DIVERT_CSG",
+          "derived": -79.31428571428572,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 70.31428571428572,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "DIVERT_CSG",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 78.42857142857142,
+          "threshold": 30.0,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 13.171428571428573,
+            "alternate_min": 0.0
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "DIVERT_CHA",
+          "derived": -82.17142857142858,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 73.17142857142858,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "DIVERT_CHA",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GATE_A6",
+          "derived": 91.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GATE_A6",
+          "derived": -14.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 5.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GATE_A6",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GATE_B6",
+          "derived": 91.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GATE_B6",
+          "derived": -14.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 5.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GATE_B6",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        },
+        {
+          "check": "FUEL",
+          "candidate_id": "GROUND_HOLD_HOU",
+          "derived": 91.6,
+          "threshold": 46.62857142857143,
+          "passed": true,
+          "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+          "inputs": {
+            "fuel_reserve_min": 91.6,
+            "fuel_source": "estimated",
+            "airborne_extra_min": 0.0,
+            "alternate_min": 16.62857142857143
+          }
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "GROUND_HOLD_HOU",
+          "derived": -39.0,
+          "threshold": 0.0,
+          "passed": false,
+          "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+          "inputs": {
+            "crew_duty_remaining_min": 108.0,
+            "duty_source": "synthetic",
+            "delay_min": 30.0,
+            "incurred_delay_min": 117.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+          }
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "GROUND_HOLD_HOU",
+          "derived": 400.0,
+          "threshold": 77.14285714285714,
+          "passed": true,
+          "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+          "inputs": {
+            "wake_category": "L",
+            "wake_source": "assumed",
+            "leader_category": "L",
+            "sep_nm": 3.0,
+            "arrival_runways": 4,
+            "nominal_aar": 45.0,
+            "aar_source": "assumed",
+            "dest_disruption": 9.0,
+            "disruption_source": "data",
+            "effective_aar": 36.0
+          }
+        }
+      ],
+      "cited_mismatches": [],
+      "engine_disagreements": [],
+      "derived_delay_min": -15.0,
+      "citations_checked": 24,
+      "citations_with_value": 24,
+      "not_rederived": [],
+      "initial_review": null,
+      "escalated": false,
+      "candidate_id": "SLOT-15"
+    }
+  },
+  "fallback": {
+    "fired": true,
+    "reason": "forced_deadlock",
+    "objective": 241.0,
+    "n_eligible": 1,
+    "excluded": [],
+    "chosen": "SLOT-15",
+    "eligible_ids": [
+      "SLOT-15"
+    ],
+    "unchecked": [],
+    "weights": {
+      "delay": 1.0,
+      "knock_on": 1.0
+    },
+    "rejected_candidate_id": null,
+    "previous_decided_by": null,
+    "previous_fallback_reason": null
+  },
+  "reviewer": {
+    "verdict": "APPROVE",
+    "notes": [
+      "FUEL re-derived: SLOT-15 (slot shift -15 min) needs 0 + 16.6 min to most distant alternate + 30 reserve = 46.6 min; fuel_reserve_min=91.6 (estimated) leaves 91.6 min vs 46.6 -> PASS [organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed].",
+      "DUTY re-derived: SLOT-15 (slot shift -15 min) adds -15 min to 117 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=108 (synthetic, at scheduled arrival) leaves 6 min, >= 0 required -> PASS [organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
+      "WAKE re-derived: SLOT-15 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=45 (assumed) - dest_disruption=9 (data) = 36/h over 4 ATL active runways (workbook) gives 400 s per runway -> PASS [organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed]."
+    ],
+    "re_derived": [
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT+15",
+        "derived": 76.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 15.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT+15",
+        "derived": -24.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 15.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT+15",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT+30",
+        "derived": 61.599999999999994,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 30.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT+30",
+        "derived": -39.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 30.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT+30",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT-15",
+        "derived": 91.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT-15",
+        "derived": 6.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": -15.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT-15",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT-30",
+        "derived": 91.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT-30",
+        "derived": 21.0,
+        "threshold": 0.0,
+        "passed": true,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": -30.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT-30",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "HOLD20",
+        "derived": 71.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 20.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "HOLD20",
+        "derived": -29.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 20.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "HOLD20",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "HOLD40",
+        "derived": 51.599999999999994,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 40.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "HOLD40",
+        "derived": -49.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 40.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "HOLD40",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "DIVERT_CSG",
+        "derived": 81.28571428571428,
+        "threshold": 30.0,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 10.314285714285715,
+          "alternate_min": 0.0
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "DIVERT_CSG",
+        "derived": -79.31428571428572,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 70.31428571428572,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "DIVERT_CSG",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "DIVERT_CHA",
+        "derived": 78.42857142857142,
+        "threshold": 30.0,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 13.171428571428573,
+          "alternate_min": 0.0
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "DIVERT_CHA",
+        "derived": -82.17142857142858,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 73.17142857142858,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "DIVERT_CHA",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "GATE_A6",
+        "derived": 91.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "GATE_A6",
+        "derived": -14.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 5.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "GATE_A6",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "GATE_B6",
+        "derived": 91.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "GATE_B6",
+        "derived": -14.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 5.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "GATE_B6",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      },
+      {
+        "check": "FUEL",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "derived": 91.6,
+        "threshold": 46.62857142857143,
+        "passed": true,
+        "citation": "organiser workbook: 30-min final reserve (holding); alternate leg per 14 CFR 121.639: assumed",
+        "inputs": {
+          "fuel_reserve_min": 91.6,
+          "fuel_source": "estimated",
+          "airborne_extra_min": 0.0,
+          "alternate_min": 16.62857142857143
+        }
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "derived": -39.0,
+        "threshold": 0.0,
+        "passed": false,
+        "citation": "organiser workbook: crew max duty 13 h from report (simplified 14 CFR 117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
+        "inputs": {
+          "crew_duty_remaining_min": 108.0,
+          "duty_source": "synthetic",
+          "delay_min": 30.0,
+          "incurred_delay_min": 117.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
+        }
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "GROUND_HOLD_HOU",
+        "derived": 400.0,
+        "threshold": 77.14285714285714,
+        "passed": true,
+        "citation": "organiser workbook (from FAA JO 7110.65); assumed: leader category L (Large); organiser workbook wake_separation NM behind it; organiser workbook: destination active_runways share the airport arrival rate; assumed: 140 kt approach speed",
+        "inputs": {
+          "wake_category": "L",
+          "wake_source": "assumed",
+          "leader_category": "L",
+          "sep_nm": 3.0,
+          "arrival_runways": 4,
+          "nominal_aar": 45.0,
+          "aar_source": "assumed",
+          "dest_disruption": 9.0,
+          "disruption_source": "data",
+          "effective_aar": 36.0
+        }
+      }
+    ],
+    "cited_mismatches": [],
+    "engine_disagreements": [],
+    "derived_delay_min": -15.0,
+    "citations_checked": 24,
+    "citations_with_value": 24,
+    "not_rederived": [],
+    "candidate_id": "SLOT-15",
+    "escalated": false,
+    "initial_review": null
+  }
+}

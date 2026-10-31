@@ -1,4 +1,4 @@
-# SRRW Solutions: multi-agent disruption negotiation for airline operations
+﻿# SRRW Solutions: multi-agent disruption negotiation for airline operations
 
 Three AI agents (ATC, Pilot, Ground) negotiate a fix for a weather-disrupted arrival over a fixed
 menu of options. Deterministic code checks every option against six rules and makes the decision.
@@ -24,8 +24,8 @@ cuts a hub's arrival rate, they coordinate three parties who each own one part o
 time. While the calls go on, the delay spreads to the rest of the aircraft's day.
 
 **A real example from the data:** aircraft N469AA, 24 Apr 2015, DFW's worst weather day in the file.
-AA334 MFE→DFW arrived **+101 min** late (58 min weather, 43 min late aircraft). The same aircraft's
-last leg that day, AA1274 DFW→BWI, arrived **+256 min** late. One disrupted arrival grew into a
+AA334 MFEâ†’DFW arrived **+101 min** late (58 min weather, 43 min late aircraft). The same aircraft's
+last leg that day, AA1274 DFWâ†’BWI, arrived **+256 min** late. One disrupted arrival grew into a
 four-hour delay by evening.
 
 The tool produces a **recommendation** for the duty manager: one option from a fixed menu, with the
@@ -37,7 +37,7 @@ never executes anything.
 ```mermaid
 flowchart TD
     A["flights.csv row"] --> B["Scenario builder<br/>(deterministic; every value tagged<br/>data / estimated / assumed / synthetic)"]
-    B --> C["Fixed option menu<br/>slot ±15/30, hold 20/40, 2 diverts,<br/>2 gate swaps, ground hold"]
+    B --> C["Fixed option menu<br/>slot Â±15/30, hold 20/40, 2 diverts,<br/>2 gate swaps, ground hold"]
     C --> D["Rules engine: 6 rule IDs<br/>WAKE, FUEL, DUTY, GATE, TURN, AAR"]
     C --> E["ATC agent (LLM)"]
     C --> F["PILOT agent (LLM)"]
@@ -57,7 +57,7 @@ flowchart TD
    flight, delayed arrivals in the destination hour, the aircraft's later legs that day, the nearest
    alternates, and estimated/synthetic state (fuel, crew duty, gates). Every number carries a source
    tag.
-2. **Fixed option menu** (`src/options/`). About 11 candidates: `SLOT±15/30`, `HOLD20/40`,
+2. **Fixed option menu** (`src/options/`). About 11 candidates: `SLOTÂ±15/30`, `HOLD20/40`,
    `DIVERT_<IATA>` to the two nearest alternates, two gate swaps, and a ground hold at origin. Each
    has a deterministic delay and knock-on estimate.
 3. **Rules engine** (`src/rules/`). One `RuleResult` per (candidate, rule), each citing its source:
@@ -65,10 +65,10 @@ flowchart TD
    | Rule ID | Check | Basis |
    |---|---|---|
    | `R-WAKE-01` | Per-runway arrival spacing vs wake separation | FAA JO 7110.65 5-5-4 (distances); runway count, leader, speed **assumed** |
-   | `R-FUEL-01` | Fuel left after the option ≥ alternate + 45 min final reserve | 14 CFR 121.639; fuel **estimated** |
+   | `R-FUEL-01` | Fuel left after the option â‰¥ alternate + 45 min final reserve | 14 CFR 121.639; fuel **estimated** |
    | `R-DUTY-01` | Crew flight-duty period not exceeded at arrival | 14 CFR Part 117; duty state **synthetic** |
    | `R-GATE-01` | Assigned or swapped gate free for the turnaround | **synthetic** gate model |
-   | `R-TURN-01` | Option adds ≤ 30 min to the next leg | **assumed** airline threshold |
+   | `R-TURN-01` | Option adds â‰¤ 30 min to the next leg | **assumed** airline threshold |
    | `R-AAR-01` | Arrival demand under the weather-reduced arrival rate | **assumed** nominal rates |
 
 4. **Three independent agents** (`src/agents/`). ATC, PILOT and GROUND are separate LLM calls with
@@ -110,7 +110,7 @@ flowchart TD
 
 ## Quick start
 
-Requires **Python ≥ 3.11** (tested on 3.14.7). The data (`data/flights.csv`, 39 MB) is in the repo.
+Requires **Python â‰¥ 3.11** (tested on 3.14.7). The data (`data/flights.csv`, 39 MB) is in the repo.
 On Windows, clone into a short path (or enable long paths): the `anthropic` SDK has file names long
 enough to exceed the 260-character limit inside a deeply nested virtual environment.
 
@@ -124,20 +124,24 @@ cp .env.example .env          # PowerShell: Copy-Item .env.example .env
 # Tests (no API key needed)
 pytest -q
 
-# Showcase: AA334 MFE->DFW, 24 Apr 2015 (row 123017), live Claude Haiku agents
-python -m src.cli --row-id 123017 --agents haiku --pretty
+# Showcase: WN2632 into ATL, 27 Jun 2015 (row 201761), live Claude Haiku agents
+python -m src.cli --row-id 201761 --agents haiku --pretty
 
-# Failure demo: forced deadlock -> the deterministic fallback decides (no API key needed)
-python -m src.cli --row-id 123017 --agents stub --force-deadlock --out runs/deadlock/ --pretty
+# Forced deadlock -> the deterministic fallback decides (no API key needed)
+python -m src.cli --row-id 201761 --agents stub --force-deadlock --out runs/deadlock/ --pretty
 
 # Solver-only baseline: no agents, the fallback picks (no API key needed)
-python -m src.cli --row-id 123017 --agents none --pretty
+python -m src.cli --row-id 201761 --agents none --pretty
 
 # Stub agents: deterministic heuristics, no API key needed
-python -m src.cli --row-id 123017 --agents stub --pretty
+python -m src.cli --row-id 201761 --agents stub --pretty
 
 # The real failure case from docs/failure_case.md (every option fails crew duty -> escalate)
-python -m src.cli --row-id 352317 --agents stub --pretty
+python -m src.cli --row-id 331503 --agents stub --pretty
+
+# The problem example, AA334 MFE->DFW (row 123017): under the workbook's DFW capacity the 14:00
+# storm hour is over capacity, so it escalates too
+python -m src.cli --row-id 123017 --agents stub --pretty
 
 # Evaluation: 200 seeded rows, solver-only + Haiku agents (hard budget cap, default $15)
 python -m eval.run_eval --n 200 --seed 42 --agents haiku --out eval/results/ --deadline none
@@ -157,12 +161,15 @@ API key.
 
 | File | What it is |
 |---|---|
-| `runs/2015-04-24_AA334_N469AA.json` | AA334 with Haiku agents |
-| `runs/live/2015-04-24_AA334_N469AA.json` | AA334 with Sonnet agents |
-| `runs/deadlock/2015-04-24_AA334_N469AA.json` | AA334 forced deadlock |
-| `runs/failure_showcase.json` | DL1501 escalation (Haiku) |
+| `runs/showcase.json` | WN2632 into ATL (row 201761), Haiku agents: consensus, reviewer APPROVE |
+| `runs/live/showcase.json` | the same flight with Sonnet agents |
+| `runs/deadlock/showcase.json` | the same flight, forced deadlock: the fallback decides |
+| `runs/failure_showcase.json` | F9782 LASâ†’DEN (row 331503): no legal option, escalate (Haiku) |
 
-In the UI sidebar, **Showcase AA334** and **Failure case** load these directly.
+The showcase was chosen from the evaluation results: a weather-delayed hub arrival where every agent's
+top pick broke a rule it could not see, the agents still agreed on a legal option, and the same
+aircraft's later legs that day lost 465 min (data). In the UI sidebar, **Failure case** loads the
+escalation; pick the showcase from the run list.
 
 ## Story demo
 
@@ -180,23 +187,26 @@ are labelled "reported in our industry brief" and are not our measurements.
 
 ## Results
 
-### Evaluation (200 real delayed flights, Claude Haiku 5.5 agents)
+### Evaluation (200 real delayed flights, Claude Haiku 5.5 agents, organisers' workbook limits)
 
 | Metric | Value |
 |---|---|
-| Consensus rate (within 2 rounds) | 85.0% (170 / 200) |
-| Consensus in round 1 | 85.0% (no run needed round 2) |
-| Agent top picks breaking a rule they could not see | 54.2% of 677 valid agent messages; every one caught |
-| Agreed options excluded by the rules | 13.5% of runs |
-| Escalated to a human (no legal option) | 13.5% (27 / 200), same with or without agents |
-| Reviewer APPROVE / MODIFY / REJECT | 68.5% / 18.0% / 13.5% |
-| Reviewer-engine disagreement | 0.8% of 2,200 candidate checks |
-| Cited-value mismatches (agent quoted a wrong value) | 0.75% of 9,922 citations |
-| Schema-invalid replies | 0.6% of 681 agent calls, rejected and logged, never repaired |
-| Fallback after an invalid reply | 1.5% of runs (3 / 200) |
+| Consensus rate (within 2 rounds) | 81.0% (162 / 200) |
+| Consensus in round 1 | 80.5% |
+| Agent top picks breaking a rule they could not see | 57.9% of 684 valid agent messages; every one caught |
+| Agreed options excluded by the rules | 15.5% of runs |
+| Escalated to a human (no legal option) | 14.5% (29 / 200), same with or without agents |
+| Reviewer APPROVE / MODIFY / REJECT | 66.0% / 19.5% / 14.5% |
+| Reviewer-engine disagreement | 0.9% of 2,200 candidate checks |
+| Cited-value mismatches (agent quoted a wrong value) | 0.94% of 9,756 citations |
+| Schema-invalid replies | 1.3% of 693 agent calls, rejected and logged, never repaired |
+| Fallback after an invalid reply | 3.0% of runs (6 / 200) |
 | Agents vs solver-only: same pick | 74.5% |
-| Cost per decision | $0.0045 (whole 200-row run: $0.89) |
-| Latency per decision | mean 32 s, p95 57 s (three sequential agent calls) |
+| Cost per decision | $0.0046 (whole 200-row run: $0.91) |
+| Latency per decision | mean 33 s, p95 58 s (three sequential agent calls) |
+
+All limits come from the organisers' workbook (`data/challenge2_operational_constraints.xlsx`);
+the few places we read, change or add a limit are listed in [docs/constraints.md](docs/constraints.md).
 
 For reference, the real outcomes in the same 200 rows (data): mean arrival delay 104.7 min, and
 mean 71.8 min of delay on the same aircraft's later delayed legs that day.
@@ -214,11 +224,13 @@ the option menu's deterministic model. They are not comparable like-for-like wit
 
 See **[docs/failure_case.md](docs/failure_case.md)**.
 
-In the showcase (DL1501 BOS→ATL, 29 Dec 2015, row 352317, saved in `runs/failure_showcase.json`),
-the three Haiku agents agreed on 8 of 11 options. Every option fails crew duty (`R-DUTY-01`), because
-the synthetic duty state leaves 103 min at scheduled arrival and the flight is already 256 min late.
+In the showcase (F9782 LASâ†’DEN, 15 Dec 2015, row 331503, saved in `runs/failure_showcase.json`),
+the three Haiku agents agreed on 9 of 11 options. Every option fails crew duty (`R-DUTY-01`), because
+the synthetic duty state leaves 183 min at scheduled arrival and the flight is already 390 min late.
 So the mediator finds no consensus, the fallback has nothing legal, and the reviewer REJECTs. The UI
-shows "No option passes engine and reviewer — escalate to duty manager" under a red fallback banner.
+shows "No option passes engine and reviewer â€” escalate to duty manager" under a red fallback banner.
+The earlier showcase (DL1501) is kept in the doc: under the organisers' crew rule it now passes,
+which confirms that its escalation rested on a synthetic value.
 
 Known failure modes:
 
@@ -228,7 +240,7 @@ Known failure modes:
   escalations are likely artefacts of the synthetic duty draw, not real crew shortages.
 - **Assumed capacity values.** Wake leader category, 3 arrival runways at every airport, 140 kt
   approach speed, nominal arrival rates and the 25% weather cut are all assumed. Recalibrating them
-  (mainly the wake leader, Heavy → Large) removed every WAKE failure on the sample, which shows how
+  (mainly the wake leader, Heavy â†’ Large) removed every WAKE failure on the sample, which shows how
   much outcomes depend on these values.
 - **Agents' top picks often break rules they cannot see.** This is by design: agents never see rule
   results, so the rules engine and reviewer must catch those picks, and the log shows each catch. It
@@ -278,7 +290,7 @@ src/
 eval/               evaluation harness, seeded sample, results/
 app/                Streamlit decision-support UI
 tests/              pytest suite and fixtures
-runs/               pre-computed demo runs (AA334, deadlock, failure showcase)
+runs/               pre-computed demo runs (showcase, Sonnet, deadlock, failure showcase)
 data/               US DOT 2015 extract, airports, airlines (read-only)
 docs/               briefing, calibration, failure case, research notes
 ```

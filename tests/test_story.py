@@ -54,7 +54,10 @@ def test_no_external_resources(html):
 def test_contains_key_real_values(html):
     data = _blob(html)
     showcase = json.loads((ROOT / "runs" / "showcase.json").read_text(encoding="utf-8"))
-    for s in ("AA334", "N469AA", "DL1501", "R-DUTY-01", showcase["meta"]["scenario_id"]):
+    failure = json.loads((ROOT / "runs" / "failure_showcase.json").read_text(encoding="utf-8"))
+    flight = showcase["scenario"]["flight"]
+    for s in ("R-DUTY-01", showcase["meta"]["scenario_id"], flight["TAIL_NUMBER"],
+              failure["meta"]["scenario_id"]):
         assert s in html, s
     # consensus rate straight from summary.csv
     assert data["summary"]["haiku"]["consensus_rate"]["value"] == _summary("consensus_rate")
@@ -63,9 +66,16 @@ def test_contains_key_real_values(html):
 
 
 def test_tail_day_from_flights_csv(html):
+    # the opening cascade is the showcase aircraft's real day, straight from flights.csv
+    flight = json.loads((ROOT / "runs" / "showcase.json").read_text(encoding="utf-8"))["scenario"]["flight"]
+    with open(ROOT / "data" / "flights.csv", encoding="utf-8", newline="") as fh:
+        day = [r for r in csv.DictReader(fh)
+               if r["TAIL_NUMBER"] == flight["TAIL_NUMBER"] and int(r["YEAR"]) == int(flight["YEAR"])
+               and int(r["MONTH"]) == int(flight["MONTH"]) and int(r["DAY"]) == int(flight["DAY"])]
+    day.sort(key=lambda r: int(r["SCHEDULED_DEPARTURE"]))
     legs = _blob(html)["tail_day"]["legs"]
-    assert [l["arr_delay"] for l in legs] == [101, 102, 264, 256]
-    assert legs[0]["flight"] == "AA334"
+    assert [l["arr_delay"] for l in legs] == [int(float(r["ARRIVAL_DELAY"])) for r in day]
+    assert legs[0]["flight"].endswith(str(int(flight["FLIGHT_NUMBER"])))
 
 
 def test_runs_embedded(html):
