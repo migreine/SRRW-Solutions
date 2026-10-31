@@ -1,4 +1,4 @@
-"""Ask Claude Fable 5.1 for a plan, in planning mode (no code).
+﻿"""Ask Claude Fable 5.1 for a plan, in planning mode (no code).
 
 Sends a request plus context files and the Airbus track PDF to the model and writes the plan to
 a Markdown file. Billed to ANTHROPIC_API_KEY (or .env).
@@ -74,7 +74,7 @@ def main() -> None:
     client = anthropic.Anthropic()
     with client.beta.messages.stream(
         model=MODEL,
-        max_tokens=32000,
+        max_tokens=64000,
         # Re-run on another model if Fable's safety classifiers decline the request.
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
