@@ -481,9 +481,11 @@ def test_claude_request_shape(role):
     assert req["model"] == MODEL_IDS["haiku"]
     assert req["system"][0]["cache_control"] == {"type": "ephemeral"}
     assert f"{role} AGENT" in req["system"][0]["text"]
-    assert req["tool_choice"] == {"type": "tool", "name": TOOL_NAME}
-    assert req["tools"][0]["name"] == TOOL_NAME
-    assert req["temperature"] == 0 and req["max_tokens"] == 1200
+    assert req["tool_choice"] == {"type": "auto"}  # forced tool use 400s on Sonnet 5.5
+    assert req["tools"][0]["name"] == TOOL_NAME and req["tools"][0]["strict"] is True
+    assert TOOL_NAME in req["system"][0]["text"]
+    assert "temperature" not in req and req["max_tokens"] == 4000
+    assert req["output_config"] == {"effort": "low"}
     user = req["messages"][0]["content"]
     assert user == views.domain_view(make_scenario(), make_candidates(), role, 1)
 

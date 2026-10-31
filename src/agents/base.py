@@ -202,12 +202,28 @@ class _Reply(BaseModel):
     vetoes: list[_Veto]
 
 
+def _strict_schema(node: Any) -> Any:
+    """Strict tool schemas reject numeric bounds; Pydantic still enforces them on every reply."""
+    if isinstance(node, dict):
+        return {k: _strict_schema(v) for k, v in node.items()
+                if k not in ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum")}
+    if isinstance(node, list):
+        return [_strict_schema(v) for v in node]
+    return node
+
+
 TOOL = {
     "name": TOOL_NAME,
     "description": "Submit your negotiation position",
-    "input_schema": _Reply.model_json_schema(),
+    "input_schema": _strict_schema(_Reply.model_json_schema()),
+    "strict": True,
 }
-TOOL_CHOICE = {"type": "tool", "name": TOOL_NAME}
+# Sonnet 5.5 / Opus 5.5 reject forced tool_choice ("tool"/"any"), so ask for the call in the
+# system prompt and let strict schema validation keep the arguments well-formed.
+TOOL_CHOICE = {"type": "auto"}
+SUBMIT_INSTRUCTION = (
+    f"\n\nReply only by calling the {TOOL_NAME} tool exactly once. Do not answer in prose."
+)
 
 
 def load_prompt(role: str) -> str:
@@ -227,30 +243,19 @@ def _int(v: Any) -> int:
         return 0
 
 
-def _block_param(block: Any) -> dict | None:
-    """Turn a response content block into a request content block (for the retry turn)."""
-    btype = _get(block, "type")
-    if btype == "text":
-        return {"type": "text", "text": _get(block, "text", "")}
-    if btype == "tool_use":
-        return {"type": "tool_use", "id": _get(block, "id"), "name": _get(block, "name"),
-                "input": _get(block, "input", {})}
-    return None
-
-
 class ClaudeAgent(Agent):
-    def __init__(self, role: Role, model: str, client: Any = None, max_tokens: int = 1200,
-                 temperature: float = 0):
+    def __init__(self, role: Role, model: str, client: Any = None, max_tokens: int = 4000,
+                 effort: str = "low"):
         super().__init__(role)
         self.model = model
-        self.max_tokens = max_tokens
-        self.temperature = temperature
+        self.max_tokens = max_tokens  # current models think by default; leave room for it
+        self.effort = effort
         if client is None:
             import anthropic
 
             client = anthropic.Anthropic(max_retries=2, timeout=60)
         self.client = client
-        self.system_prompt = load_prompt(role)
+        self.system_prompt = load_prompt(role) + SUBMIT_INSTRUCTION
         self.calls: list[dict] = []
 
     # -- accounting ----------------------------------------------------------------------------
@@ -314,7 +319,7 @@ class ClaudeAgent(Agent):
                 tools=[TOOL],
                 tool_choice=TOOL_CHOICE,
                 max_tokens=self.max_tokens,
-                temperature=self.temperature,
+                output_config={"effort": self.effort},
             )
             latency = time.perf_counter() - t0
             reply, raw_text, error, tool_use = self._parse(resp)
@@ -335,7 +340,8 @@ class ClaudeAgent(Agent):
     def _retry_messages(messages: list[dict], resp: Any, tool_use: Any, error: str) -> list[dict]:
         note = (f"Your reply failed validation: {error}. Call {TOOL_NAME} once more with a "
                 "payload that satisfies the schema. Do not change your position.")
-        assistant = [b for b in (_block_param(b) for b in _get(resp, "content") or []) if b]
+        # Echo the reply back unchanged: thinking blocks must be passed back as they came.
+        assistant = list(_get(resp, "content") or [])
         if not assistant:
             # Nothing to echo back: restate the original request with the error appended.
             return [{"role": "user", "content": f"{messages[0]['content']}\n\n{note}"}]
