@@ -368,17 +368,14 @@ def ranking_for(msg: dict) -> list[dict]:
 
 
 def resolve_log_path(run: dict, run_path: str | Path | None) -> Path | None:
-    """recommendation.log_path if it exists, else <run file stem>.jsonl next to the run,
-    else the recorded log_path (where a new decision would be written)."""
-    recorded = safe_get(run, "recommendation.log_path")
-    recorded_p = _abs(recorded) if recorded else None
-    if recorded_p is not None and recorded_p.exists():
-        return recorded_p
+    """<run file stem>.jsonl next to the run if it exists (a run and its log travel together, and
+    two folders can hold runs with the same scenario_id), else recommendation.log_path."""
     if run_path is not None:
         sibling = Path(run_path).with_suffix(".jsonl")
         if sibling.exists():
             return sibling
-    return recorded_p
+    recorded = safe_get(run, "recommendation.log_path")
+    return _abs(recorded) if recorded else None
 
 
 def read_log(path: str | Path | None) -> tuple[list[dict], str | None]:

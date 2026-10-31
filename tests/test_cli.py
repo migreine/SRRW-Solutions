@@ -41,18 +41,20 @@ def test_fixture_mode_end_to_end(out_dir):
     assert data["fallback"]["fired"] is False
 
     # Real reviewer: SLOT+30 passes FUEL 105.1-30=75.1 >= 27.1 (most distant alternate AUS) + 45 =
-    # 72.1, DUTY 150-30=120, WAKE 94.7 s >= 77.1 s; the
-    # engine fails DIVERT_AUS on duty (est 165 min) but the reviewer derives 190/7+60 = 87 min.
+    # 72.1, DUTY 150-101 incurred-30=19, WAKE 142.1 s >= 77.1 s. DIVERT_AUS: 150-101-(190/7+60) =
+    # -38.1 -> the reviewer fails it on duty, as the engine does, so there is no disagreement.
     rv = data["reviewer"]
-    assert rv["verdict"] == "MODIFY" == rec.reviewer_verdict
-    assert rv["engine_disagreements"] == [{"rule_id": "R-DUTY-01", "candidate_id": "DIVERT_AUS",
-                                           "engine_passed": False, "reviewer_passed": True}]
+    assert rv["verdict"] == "APPROVE" == rec.reviewer_verdict
+    assert rv["engine_disagreements"] == []
+    duty = {e["candidate_id"]: e for e in rv["re_derived"] if e["check"] == "DUTY"}
+    assert duty["SLOT+30"]["derived"] == pytest.approx(19) and duty["SLOT+30"]["passed"]
+    assert duty["DIVERT_AUS"]["passed"] is False
     assert len(rv["re_derived"]) == 8 * 3  # every candidate, FUEL/DUTY/WAKE
     assert rv["cited_mismatches"] == [] and rv["citations_with_value"] == 34
     assert rv["candidate_id"] == "SLOT+30" and rv["escalated"] is False
     assert rv["initial_review"] is None
-    assert rec.reviewer_notes == rv["notes"] and rec.reviewer_detail["verdict"] == "MODIFY"
-    assert any(n.startswith("ENGINE: R-DUTY-01 failed DIVERT_AUS") for n in rv["notes"])
+    assert rec.reviewer_notes == rv["notes"] and rec.reviewer_detail["verdict"] == "APPROVE"
+    assert not any(n.startswith("ENGINE:") for n in rv["notes"])
 
     names = [e["event"] for e in ConsensusLog(log_path).read_all()]
     assert names.count("reviewer_verdict") == 1 and names.count("fallback_fired") == 0
@@ -71,7 +73,7 @@ def test_none_mode_is_solver_only(out_dir):
     assert rec.rounds_used == 0 and rec.decided_by == "fallback" and result["turns"] == []
     assert result["fallback"]["reason"] == "solver_only" and result["fallback"]["fired"]
     assert rec.chosen.candidate_id == "SLOT-15" and result["meta"]["model"] is None
-    assert rec.reviewer_verdict == "MODIFY"  # SLOT-15 passes; DIVERT_AUS engine disagreement
+    assert rec.reviewer_verdict == "APPROVE"  # SLOT-15 passes; engine and reviewer agree everywhere
     assert result["reviewer"]["citations_with_value"] == 0  # no agents, no citations
     log = ConsensusLog(_files(out_dir, result)[1]).read_all()
     assert not [e for e in log if e["event"] == "agent_message"]
@@ -105,9 +107,9 @@ def _events(result, out_dir, name):
 def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkeypatch):
     # fuel 97.1 (old 70 + 27.1 alternate time): consensus SLOT+30 leaves 97.1-30=67.1 < 27.1 to the
     # most distant alternate (AUS) + 45 reserve = 72.1 -> REJECT. Reviewer also fails HOLD40
-    # (97.1-40=57.1). DIVERT_AUS needs only the 45 min reserve on arrival (97.1-27.1=70 >= 45), so
-    # the reviewer passes it, but the engine still fails it on duty. The fallback excludes HOLD40
-    # and SLOT+30 and picks SLOT-15 (objective -15+30=15) from
+    # (97.1-40=57.1). DIVERT_AUS passes FUEL (only the 45 min reserve on arrival, 97.1-27.1=70) but
+    # fails DUTY (150-101 incurred-87.1 < 0), as the engine does. The fallback excludes DIVERT_AUS,
+    # HOLD40 and SLOT+30 and picks SLOT-15 (objective -15+30=15) from
     # SLOT+15/SLOT-15/HOLD20/GATE_B12/GROUND_HOLD_MFE.
     _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=97.1, source="estimated"))
     result = run_one(0, "fixture", out_dir=out_dir)
@@ -118,16 +120,16 @@ def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkey
     fb = result["fallback"]
     assert fb["fired"] and fb["reason"] == "reviewer_reject"
     assert fb["rejected_candidate_id"] == "SLOT+30" and fb["previous_decided_by"] == "consensus"
-    assert fb["excluded"] == ["HOLD40", "SLOT+30"] and fb["n_eligible"] == 5
+    assert fb["excluded"] == ["DIVERT_AUS", "HOLD40", "SLOT+30"] and fb["n_eligible"] == 5
     assert fb["objective"] == 15
 
     # SLOT-15 passes the re-review; MODIFY because the engine (fuel 105.1) and reviewer (fuel 97.1)
-    # disagree on SLOT+30 fuel, and on DIVERT_AUS duty as in the base case.
+    # disagree on SLOT+30 fuel.
     rv = result["reviewer"]
     assert rv["verdict"] == "MODIFY" == rec.reviewer_verdict and rv["candidate_id"] == "SLOT-15"
     assert rv["escalated"] is False and rv["initial_review"]["verdict"] == "REJECT"
     assert {(d["rule_id"], d["candidate_id"]) for d in rv["engine_disagreements"]} == {
-        ("R-FUEL-01", "SLOT+30"), ("R-DUTY-01", "DIVERT_AUS")}
+        ("R-FUEL-01", "SLOT+30")}
     assert rv["notes"][0].startswith("REVIEWER: REJECT of SLOT+30 (decided by consensus)")
     assert any(n.startswith("FUEL re-derived: SLOT+30") and "FAIL" in n for n in rv["notes"])
     assert any(n.startswith("FUEL re-derived: SLOT-15") and "PASS" in n for n in rv["notes"])
@@ -168,7 +170,7 @@ def test_reviewer_wake_fail_everywhere_escalates(out_dir, monkeypatch):
     assert rv["escalated"] is True and rv["candidate_id"] is None
     wake = [d for d in rv["engine_disagreements"] if d["rule_id"] == "R-WAKE-01"]
     assert len(wake) == 8 and all(d["engine_passed"] and not d["reviewer_passed"] for d in wake)
-    assert len(rv["engine_disagreements"]) == 9  # + R-DUTY-01 DIVERT_AUS, as in the base case
+    assert len(rv["engine_disagreements"]) == 8  # WAKE only: DUTY now agrees on DIVERT_AUS
     stages = [(e["stage"], e["final"]) for e in _events(result, out_dir, "reviewer_verdict")]
     assert stages == [("review", False), ("escalation", True)]
     (final,) = _events(result, out_dir, "recommendation")
@@ -189,8 +191,9 @@ def test_reviewer_rejects_fallback_pick_too_escalates(out_dir, monkeypatch):
     result = run_one(0, "fixture", out_dir=out_dir)
     assert result["recommendation"]["chosen"] is None
     assert result["recommendation"]["reviewer_verdict"] == "REJECT"
-    # first exclusion: rejected SLOT+30 plus HOLD40 (reviewer fuel fail); fallback picked SLOT-15
-    assert result["fallback"]["excluded"] == ["HOLD40", "SLOT+30"]
+    # first exclusion: rejected SLOT+30 plus HOLD40 (reviewer fuel fail) and DIVERT_AUS (reviewer
+    # duty fail); fallback picked SLOT-15
+    assert result["fallback"]["excluded"] == ["DIVERT_AUS", "HOLD40", "SLOT+30"]
     assert result["fallback"]["chosen"] == "SLOT-15"
     assert result["reviewer"]["notes"][-1] == ESCALATE_NOTE
     stages = [(e["stage"], e["candidate_id"]) for e in _events(result, out_dir, "reviewer_verdict")]
@@ -221,7 +224,7 @@ def test_unknown_mode_rejected(out_dir):
 def test_main_pretty_prints_table(out_dir, capsys):
     main(["--row-id", "0", "--agents", "fixture", "--pretty", "--out", str(out_dir)])
     text = capsys.readouterr().out
-    for token in ("SLOT+30", "R-FUEL-01", "FAIL", "Decided by : consensus", "Reviewer   : MODIFY",
+    for token in ("SLOT+30", "R-FUEL-01", "FAIL", "Decided by : consensus", "Reviewer   : APPROVE",
                   "ATC", "PILOT", "GROUND"):
         assert token in text
     text.encode("ascii")  # the table must print on any Windows console
