@@ -9,14 +9,14 @@
       "force_deadlock": false,
       "tamper_rules": false
     },
-    "started_at": "2026-10-31T14:05:55.733344+08:00",
-    "latency_s": 33.3719,
-    "cost_usd": 0.004213,
-    "tokens_in": 5187,
-    "tokens_out": 7265,
+    "started_at": "2026-10-31T14:40:56.900518+08:00",
+    "latency_s": 32.2899,
+    "cost_usd": 0.003947,
+    "tokens_in": 5124,
+    "tokens_out": 6746,
     "cache_read_tokens": 6190,
     "n_agent_calls": 3,
-    "git_sha": "1f2c0ca",
+    "git_sha": "29ccd8c",
     "fixture": false,
     "max_rounds": 2,
     "weights": {
@@ -1144,29 +1144,30 @@
           "agent": "ATC",
           "round": 1,
           "acceptable": [
+            "SLOT-30",
+            "SLOT-15",
+            "GROUND_HOLD_MFE",
             "SLOT+15",
             "SLOT+30",
-            "SLOT-15",
-            "SLOT-30",
-            "GROUND_HOLD_MFE",
             "GATE_C2",
             "GATE_B12",
             "HOLD20"
           ],
           "ranking": [
             {
-              "candidate_id": "SLOT+15",
-              "score": 0.85,
-              "rationale": "Small later slot shift moves the flight away from the disrupted destination hour with minimal disturbance to the arrival stream.",
+              "candidate_id": "SLOT-30",
+              "score": 0.95,
+              "rationale": "Earlier slot moves the flight away from the destination peak with no airborne holding, and wake spacing benefits from the separation on final; dest_disruption=26 against nominal_aar=118 (assumed) is the main driver.",
               "cited_fields": [
                 "dest_disruption=26",
-                "wake_category=L (assumed)"
+                "nominal_aar=118",
+                "wake_category=L"
               ]
             },
             {
-              "candidate_id": "SLOT+30",
-              "score": 0.8,
-              "rationale": "Later slot shift also moves off the disrupted hour and keeps aircraft off taxiways, though a larger shift disturbs the stream more.",
+              "candidate_id": "SLOT-15",
+              "score": 0.9,
+              "rationale": "Small earlier slot shift moves arrival off the disrupted hour and disturbs the arrival stream least.",
               "cited_fields": [
                 "dest_disruption=26",
                 "taxi_congestion=0.6"
@@ -1174,35 +1175,34 @@
             },
             {
               "candidate_id": "GROUND_HOLD_MFE",
-              "score": 0.75,
-              "rationale": "Ground hold at origin keeps the aircraft off congested taxiways and avoids adding airborne holding into the arrival peak.",
+              "score": 0.85,
+              "rationale": "Holding at origin keeps the aircraft off the destination taxiways at the peak and adds no airborne holding into final.",
               "cited_fields": [
                 "taxi_congestion=0.6",
+                "flight.ORIGIN_AIRPORT=MFE (data)"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.5,
+              "rationale": "Later slot moves arrival toward the disrupted hour, though the shift is small and keeps the stream regular.",
+              "cited_fields": [
                 "dest_disruption=26"
               ]
             },
             {
-              "candidate_id": "SLOT-15",
-              "score": 0.6,
-              "rationale": "Earlier shift is a small stream disturbance but risks landing nearer the disrupted peak.",
+              "candidate_id": "SLOT+30",
+              "score": 0.4,
+              "rationale": "Larger later shift places the flight further into the disrupted hour on final, weaker for wake spacing.",
               "cited_fields": [
                 "dest_disruption=26",
-                "nominal_aar=118 (assumed)"
-              ]
-            },
-            {
-              "candidate_id": "SLOT-30",
-              "score": 0.5,
-              "rationale": "Larger earlier shift lands closer to the disrupted peak and adds more stream disruption.",
-              "cited_fields": [
-                "dest_disruption=26",
-                "nominal_aar=118 (assumed)"
+                "wake_category=L"
               ]
             },
             {
               "candidate_id": "GATE_C2",
               "score": 0.35,
-              "rationale": "Adds 5 minutes of taxi on a congested surface at the peak, which is contrary to taxiway flow goals.",
+              "rationale": "Adds five minutes of taxi at a time when taxi_congestion is already elevated, adding aircraft to the taxiways.",
               "cited_fields": [
                 "taxi_congestion=0.6"
               ]
@@ -1210,15 +1210,15 @@
             {
               "candidate_id": "GATE_B12",
               "score": 0.35,
-              "rationale": "Adds 5 minutes of taxi on a congested surface at the peak, which is contrary to taxiway flow goals.",
+              "rationale": "Adds five minutes of taxi at a time when taxi_congestion is already elevated, adding aircraft to the taxiways.",
               "cited_fields": [
                 "taxi_congestion=0.6"
               ]
             },
             {
               "candidate_id": "HOLD20",
-              "score": 0.3,
-              "rationale": "Airborne hold adds traffic into the disrupted arrival peak and disturbs the stream.",
+              "score": 0.25,
+              "rationale": "Airborne hold places the flight into the destination arrival window and disturbs the sector stream.",
               "cited_fields": [
                 "dest_disruption=26"
               ]
@@ -1226,7 +1226,7 @@
             {
               "candidate_id": "HOLD40",
               "score": 0.1,
-              "rationale": "Longer airborne hold puts the flight into the disrupted peak for an extended period and disturbs the stream most among non-diversion options.",
+              "rationale": "Longer airborne hold keeps the flight in the disrupted arrival window for longer and disturbs the stream most among holds.",
               "cited_fields": [
                 "dest_disruption=26"
               ]
@@ -1234,24 +1234,34 @@
             {
               "candidate_id": "DIVERT_ACT",
               "score": 0.05,
-              "rationale": "Diversion removes the flight from the destination arrival stream entirely, which is the largest sector-throughput disturbance.",
+              "rationale": "Diversion removes the flight from the destination runway and disturbs the arrival stream most.",
               "cited_fields": [
-                "dest_disruption=26"
+                "flight.DESTINATION_AIRPORT=DFW (data)"
               ]
             },
             {
               "candidate_id": "DIVERT_TYR",
-              "score": 0.03,
-              "rationale": "Diversion with the longest estimated delay causes the largest sector-throughput disturbance.",
+              "score": 0.02,
+              "rationale": "Diversion removes the flight from the destination runway and disturbs the arrival stream most.",
               "cited_fields": [
-                "dest_disruption=26"
+                "flight.DESTINATION_AIRPORT=DFW (data)"
               ]
             }
           ],
           "vetoes": [
             {
+              "candidate_id": "DIVERT_ACT",
+              "reason": "Diversion takes the flight off the DFW runway and approach, the largest disruption to the arrival stream.",
+              "cited_field": "flight.DESTINATION_AIRPORT=DFW (data)"
+            },
+            {
+              "candidate_id": "DIVERT_TYR",
+              "reason": "Diversion takes the flight off the DFW runway and approach, the largest disruption to the arrival stream.",
+              "cited_field": "flight.DESTINATION_AIRPORT=DFW (data)"
+            },
+            {
               "candidate_id": "HOLD40",
-              "reason": "A 40-minute airborne hold places the flight into the disrupted arrival peak and disturbs the stream, against the wake-spacing and throughput priorities.",
+              "reason": "A 40-minute airborne hold keeps the flight in the disrupted DFW arrival window on final.",
               "cited_field": "dest_disruption=26"
             }
           ]
@@ -1262,9 +1272,9 @@
           "acceptable": [
             "SLOT-30",
             "SLOT-15",
-            "GROUND_HOLD_MFE",
             "GATE_C2",
             "GATE_B12",
+            "GROUND_HOLD_MFE",
             "SLOT+15",
             "SLOT+30",
             "HOLD20"
@@ -1273,35 +1283,25 @@
             {
               "candidate_id": "SLOT-30",
               "score": 0.95,
-              "rationale": "Earlier arrival adds no airborne time and best protects connections, though the slot is an estimate with fuel_reserve_min=96.2 (estimated).",
+              "rationale": "Earlier arrival adds no airborne time and gives the shortest knock-on to connections; fuel_reserve_min is only estimated, so avoiding airborne draw matters.",
               "cited_fields": [
                 "fuel_reserve_min=96.2",
-                "connections[0].minutes_after_arrival=49",
-                "crew_duty_remaining_min=292"
+                "connections[0].minutes_after_arrival=49"
               ]
             },
             {
               "candidate_id": "SLOT-15",
               "score": 0.9,
-              "rationale": "Earlier arrival with no added airborne time, keeping the day short and protecting connections.",
+              "rationale": "Earlier arrival with no airborne time and a smaller knock-on than the baseline, protecting the listed connections.",
               "cited_fields": [
                 "fuel_reserve_min=96.2",
                 "crew_duty_remaining_min=292"
               ]
             },
             {
-              "candidate_id": "GROUND_HOLD_MFE",
-              "score": 0.8,
-              "rationale": "Holding on the ground at origin avoids airborne fuel draw and avoids weather exposure at DFW, though it delays connections.",
-              "cited_fields": [
-                "fuel_reserve_min=96.2",
-                "flight.WEATHER_DELAY=58"
-              ]
-            },
-            {
               "candidate_id": "GATE_C2",
               "score": 0.8,
-              "rationale": "Only 5 minutes of extra taxi with no airborne time; acceptable for fuel and crew state.",
+              "rationale": "Adds only 5 minutes of taxi, no airborne time; acceptable with the fuel figure estimated.",
               "cited_fields": [
                 "fuel_reserve_min=96.2"
               ]
@@ -1309,71 +1309,80 @@
             {
               "candidate_id": "GATE_B12",
               "score": 0.8,
-              "rationale": "Only 5 minutes of extra taxi with no airborne time; equivalent to C2 for the flight deck.",
+              "rationale": "Adds only 5 minutes of taxi, no airborne time; equivalent to C2 for the flight deck.",
               "cited_fields": [
                 "fuel_reserve_min=96.2"
               ]
             },
             {
-              "candidate_id": "SLOT+15",
+              "candidate_id": "GROUND_HOLD_MFE",
               "score": 0.7,
-              "rationale": "Adds 15 minutes to the arrival, drawing modestly on the estimated fuel reserve and pushing connections later.",
-              "cited_fields": [
-                "fuel_reserve_min=96.2",
-                "connections[0].minutes_after_arrival=49"
-              ]
-            },
-            {
-              "candidate_id": "SLOT+30",
-              "score": 0.6,
-              "rationale": "Adds 30 minutes to the arrival, a larger draw on an estimated fuel reserve and further erosion of connections.",
-              "cited_fields": [
-                "fuel_reserve_min=96.2",
-                "connections[0].minutes_after_arrival=49"
-              ]
-            },
-            {
-              "candidate_id": "HOLD20",
-              "score": 0.4,
-              "rationale": "Airborne hold draws on the estimated fuel reserve and occurs in weather; tolerable only if slot options fail.",
-              "cited_fields": [
-                "fuel_reserve_min=96.2",
-                "flight.WEATHER_DELAY=58"
-              ]
-            },
-            {
-              "candidate_id": "HOLD40",
-              "score": 0.1,
-              "rationale": "A 40-minute airborne hold in weather draws heavily on the estimated fuel reserve and adds turbulence exposure near destination.",
+              "rationale": "Holding on the ground at origin draws no airborne fuel and keeps the aircraft out of weather, though it delays connections.",
               "cited_fields": [
                 "flight.WEATHER_DELAY=58",
                 "fuel_reserve_min=96.2"
               ]
             },
             {
-              "candidate_id": "DIVERT_ACT",
-              "score": 0.2,
-              "rationale": "Diversion adds a second approach and loses all connections, though the alternate is nearer than TYR.",
+              "candidate_id": "SLOT+15",
+              "score": 0.45,
+              "rationale": "Later arrival with a 15-minute shift; tolerable only if no airborne hold is needed, and connections are estimated.",
               "cited_fields": [
-                "alternates[0].distance_nm=77.8",
-                "connections[0].minutes_after_arrival=49"
+                "connections[0].source=estimated"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.35,
+              "rationale": "Later arrival of 30 minutes erodes connections and duty time more than a shorter shift.",
+              "cited_fields": [
+                "crew_duty_remaining_min=292"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.2,
+              "rationale": "Airborne hold draws on estimated fuel_reserve_min and occurs in weather, the most exposed place to be.",
+              "cited_fields": [
+                "flight.WEATHER_DELAY=58",
+                "fuel_reserve_min=96.2"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.05,
+              "rationale": "Vetoed: a 40-minute airborne hold in weather draws heavily on estimated fuel reserve.",
+              "cited_fields": [
+                "fuel_reserve_min=96.2"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_ACT",
+              "score": 0.1,
+              "rationale": "Diversion adds a second approach and loses all connections; ranks below arrival at destination.",
+              "cited_fields": [
+                "alternates[0].distance_nm=77.8"
               ]
             },
             {
               "candidate_id": "DIVERT_TYR",
-              "score": 0.15,
-              "rationale": "Diversion adds a second approach, loses all connections, and the alternate is farther than ACT.",
+              "score": 0.08,
+              "rationale": "Farther alternate than ACT with the same loss of connections and an extra approach.",
               "cited_fields": [
-                "alternates[1].distance_nm=88.8",
-                "connections[0].minutes_after_arrival=49"
+                "alternates[1].distance_nm=88.8"
               ]
             }
           ],
           "vetoes": [
             {
               "candidate_id": "HOLD40",
-              "reason": "Forty minutes of airborne holding in weather draws on the estimated fuel reserve and adds turbulence exposure at destination.",
-              "cited_field": "flight.WEATHER_DELAY=58"
+              "reason": "A 40-minute airborne hold in weather draws on the estimated fuel reserve and is the most exposed option.",
+              "cited_field": "fuel_reserve_min=96.2"
+            },
+            {
+              "candidate_id": "DIVERT_TYR",
+              "reason": "Farthest alternate with a second approach and loss of all connections; ranks below ACT.",
+              "cited_field": "alternates[1].distance_nm=88.8"
             }
           ]
         },
@@ -1395,106 +1404,108 @@
             {
               "candidate_id": "SLOT-30",
               "score": 0.9,
-              "rationale": "Earlier arrival with the lowest est_knock_on_min (197) on the menu, and it keeps the aircraft at DFW for the downstream leg.",
+              "rationale": "Lowest est_knock_on_min on the menu (197), which best protects ground-crew overtime; earlier arrival is a free-gate question I cannot confirm from the synthetic gate model.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828",
-                "taxi_congestion=0.6"
+                "est_knock_on_min=197",
+                "gates.assigned_gate=D12",
+                "gates.turnaround_source=assumed"
               ]
             },
             {
               "candidate_id": "SLOT-15",
-              "score": 0.85,
-              "rationale": "Earlier arrival with est_knock_on_min 242, the second-lowest; keeps the tail at DFW.",
+              "score": 0.8,
+              "rationale": "Second-lowest knock-on (242) with a smaller advance; keeps the aircraft landing at the hub.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828",
-                "taxi_congestion=0.6"
+                "est_knock_on_min=242",
+                "downstream_legs[0].sched_dep_abs=828"
               ]
             },
             {
               "candidate_id": "GATE_C2",
-              "score": 0.8,
-              "rationale": "Gate swap keeps the arrival time unchanged, est_knock_on_min 302; the gate model is synthetic (gates.turnaround_source=assumed) so the gate fit is unverified.",
+              "score": 0.7,
+              "rationale": "Gate tool I own; adds only 5 min taxi on a low-congestion ramp, knock-on 302 and keeps the aircraft at the hub.",
               "cited_fields": [
-                "gates.assigned_gate=D12",
-                "taxi_congestion=0.6"
+                "taxi_congestion=0.6",
+                "est_knock_on_min=302"
               ]
             },
             {
               "candidate_id": "GATE_B12",
-              "score": 0.8,
-              "rationale": "Same as C2: gate swap with est_knock_on_min 302; synthetic gate model, fit unverified.",
+              "score": 0.7,
+              "rationale": "Same gate-swap profile as C2 (knock-on 302, 5 min taxi) on a low-congestion ramp; gate model is synthetic.",
               "cited_fields": [
-                "gates.assigned_gate=D12",
-                "taxi_congestion=0.6"
+                "taxi_congestion=0.6",
+                "est_knock_on_min=302"
               ]
             },
             {
               "candidate_id": "SLOT+15",
-              "score": 0.6,
-              "rationale": "Later arrival adds est_knock_on_min 332 relative to the earlier slots; acceptable but not preferred.",
+              "score": 0.5,
+              "rationale": "Later arrival raises knock-on to 332 and adds a delay the downstream MEM leg already absorbs poorly.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "est_knock_on_min=332",
+                "downstream_legs[1].gap_after_actual_arrival_min=86"
               ]
             },
             {
               "candidate_id": "HOLD20",
-              "score": 0.5,
-              "rationale": "Airborne hold of 20 min with est_knock_on_min 347 keeps the aircraft at the hub.",
+              "score": 0.45,
+              "rationale": "Airborne-style hold of 20 min gives knock-on 347, worse than gate swaps and slot shifts.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "est_knock_on_min=347"
               ]
             },
             {
               "candidate_id": "GROUND_HOLD_MFE",
               "score": 0.4,
-              "rationale": "Ground hold at MFE with est_knock_on_min 377 adds a 30-minute delay; tolerable but weaker than in-place options.",
+              "rationale": "Ground hold at MFE adds 30 min and knock-on 377 for no gate-side benefit.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "est_knock_on_min=377"
               ]
             },
             {
               "candidate_id": "SLOT+30",
-              "score": 0.4,
-              "rationale": "Later arrival with est_knock_on_min 377 pushes the turnaround further into the next shift.",
+              "score": 0.35,
+              "rationale": "Knock-on 377 and 30 min delay; accepted only as a fallback.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "est_knock_on_min=377"
               ]
             },
             {
               "candidate_id": "HOLD40",
-              "score": 0.3,
-              "rationale": "Largest hold with est_knock_on_min 407 is the highest non-diversion knock-on on the menu.",
+              "score": 0.25,
+              "rationale": "Longest hold on the menu (40 min, knock-on 407); accepted only as last resort among non-diversions.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "est_knock_on_min=407"
               ]
             },
             {
               "candidate_id": "DIVERT_ACT",
               "score": 0.1,
-              "rationale": "Diversion strands the tail, the gate plan and downstream legs; est_knock_on_min 533.7.",
+              "rationale": "Diversion strands the tail and the downstream legs; knock-on 533.7 is high.",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "downstream_legs[0].gap_after_actual_arrival_min=-48"
               ]
             },
             {
               "candidate_id": "DIVERT_TYR",
               "score": 0.05,
-              "rationale": "Diversion strands the tail, the gate plan and downstream legs; est_knock_on_min 543.1, the highest on the menu.",
+              "rationale": "Diversion strands the tail and downstream DFW-MEM-DFW-BWI legs; highest knock-on (543.1).",
               "cited_fields": [
-                "downstream_legs[0].sched_dep_abs=828"
+                "downstream_legs[0].gap_after_actual_arrival_min=-48"
               ]
             }
           ],
           "vetoes": [
             {
               "candidate_id": "DIVERT_ACT",
-              "reason": "Diversion strands the tail and the downstream legs at the hub-based rotation; ground refuses.",
-              "cited_field": "downstream_legs[0].sched_dep_abs=828"
+              "reason": "Diversion strands the tail and the listed downstream legs, and knock-on is high.",
+              "cited_field": "downstream_legs[0].gap_after_actual_arrival_min=-48"
             },
             {
               "candidate_id": "DIVERT_TYR",
-              "reason": "Diversion strands the tail and the downstream legs; highest est_knock_on_min on the menu.",
-              "cited_field": "downstream_legs[0].sched_dep_abs=828"
+              "reason": "Diversion strands the tail and the listed downstream legs; highest knock-on on the menu.",
+              "cited_field": "downstream_legs[0].gap_after_actual_arrival_min=-48"
             }
           ]
         }
@@ -2124,7 +2135,7 @@
     "reviewer_verdict": "APPROVE",
     "reviewer_notes": [
       "FUEL re-derived: SLOT-30 (slot shift -30 min) needs 0 + 14 min to most distant alternate + 45 reserve = 59 min; fuel_reserve_min=96.2 (estimated) leaves 96.2 min vs 59 -> PASS [14 CFR 121.639; 45-min final reserve: assumed].",
-      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min; crew_duty_remaining_min=292 (synthetic) leaves 322 min, >= 0 required -> PASS [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min to 101 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=292 (synthetic, at scheduled arrival) leaves 221 min, >= 0 required -> PASS [14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
       "WAKE re-derived: SLOT-30 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=118 (assumed) - dest_disruption=26 (data) = 92/h over 3 assumed arrival runways gives 117.4 s per runway -> PASS [FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed]."
     ],
     "human_decision": "pending",
@@ -2134,7 +2145,7 @@
       "verdict": "APPROVE",
       "notes": [
         "FUEL re-derived: SLOT-30 (slot shift -30 min) needs 0 + 14 min to most distant alternate + 45 reserve = 59 min; fuel_reserve_min=96.2 (estimated) leaves 96.2 min vs 59 -> PASS [14 CFR 121.639; 45-min final reserve: assumed].",
-        "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min; crew_duty_remaining_min=292 (synthetic) leaves 322 min, >= 0 required -> PASS [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min to 101 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=292 (synthetic, at scheduled arrival) leaves 221 min, >= 0 required -> PASS [14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
         "WAKE re-derived: SLOT-30 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=118 (assumed) - dest_disruption=26 (data) = 92/h over 3 assumed arrival runways gives 117.4 s per runway -> PASS [FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed]."
       ],
       "re_derived": [
@@ -2155,14 +2166,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT+15",
-          "derived": 277.0,
+          "derived": 176.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 15.0
+            "delay_min": 15.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2202,14 +2215,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT+30",
-          "derived": 262.0,
+          "derived": 161.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 30.0
+            "delay_min": 30.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2249,14 +2264,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT-15",
-          "derived": 307.0,
+          "derived": 206.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": -15.0
+            "delay_min": -15.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2296,14 +2313,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT-30",
-          "derived": 322.0,
+          "derived": 221.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": -30.0
+            "delay_min": -30.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2343,14 +2362,16 @@
         {
           "check": "DUTY",
           "candidate_id": "HOLD20",
-          "derived": 272.0,
+          "derived": 171.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 20.0
+            "delay_min": 20.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2390,14 +2411,16 @@
         {
           "check": "DUTY",
           "candidate_id": "HOLD40",
-          "derived": 252.0,
+          "derived": 151.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 40.0
+            "delay_min": 40.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2437,14 +2460,16 @@
         {
           "check": "DUTY",
           "candidate_id": "DIVERT_ACT",
-          "derived": 220.8857142857143,
+          "derived": 119.88571428571429,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 71.11428571428571
+            "delay_min": 71.11428571428571,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2484,14 +2509,16 @@
         {
           "check": "DUTY",
           "candidate_id": "DIVERT_TYR",
-          "derived": 219.31428571428572,
+          "derived": 118.31428571428572,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 72.68571428571428
+            "delay_min": 72.68571428571428,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2531,14 +2558,16 @@
         {
           "check": "DUTY",
           "candidate_id": "GATE_C2",
-          "derived": 287.0,
+          "derived": 186.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 5.0
+            "delay_min": 5.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2578,14 +2607,16 @@
         {
           "check": "DUTY",
           "candidate_id": "GATE_B12",
-          "derived": 287.0,
+          "derived": 186.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 5.0
+            "delay_min": 5.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2625,14 +2656,16 @@
         {
           "check": "DUTY",
           "candidate_id": "GROUND_HOLD_MFE",
-          "derived": 262.0,
+          "derived": 161.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 30.0
+            "delay_min": 30.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2659,8 +2692,8 @@
       "cited_mismatches": [],
       "engine_disagreements": [],
       "derived_delay_min": -30.0,
-      "citations_checked": 56,
-      "citations_with_value": 56,
+      "citations_checked": 55,
+      "citations_with_value": 55,
       "not_rederived": [],
       "initial_review": null,
       "escalated": false,
@@ -2685,7 +2718,7 @@
     "verdict": "APPROVE",
     "notes": [
       "FUEL re-derived: SLOT-30 (slot shift -30 min) needs 0 + 14 min to most distant alternate + 45 reserve = 59 min; fuel_reserve_min=96.2 (estimated) leaves 96.2 min vs 59 -> PASS [14 CFR 121.639; 45-min final reserve: assumed].",
-      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min; crew_duty_remaining_min=292 (synthetic) leaves 322 min, >= 0 required -> PASS [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min to 101 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=292 (synthetic, at scheduled arrival) leaves 221 min, >= 0 required -> PASS [14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
       "WAKE re-derived: SLOT-30 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=118 (assumed) - dest_disruption=26 (data) = 92/h over 3 assumed arrival runways gives 117.4 s per runway -> PASS [FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed]."
     ],
     "re_derived": [
@@ -2706,14 +2739,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT+15",
-        "derived": 277.0,
+        "derived": 176.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 15.0
+          "delay_min": 15.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -2753,14 +2788,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT+30",
-        "derived": 262.0,
+        "derived": 161.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 30.0
+          "delay_min": 30.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -2800,14 +2837,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT-15",
-        "derived": 307.0,
+        "derived": 206.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": -15.0
+          "delay_min": -15.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -2847,14 +2886,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT-30",
-        "derived": 322.0,
+        "derived": 221.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": -30.0
+          "delay_min": -30.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -2894,14 +2935,16 @@
       {
         "check": "DUTY",
         "candidate_id": "HOLD20",
-        "derived": 272.0,
+        "derived": 171.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 20.0
+          "delay_min": 20.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -2941,14 +2984,16 @@
       {
         "check": "DUTY",
         "candidate_id": "HOLD40",
-        "derived": 252.0,
+        "derived": 151.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 40.0
+          "delay_min": 40.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -2988,14 +3033,16 @@
       {
         "check": "DUTY",
         "candidate_id": "DIVERT_ACT",
-        "derived": 220.8857142857143,
+        "derived": 119.88571428571429,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 71.11428571428571
+          "delay_min": 71.11428571428571,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3035,14 +3082,16 @@
       {
         "check": "DUTY",
         "candidate_id": "DIVERT_TYR",
-        "derived": 219.31428571428572,
+        "derived": 118.31428571428572,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 72.68571428571428
+          "delay_min": 72.68571428571428,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3082,14 +3131,16 @@
       {
         "check": "DUTY",
         "candidate_id": "GATE_C2",
-        "derived": 287.0,
+        "derived": 186.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 5.0
+          "delay_min": 5.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3129,14 +3180,16 @@
       {
         "check": "DUTY",
         "candidate_id": "GATE_B12",
-        "derived": 287.0,
+        "derived": 186.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 5.0
+          "delay_min": 5.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3176,14 +3229,16 @@
       {
         "check": "DUTY",
         "candidate_id": "GROUND_HOLD_MFE",
-        "derived": 262.0,
+        "derived": 161.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 30.0
+          "delay_min": 30.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3210,8 +3265,8 @@
     "cited_mismatches": [],
     "engine_disagreements": [],
     "derived_delay_min": -30.0,
-    "citations_checked": 56,
-    "citations_with_value": 56,
+    "citations_checked": 55,
+    "citations_with_value": 55,
     "not_rederived": [],
     "candidate_id": "SLOT-30",
     "escalated": false,

@@ -1,17 +1,17 @@
 metric,value,unit,n,definition,note,mode
 actual_delay_mean,104.67,min,200,mean ARRIVAL_DELAY of the sampled rows,data,data
 actual_delay_median,80.5,min,200,median ARRIVAL_DELAY of the sampled rows,data,data
-actual_chain_mean,0,min,200,mean of sum(ARRIVAL_DELAY) over the tail's later legs that day (0 if none),"data, partial: only delayed downstream legs exist in the extract",data
+actual_chain_mean,71.835,min,200,mean of sum(ARRIVAL_DELAY) over the tail's later legs that day (0 if none),"data, partial: only delayed downstream legs exist in the extract",data
 n_rows,200,rows,200,sample size,,none
 n_completed,200,rows,200,runs finished without error,,none
 n_guard_stopped,0,rows,200,rows not run because the cost/time guard stopped the sweep,,none
 n_errors,0,rows,200,runs that raised (recorded in per_scenario.csv 'error'),,none
-reviewer_APPROVE_rate,0.66,ratio,200,final reviewer verdict == APPROVE / n_completed,,none
+reviewer_APPROVE_rate,0.82,ratio,200,final reviewer verdict == APPROVE / n_completed,,none
 reviewer_REJECT_rate,0.135,ratio,200,final reviewer verdict == REJECT / n_completed,,none
-reviewer_MODIFY_rate,0.205,ratio,200,final reviewer verdict == MODIFY / n_completed,,none
-reviewer_engine_disagreement_rate,0.201364,ratio,2200,candidates where engine and reviewer pass/fail differ / candidates checked,checked = re-derived by the reviewer and checked by the engine on R-FUEL/R-DUTY/R-WAKE,none
-latency_s_mean,0.074516,s,200,mean run_one wall time,,none
-latency_s_p95,0.087,s,200,95th percentile run_one wall time,,none
+reviewer_MODIFY_rate,0.045,ratio,200,final reviewer verdict == MODIFY / n_completed,,none
+reviewer_engine_disagreement_rate,0.00818182,ratio,2200,candidates where engine and reviewer pass/fail differ / candidates checked,checked = re-derived by the reviewer and checked by the engine on R-FUEL/R-DUTY/R-WAKE,none
+latency_s_mean,0.0685535,s,200,mean run_one wall time,,none
+latency_s_p95,0.0733,s,200,95th percentile run_one wall time,,none
 cost_usd_mean,0,usd,200,mean agent API cost per scenario,,none
 cost_usd_total,0,usd,200,total agent API cost,,none
 tokens_total,0,tokens,200,input + output tokens across agent calls,,none
@@ -24,33 +24,33 @@ n_rows,200,rows,200,sample size,,haiku
 n_completed,200,rows,200,runs finished without error,,haiku
 n_guard_stopped,0,rows,200,rows not run because the cost/time guard stopped the sweep,,haiku
 n_errors,0,rows,200,runs that raised (recorded in per_scenario.csv 'error'),,haiku
-reviewer_APPROVE_rate,0.225,ratio,200,final reviewer verdict == APPROVE / n_completed,,haiku
+reviewer_APPROVE_rate,0.685,ratio,200,final reviewer verdict == APPROVE / n_completed,,haiku
 reviewer_REJECT_rate,0.135,ratio,200,final reviewer verdict == REJECT / n_completed,,haiku
-reviewer_MODIFY_rate,0.64,ratio,200,final reviewer verdict == MODIFY / n_completed,,haiku
-reviewer_engine_disagreement_rate,0.201364,ratio,2200,candidates where engine and reviewer pass/fail differ / candidates checked,checked = re-derived by the reviewer and checked by the engine on R-FUEL/R-DUTY/R-WAKE,haiku
-latency_s_mean,31.9654,s,200,mean run_one wall time,,haiku
-latency_s_p95,55.7718,s,200,95th percentile run_one wall time,,haiku
-cost_usd_mean,0.00446611,usd,200,mean agent API cost per scenario,,haiku
-cost_usd_total,0.893221,usd,200,total agent API cost,,haiku
-tokens_total,2.588e+06,tokens,200,input + output tokens across agent calls,,haiku
+reviewer_MODIFY_rate,0.18,ratio,200,final reviewer verdict == MODIFY / n_completed,,haiku
+reviewer_engine_disagreement_rate,0.00818182,ratio,2200,candidates where engine and reviewer pass/fail differ / candidates checked,checked = re-derived by the reviewer and checked by the engine on R-FUEL/R-DUTY/R-WAKE,haiku
+latency_s_mean,31.956,s,200,mean run_one wall time,,haiku
+latency_s_p95,56.8431,s,200,95th percentile run_one wall time,,haiku
+cost_usd_mean,0.00446781,usd,200,mean agent API cost per scenario,,haiku
+cost_usd_total,0.893561,usd,200,total agent API cost,,haiku
+tokens_total,2.5814e+06,tokens,200,input + output tokens across agent calls,,haiku
 human_decision,pending,,200,human decision on eval recommendations,eval never acts; a human approves,haiku
-consensus_rate,0.845,ratio,200,"decided_by == ""consensus"" / n_completed",,haiku
-consensus_round1_rate,0.845,ratio,200,consensus in round 1 / n_completed,,haiku
+consensus_rate,0.85,ratio,200,"decided_by == ""consensus"" / n_completed",,haiku
+consensus_round1_rate,0.85,ratio,200,consensus in round 1 / n_completed,,haiku
 consensus_round2_rate,0,ratio,200,consensus in round 2 / n_completed,,haiku
 mean_rounds,1.135,rounds,200,mean rounds_used over agent runs,,haiku
 fallback_rate_no_consensus,0,ratio,200,fallback with reason no_consensus / n_completed,,haiku
-fallback_rate_invalid_message,0.02,ratio,200,fallback with reason invalid_message / n_completed,,haiku
+fallback_rate_invalid_message,0.015,ratio,200,fallback with reason invalid_message / n_completed,,haiku
 fallback_rate_monotonic_violation,0,ratio,200,fallback with reason monotonic_violation / n_completed,,haiku
 fallback_rate_forced_deadlock,0,ratio,200,fallback with reason forced_deadlock / n_completed,forced runs are never counted,haiku
 fallback_rate_reviewer_reject,0.135,ratio,200,fallback with reason reviewer_reject / n_completed,,haiku
-agent_top_pick_rule_fail_rate,0.528889,ratio,675,valid messages whose ranking[0] candidate fails >= 1 engine rule / valid messages,violations caught by the rules engine,haiku
-agent_top_pick_rule_fail_rate_ATC,0.449339,ratio,227,ATC valid messages whose ranking[0] fails >= 1 engine rule / ATC valid messages,,haiku
-agent_top_pick_rule_fail_rate_PILOT,0.625,ratio,224,PILOT valid messages whose ranking[0] fails >= 1 engine rule / PILOT valid messages,,haiku
-agent_top_pick_rule_fail_rate_GROUND,0.513393,ratio,224,GROUND valid messages whose ranking[0] fails >= 1 engine rule / GROUND valid messages,,haiku
+agent_top_pick_rule_fail_rate,0.542097,ratio,677,valid messages whose ranking[0] candidate fails >= 1 engine rule / valid messages,violations caught by the rules engine,haiku
+agent_top_pick_rule_fail_rate_ATC,0.460177,ratio,226,ATC valid messages whose ranking[0] fails >= 1 engine rule / ATC valid messages,,haiku
+agent_top_pick_rule_fail_rate_PILOT,0.635556,ratio,225,PILOT valid messages whose ranking[0] fails >= 1 engine rule / PILOT valid messages,,haiku
+agent_top_pick_rule_fail_rate_GROUND,0.530973,ratio,226,GROUND valid messages whose ranking[0] fails >= 1 engine rule / GROUND valid messages,,haiku
 consensus_excluded_by_rules_rate,0.135,ratio,200,runs where the acceptable intersection was non-empty but none of it passed every rule / n_completed,,haiku
-cited_value_mismatch_rate,0.0548221,ratio,9923,mismatched path=value citations / path=value citations checked by the reviewer (every message of each agent that accepts the final pick),,haiku
-schema_invalid_rate,0.00881057,ratio,681,"invalid messages (schema, unknown_candidate, conflict, monotonic, exception) / agent calls",,haiku
-modelled_delay_agents_mean,-11.6012,min,200,mean est_delay_min of the agents+solver pick,model estimate; not comparable like-for-like with actual,haiku
+cited_value_mismatch_rate,0.00745817,ratio,9922,mismatched path=value citations / path=value citations checked by the reviewer (every message of each agent that accepts the final pick),,haiku
+schema_invalid_rate,0.00587372,ratio,681,"invalid messages (schema, unknown_candidate, conflict, monotonic, exception) / agent calls",,haiku
+modelled_delay_agents_mean,-11.2428,min,200,mean est_delay_min of the agents+solver pick,model estimate; not comparable like-for-like with actual,haiku
 modelled_delay_agents_median,-15,min,200,median est_delay_min of the agents+solver pick,model estimate; not comparable like-for-like with actual,haiku
-modelled_saving_vs_actual_mean,96.8497,min,173,mean of actual ARRIVAL_DELAY - modelled est_delay_min (agents+solver pick),estimate: model estimate; not comparable like-for-like with actual,haiku
-agents_vs_solver_same_pick_rate,0.705,ratio,200,rows where agents+solver and solver-only chose the same candidate / rows run in both,the like-for-like comparison,haiku
+modelled_saving_vs_actual_mean,96.4913,min,173,mean of actual ARRIVAL_DELAY - modelled est_delay_min (agents+solver pick),estimate: model estimate; not comparable like-for-like with actual,haiku
+agents_vs_solver_same_pick_rate,0.745,ratio,200,rows where agents+solver and solver-only chose the same candidate / rows run in both,the like-for-like comparison,haiku

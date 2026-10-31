@@ -175,9 +175,8 @@ corrected figures are:
 Two of the draft candidates no longer fail the way the draft described. They are kept because they
 show how much outcomes depend on assumed constants.
 
-Their current outcomes are taken from `eval/results/per_scenario.csv`. The engine, menu and builder
-have not changed since that run. The reviewer verdicts there predate the reviewer fixes in
-`9dcb86a`, which also removed some false cited-value mismatches.
+Their current outcomes are taken from `eval/results/per_scenario.csv`, from the 200-row evaluation
+re-run on the final code (after the reviewer fixes in `9dcb86a`).
 
 ### Row 145563: WN2940 PBI→ATL, 18 May 2015 (stale: no longer a no-option row)
 
@@ -193,9 +192,9 @@ have not changed since that run. The reviewer verdicts there predate the reviewe
   - The assumed wake leader is now a Large (77.1 s needed), so R-WAKE-01 no longer fails anywhere
     on the sample.
   - Solver-only picks `GATE_B12` (reviewer APPROVE).
-  - The Haiku agents agreed on `SLOT+15` in round 1 (reviewer MODIFY, from 2 cited-value
+  - The Haiku agents agreed on `GATE_B12` in round 1 (reviewer APPROVE, no cited-value
     mismatches).
-  - All three agents' top picks failed at least one rule.
+  - All three agents' top picks failed at least one rule; the consensus landed on a legal option.
 - **What it still shows.** Recalibrating assumed constants (chiefly the wake leader, Heavy →
   Large) turned "no option" into a routine recommendation. An answer that rests on assumed values must say so, and the source tags in the
   citations do.
@@ -218,10 +217,9 @@ have not changed since that run. The reviewer verdicts there predate the reviewe
 - **What happens now.**
   - The required spacing is 77.1 s and R-WAKE-01 passes.
   - Solver-only picks `SLOT-15` (reviewer APPROVE).
-  - The Haiku agents agreed on `SLOT+15` in round 1 (reviewer MODIFY, from 6 cited-value
-    mismatches).
-  - The ATC and PILOT top picks each failed at least one rule. `per_scenario.csv` records only
-    that they failed, not which rule.
+  - The Haiku agents agreed on `SLOT-15` in round 1 (reviewer APPROVE, no cited-value mismatches).
+  - The PILOT top pick failed at least one rule. `per_scenario.csv` records only that it failed,
+    not which rule.
 - **What it still shows.** A hard threshold on an assumed input is brittle. Recalibrating assumed
   constants (chiefly the wake leader) moved this row from "80 min divert" to "15 min earlier slot".
 - **What would fix it.** A margin band: within ±10% of a threshold on an assumed input, return

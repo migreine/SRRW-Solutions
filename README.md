@@ -111,6 +111,8 @@ flowchart TD
 ## Quick start
 
 Requires **Python ≥ 3.11** (tested on 3.14.7). The data (`data/flights.csv`, 39 MB) is in the repo.
+On Windows, clone into a short path (or enable long paths): the `anthropic` SDK has file names long
+enough to exceed the 260-character limit inside a deeply nested virtual environment.
 
 ```bash
 pip install -r requirements.txt
@@ -168,18 +170,22 @@ In the UI sidebar, **Showcase AA334** and **Failure case** load these directly.
 
 | Metric | Value |
 |---|---|
-| Consensus rate (within 2 rounds) | TBD |
-| Consensus in round 1 | TBD |
-| Agent top picks breaking a rule they could not see | TBD |
-| Agreed options excluded by the rules | TBD |
-| Escalated to a human (no legal option) | TBD |
-| Reviewer APPROVE / MODIFY / REJECT | TBD |
-| Reviewer-engine disagreement | TBD |
-| Schema-invalid replies | TBD |
-| Fallback after an invalid reply | TBD |
-| Agents vs solver-only: same pick | TBD |
-| Cost per decision | TBD |
-| Latency per decision | TBD |
+| Consensus rate (within 2 rounds) | 85.0% (170 / 200) |
+| Consensus in round 1 | 85.0% (no run needed round 2) |
+| Agent top picks breaking a rule they could not see | 54.2% of 677 valid agent messages; every one caught |
+| Agreed options excluded by the rules | 13.5% of runs |
+| Escalated to a human (no legal option) | 13.5% (27 / 200), same with or without agents |
+| Reviewer APPROVE / MODIFY / REJECT | 68.5% / 18.0% / 13.5% |
+| Reviewer-engine disagreement | 0.8% of 2,200 candidate checks |
+| Cited-value mismatches (agent quoted a wrong value) | 0.75% of 9,922 citations |
+| Schema-invalid replies | 0.6% of 681 agent calls, rejected and logged, never repaired |
+| Fallback after an invalid reply | 1.5% of runs (3 / 200) |
+| Agents vs solver-only: same pick | 74.5% |
+| Cost per decision | $0.0045 (whole 200-row run: $0.89) |
+| Latency per decision | mean 32 s, p95 57 s (three sequential agent calls) |
+
+For reference, the real outcomes in the same 200 rows (data): mean arrival delay 104.7 min, and
+mean 71.8 min of delay on the same aircraft's later delayed legs that day.
 
 Full numbers and definitions are in [`eval/results/summary.md`](eval/results/summary.md). The
 per-row results are in `eval/results/per_scenario.csv`. The sample is 150 weather-delayed arrivals
@@ -218,7 +224,8 @@ Known failure modes:
   fixes cannot be expressed.
 - **The engine and reviewer use different models** for wake demand, and used different duty
   arithmetic until commit `9dcb86a`. Disagreements are reported in the run file and the UI, not
-  hidden. The saved showcase and eval runs predate that fix (see docs/failure_case.md).
+  hidden. The saved demo runs and the evaluation were re-run after that fix; disagreement fell from
+  20.1% to 0.8% of candidate checks (see docs/failure_case.md).
 
 ## Data and limitations
 

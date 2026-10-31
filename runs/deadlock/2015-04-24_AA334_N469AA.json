@@ -9,14 +9,14 @@
       "force_deadlock": true,
       "tamper_rules": false
     },
-    "started_at": "2026-10-31T14:06:29.776756+08:00",
-    "latency_s": 3.3561,
+    "started_at": "2026-10-31T14:41:29.913425+08:00",
+    "latency_s": 3.7362,
     "cost_usd": 0.0,
     "tokens_in": 0,
     "tokens_out": 0,
     "cache_read_tokens": 0,
     "n_agent_calls": 0,
-    "git_sha": "1f2c0ca",
+    "git_sha": "29ccd8c",
     "fixture": false,
     "max_rounds": 2,
     "weights": {
@@ -2404,7 +2404,7 @@
     "reviewer_verdict": "APPROVE",
     "reviewer_notes": [
       "FUEL re-derived: SLOT-30 (slot shift -30 min) needs 0 + 14 min to most distant alternate + 45 reserve = 59 min; fuel_reserve_min=96.2 (estimated) leaves 96.2 min vs 59 -> PASS [14 CFR 121.639; 45-min final reserve: assumed].",
-      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min; crew_duty_remaining_min=292 (synthetic) leaves 322 min, >= 0 required -> PASS [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min to 101 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=292 (synthetic, at scheduled arrival) leaves 221 min, >= 0 required -> PASS [14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
       "WAKE re-derived: SLOT-30 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=118 (assumed) - dest_disruption=26 (data) = 92/h over 3 assumed arrival runways gives 117.4 s per runway -> PASS [FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed]."
     ],
     "human_decision": "pending",
@@ -2436,7 +2436,7 @@
       "verdict": "APPROVE",
       "notes": [
         "FUEL re-derived: SLOT-30 (slot shift -30 min) needs 0 + 14 min to most distant alternate + 45 reserve = 59 min; fuel_reserve_min=96.2 (estimated) leaves 96.2 min vs 59 -> PASS [14 CFR 121.639; 45-min final reserve: assumed].",
-        "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min; crew_duty_remaining_min=292 (synthetic) leaves 322 min, >= 0 required -> PASS [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+        "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min to 101 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=292 (synthetic, at scheduled arrival) leaves 221 min, >= 0 required -> PASS [14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
         "WAKE re-derived: SLOT-30 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=118 (assumed) - dest_disruption=26 (data) = 92/h over 3 assumed arrival runways gives 117.4 s per runway -> PASS [FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed]."
       ],
       "re_derived": [
@@ -2457,14 +2457,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT+15",
-          "derived": 277.0,
+          "derived": 176.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 15.0
+            "delay_min": 15.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2504,14 +2506,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT+30",
-          "derived": 262.0,
+          "derived": 161.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 30.0
+            "delay_min": 30.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2551,14 +2555,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT-15",
-          "derived": 307.0,
+          "derived": 206.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": -15.0
+            "delay_min": -15.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2598,14 +2604,16 @@
         {
           "check": "DUTY",
           "candidate_id": "SLOT-30",
-          "derived": 322.0,
+          "derived": 221.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": -30.0
+            "delay_min": -30.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2645,14 +2653,16 @@
         {
           "check": "DUTY",
           "candidate_id": "HOLD20",
-          "derived": 272.0,
+          "derived": 171.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 20.0
+            "delay_min": 20.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2692,14 +2702,16 @@
         {
           "check": "DUTY",
           "candidate_id": "HOLD40",
-          "derived": 252.0,
+          "derived": 151.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 40.0
+            "delay_min": 40.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2739,14 +2751,16 @@
         {
           "check": "DUTY",
           "candidate_id": "DIVERT_ACT",
-          "derived": 220.8857142857143,
+          "derived": 119.88571428571429,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 71.11428571428571
+            "delay_min": 71.11428571428571,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2786,14 +2800,16 @@
         {
           "check": "DUTY",
           "candidate_id": "DIVERT_TYR",
-          "derived": 219.31428571428572,
+          "derived": 118.31428571428572,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 72.68571428571428
+            "delay_min": 72.68571428571428,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2833,14 +2849,16 @@
         {
           "check": "DUTY",
           "candidate_id": "GATE_C2",
-          "derived": 287.0,
+          "derived": 186.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 5.0
+            "delay_min": 5.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2880,14 +2898,16 @@
         {
           "check": "DUTY",
           "candidate_id": "GATE_B12",
-          "derived": 287.0,
+          "derived": 186.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 5.0
+            "delay_min": 5.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2927,14 +2947,16 @@
         {
           "check": "DUTY",
           "candidate_id": "GROUND_HOLD_MFE",
-          "derived": 262.0,
+          "derived": 161.0,
           "threshold": 0.0,
           "passed": true,
-          "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+          "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
           "inputs": {
             "crew_duty_remaining_min": 292.0,
             "duty_source": "synthetic",
-            "delay_min": 30.0
+            "delay_min": 30.0,
+            "incurred_delay_min": 101.0,
+            "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
           }
         },
         {
@@ -2999,7 +3021,7 @@
     "verdict": "APPROVE",
     "notes": [
       "FUEL re-derived: SLOT-30 (slot shift -30 min) needs 0 + 14 min to most distant alternate + 45 reserve = 59 min; fuel_reserve_min=96.2 (estimated) leaves 96.2 min vs 59 -> PASS [14 CFR 121.639; 45-min final reserve: assumed].",
-      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min; crew_duty_remaining_min=292 (synthetic) leaves 322 min, >= 0 required -> PASS [14 CFR 117; duty remaining >= 0 at arrival: assumed].",
+      "DUTY re-derived: SLOT-30 (slot shift -30 min) adds -30 min to 101 min already incurred (flight.actual_arr_abs - flight.sched_arr_abs, data); crew_duty_remaining_min=292 (synthetic, at scheduled arrival) leaves 221 min, >= 0 required -> PASS [14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed].",
       "WAKE re-derived: SLOT-30 wake_category=L (assumed) behind an assumed Large leader needs 3 NM = 77.1 s at 140 kt; nominal_aar=118 (assumed) - dest_disruption=26 (data) = 92/h over 3 assumed arrival runways gives 117.4 s per runway -> PASS [FAA JO 7110.65 5-5-4; assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category; assumed: 3 arrival runways share the airport arrival rate; assumed: 140 kt approach speed]."
     ],
     "re_derived": [
@@ -3020,14 +3042,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT+15",
-        "derived": 277.0,
+        "derived": 176.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 15.0
+          "delay_min": 15.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3067,14 +3091,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT+30",
-        "derived": 262.0,
+        "derived": 161.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 30.0
+          "delay_min": 30.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3114,14 +3140,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT-15",
-        "derived": 307.0,
+        "derived": 206.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": -15.0
+          "delay_min": -15.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3161,14 +3189,16 @@
       {
         "check": "DUTY",
         "candidate_id": "SLOT-30",
-        "derived": 322.0,
+        "derived": 221.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": -30.0
+          "delay_min": -30.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3208,14 +3238,16 @@
       {
         "check": "DUTY",
         "candidate_id": "HOLD20",
-        "derived": 272.0,
+        "derived": 171.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 20.0
+          "delay_min": 20.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3255,14 +3287,16 @@
       {
         "check": "DUTY",
         "candidate_id": "HOLD40",
-        "derived": 252.0,
+        "derived": 151.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 40.0
+          "delay_min": 40.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3302,14 +3336,16 @@
       {
         "check": "DUTY",
         "candidate_id": "DIVERT_ACT",
-        "derived": 220.8857142857143,
+        "derived": 119.88571428571429,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 71.11428571428571
+          "delay_min": 71.11428571428571,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3349,14 +3385,16 @@
       {
         "check": "DUTY",
         "candidate_id": "DIVERT_TYR",
-        "derived": 219.31428571428572,
+        "derived": 118.31428571428572,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 72.68571428571428
+          "delay_min": 72.68571428571428,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3396,14 +3434,16 @@
       {
         "check": "DUTY",
         "candidate_id": "GATE_C2",
-        "derived": 287.0,
+        "derived": 186.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 5.0
+          "delay_min": 5.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3443,14 +3483,16 @@
       {
         "check": "DUTY",
         "candidate_id": "GATE_B12",
-        "derived": 287.0,
+        "derived": 186.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 5.0
+          "delay_min": 5.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
@@ -3490,14 +3532,16 @@
       {
         "check": "DUTY",
         "candidate_id": "GROUND_HOLD_MFE",
-        "derived": 262.0,
+        "derived": 161.0,
         "threshold": 0.0,
         "passed": true,
-        "citation": "14 CFR 117; duty remaining >= 0 at arrival: assumed",
+        "citation": "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed",
         "inputs": {
           "crew_duty_remaining_min": 292.0,
           "duty_source": "synthetic",
-          "delay_min": 30.0
+          "delay_min": 30.0,
+          "incurred_delay_min": 101.0,
+          "incurred_from": "flight.actual_arr_abs - flight.sched_arr_abs"
         }
       },
       {
