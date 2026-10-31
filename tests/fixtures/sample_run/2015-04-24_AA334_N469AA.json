@@ -1,0 +1,1599 @@
+{
+  "meta": {
+    "scenario_id": "2015-04-24_AA334_N469AA",
+    "row_index": 131072,
+    "agents": "haiku",
+    "model": "claude-haiku-5-5",
+    "seed": 42,
+    "flags": {
+      "force_deadlock": false,
+      "tamper_rules": false
+    },
+    "started_at": "2026-10-31T13:21:04+08:00",
+    "latency_s": 19.2,
+    "cost_usd": 0.003189,
+    "tokens_in": 12605,
+    "tokens_out": 3855,
+    "git_sha": "sample",
+    "sample_fixture": true
+  },
+  "scenario": {
+    "scenario_id": "2015-04-24_AA334_N469AA",
+    "row_index": 131072,
+    "flight": {
+      "AIR_SYSTEM_DELAY": 0,
+      "SECURITY_DELAY": 0,
+      "AIRLINE_DELAY": 0,
+      "DIVERTED": 0,
+      "CANCELLED": 0,
+      "YEAR": 2015,
+      "MONTH": 4,
+      "DAY": 24,
+      "DAY_OF_WEEK": 5,
+      "AIRLINE": "AA",
+      "TAIL_NUMBER": "N469AA",
+      "CANCELLATION_REASON": null,
+      "FLIGHT_NUMBER": 334,
+      "ORIGIN_AIRPORT": "MFE",
+      "DESTINATION_AIRPORT": "DFW",
+      "SCHEDULED_DEPARTURE": 676,
+      "DEPARTURE_TIME": 790,
+      "DEPARTURE_DELAY": 114.0,
+      "TAXI_OUT": 14.0,
+      "WHEELS_OFF": 804,
+      "SCHEDULED_TIME": 99.0,
+      "ELAPSED_TIME": 86.0,
+      "AIR_TIME": 64.0,
+      "DISTANCE": 468,
+      "WHEELS_ON": 868,
+      "TAXI_IN": 8.0,
+      "SCHEDULED_ARRIVAL": 775,
+      "ARRIVAL_TIME": 876,
+      "ARRIVAL_DELAY": 101.0,
+      "LATE_AIRCRAFT_DELAY": 43.0,
+      "WEATHER_DELAY": 58.0
+    },
+    "dest_disruption": {
+      "value": 14,
+      "source": "data",
+      "note": "delayed arrivals at DFW, 12:00-13:00 local (proxy)"
+    },
+    "taxi_congestion": {
+      "value": 1.4,
+      "source": "data",
+      "note": "TAXI_IN / DFW median TAXI_IN"
+    },
+    "downstream_legs": [
+      {
+        "AIRLINE": "AA",
+        "FLIGHT_NUMBER": 1389,
+        "ORIGIN_AIRPORT": "DFW",
+        "DESTINATION_AIRPORT": "MEM",
+        "SCHEDULED_DEPARTURE": 828,
+        "SCHEDULED_ARRIVAL": 922,
+        "DEPARTURE_DELAY": 111.0,
+        "ARRIVAL_DELAY": 102.0
+      },
+      {
+        "AIRLINE": "AA",
+        "FLIGHT_NUMBER": 1389,
+        "ORIGIN_AIRPORT": "MEM",
+        "DESTINATION_AIRPORT": "DFW",
+        "SCHEDULED_DEPARTURE": 962,
+        "SCHEDULED_ARRIVAL": 1068,
+        "DEPARTURE_DELAY": 249.0,
+        "ARRIVAL_DELAY": 264.0
+      },
+      {
+        "AIRLINE": "AA",
+        "FLIGHT_NUMBER": 1274,
+        "ORIGIN_AIRPORT": "DFW",
+        "DESTINATION_AIRPORT": "BWI",
+        "SCHEDULED_DEPARTURE": 1115,
+        "SCHEDULED_ARRIVAL": 1365,
+        "DEPARTURE_DELAY": 288.0,
+        "ARRIVAL_DELAY": 256.0
+      }
+    ],
+    "alternates": [
+      {
+        "iata": "DAL",
+        "distance_nm": 10
+      },
+      {
+        "iata": "AUS",
+        "distance_nm": 165
+      },
+      {
+        "iata": "IAH",
+        "distance_nm": 196
+      }
+    ],
+    "wake_category": {
+      "value": "L",
+      "source": "assumed",
+      "note": "FAA registry miss -> airline fleet default (MD-80/737)"
+    },
+    "fuel_reserve_min": {
+      "value": 78,
+      "source": "estimated",
+      "note": "distance x typical burn; planned arrival + reserve"
+    },
+    "crew_duty_remaining_min": {
+      "value": 150,
+      "source": "synthetic",
+      "note": "seeded FDP model under Part 117"
+    },
+    "gates": {
+      "assigned": "C21",
+      "free": [
+        "C14",
+        "C30"
+      ],
+      "occupied_until": {
+        "C21": 890
+      }
+    },
+    "connections": [
+      {
+        "flight": "AA2211",
+        "dest": "ORD",
+        "pax": 14,
+        "minutes_after_arrival": 70
+      },
+      {
+        "flight": "AA1630",
+        "dest": "LGA",
+        "pax": 9,
+        "minutes_after_arrival": 95
+      },
+      {
+        "flight": "AA455",
+        "dest": "MIA",
+        "pax": 6,
+        "minutes_after_arrival": 150
+      }
+    ],
+    "nominal_aar": {
+      "value": 90,
+      "source": "assumed",
+      "note": "FAA published DFW rate, VMC"
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "SLOT-15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": -15
+      },
+      "est_delay_min": 0.0,
+      "est_knock_on_min": 0.0
+    },
+    {
+      "candidate_id": "SLOT+15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 15
+      },
+      "est_delay_min": 15.0,
+      "est_knock_on_min": 10.0
+    },
+    {
+      "candidate_id": "SLOT+30",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 30
+      },
+      "est_delay_min": 30.0,
+      "est_knock_on_min": 26.0
+    },
+    {
+      "candidate_id": "HOLD20",
+      "kind": "hold",
+      "params": {
+        "minutes": 20
+      },
+      "est_delay_min": 20.0,
+      "est_knock_on_min": 16.0
+    },
+    {
+      "candidate_id": "HOLD40",
+      "kind": "hold",
+      "params": {
+        "minutes": 40
+      },
+      "est_delay_min": 40.0,
+      "est_knock_on_min": 35.0
+    },
+    {
+      "candidate_id": "DIVERT_DAL",
+      "kind": "divert",
+      "params": {
+        "iata": "DAL"
+      },
+      "est_delay_min": 95.0,
+      "est_knock_on_min": 140.0
+    },
+    {
+      "candidate_id": "DIVERT_AUS",
+      "kind": "divert",
+      "params": {
+        "iata": "AUS"
+      },
+      "est_delay_min": 150.0,
+      "est_knock_on_min": 210.0
+    },
+    {
+      "candidate_id": "GATE_C14",
+      "kind": "gate_swap",
+      "params": {
+        "gate": "C14",
+        "extra_taxi_min": 4
+      },
+      "est_delay_min": 4.0,
+      "est_knock_on_min": 0.0
+    },
+    {
+      "candidate_id": "GATE_C30",
+      "kind": "gate_swap",
+      "params": {
+        "gate": "C30",
+        "extra_taxi_min": 6
+      },
+      "est_delay_min": 6.0,
+      "est_knock_on_min": 0.0
+    },
+    {
+      "candidate_id": "GHOLD20",
+      "kind": "ground_hold",
+      "params": {
+        "minutes": 20
+      },
+      "est_delay_min": 20.0,
+      "est_knock_on_min": 14.0
+    }
+  ],
+  "rule_results": [
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT-15",
+      "passed": false,
+      "observed": 4.1,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "DIVERT_DAL",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "DIVERT_AUS",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GATE_C14",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GATE_C30",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-WAKE-01",
+      "candidate_id": "GHOLD20",
+      "passed": true,
+      "observed": 5.0,
+      "threshold": 5.0,
+      "source": "assumed",
+      "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 78.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 63.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 48.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 58.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "HOLD40",
+      "passed": false,
+      "observed": 38.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "DIVERT_DAL",
+      "passed": true,
+      "observed": 76.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "DIVERT_AUS",
+      "passed": true,
+      "observed": 54.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GATE_C14",
+      "passed": true,
+      "observed": 78.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GATE_C30",
+      "passed": true,
+      "observed": 78.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-FUEL-01",
+      "candidate_id": "GHOLD20",
+      "passed": true,
+      "observed": 78.0,
+      "threshold": 45.0,
+      "source": "estimated",
+      "citation": "14 CFR 121.639 (engine: final reserve floor)"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "DIVERT_DAL",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "DIVERT_AUS",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GATE_C14",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GATE_C30",
+      "passed": false,
+      "observed": "occupied 14:40-15:25",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-GATE-01",
+      "candidate_id": "GHOLD20",
+      "passed": true,
+      "observed": "free",
+      "threshold": "free",
+      "source": "synthetic",
+      "citation": "synthetic gate model, seed 42"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 150.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 135.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 120.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 130.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 110.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "DIVERT_DAL",
+      "passed": true,
+      "observed": 88.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "DIVERT_AUS",
+      "passed": true,
+      "observed": 66.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GATE_C14",
+      "passed": true,
+      "observed": 146.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GATE_C30",
+      "passed": true,
+      "observed": 144.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-DUTY-01",
+      "candidate_id": "GHOLD20",
+      "passed": true,
+      "observed": 130.0,
+      "threshold": 0.0,
+      "source": "synthetic",
+      "citation": "14 CFR Part 117 (FDP remaining)"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT-15",
+      "passed": true,
+      "observed": 58.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 53.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 45.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 50.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "HOLD40",
+      "passed": false,
+      "observed": 40.5,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "DIVERT_DAL",
+      "passed": false,
+      "observed": "tail at DAL",
+      "threshold": "at DFW",
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "DIVERT_AUS",
+      "passed": false,
+      "observed": "tail at AUS",
+      "threshold": "at DFW",
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GATE_C14",
+      "passed": true,
+      "observed": 58.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GATE_C30",
+      "passed": true,
+      "observed": 58.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-TURN-01",
+      "candidate_id": "GHOLD20",
+      "passed": true,
+      "observed": 51.0,
+      "threshold": 45.0,
+      "source": "assumed",
+      "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT-15",
+      "passed": false,
+      "observed": 21.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT+15",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "SLOT+30",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "HOLD20",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "HOLD40",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "DIVERT_DAL",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "DIVERT_AUS",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GATE_C14",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GATE_C30",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    },
+    {
+      "rule_id": "R-AAR-01",
+      "candidate_id": "GHOLD20",
+      "passed": true,
+      "observed": 13.0,
+      "threshold": 18.0,
+      "source": "assumed",
+      "citation": "assumed: FAA published arrival rate, disruption cap"
+    }
+  ],
+  "turns": [
+    {
+      "round": 1,
+      "messages": [
+        {
+          "agent": "ATC",
+          "round": 1,
+          "acceptable": [
+            "SLOT+15",
+            "GHOLD20",
+            "SLOT+30"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.9,
+              "rationale": "A 15-minute shift moves this arrival off the DFW peak with dest_disruption=14 against nominal_aar=90.",
+              "cited_fields": [
+                "dest_disruption=14",
+                "nominal_aar=90"
+              ]
+            },
+            {
+              "candidate_id": "GHOLD20",
+              "score": 0.85,
+              "rationale": "Holding at MFE keeps the aircraft out of the DFW stream and off busy taxiways.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.75,
+              "rationale": "Regularises the stream but later than needed.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C14",
+              "score": 0.55,
+              "rationale": "Neutral for the runway; adds a little taxi time when taxi_congestion=1.4.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.4,
+              "rationale": "Pulls the flight into the peak hour.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C30",
+              "score": 0.5,
+              "rationale": "Neutral for the runway, longer taxi.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.35,
+              "rationale": "Airborne holding into a disrupted hour.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "score": 0.25,
+              "rationale": "Re-enters the sector later as a second arrival.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "score": 0.2,
+              "rationale": "Removes the flight but adds a later re-entry.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.1,
+              "rationale": "Longest airborne hold during the disruption peak.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "HOLD40",
+              "reason": "Adds 40 minutes of airborne holding into the disrupted hour.",
+              "cited_field": "dest_disruption=14"
+            }
+          ]
+        },
+        {
+          "agent": "PILOT",
+          "round": 1,
+          "acceptable": [
+            "GATE_C14",
+            "SLOT+15",
+            "SLOT-15"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "GATE_C14",
+              "score": 0.85,
+              "rationale": "No added airborne time and protects the AA2211 connection.",
+              "cited_fields": [
+                "fuel_reserve_min=78",
+                "connections[0].minutes_after_arrival=70"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.8,
+              "rationale": "Earliest arrival protects the three listed connections.",
+              "cited_fields": [
+                "connections[0].pax=14"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.8,
+              "rationale": "Small shift; the fuel figure is an estimate so short is better.",
+              "cited_fields": [
+                "fuel_reserve_min=78",
+                "crew_duty_remaining_min=180"
+              ]
+            },
+            {
+              "candidate_id": "GHOLD20",
+              "score": 0.65,
+              "rationale": "Waits on the ground at MFE, no airborne burn.",
+              "cited_fields": [
+                "fuel_reserve_min=78"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C30",
+              "score": 0.6,
+              "rationale": "Neutral for the flight deck.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.5,
+              "rationale": "Longer day for the crew.",
+              "cited_fields": [
+                "crew_duty_remaining_min=150"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.35,
+              "rationale": "Holding near weather with WEATHER_DELAY present.",
+              "cited_fields": [
+                "flight.WEATHER_DELAY=58"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "score": 0.3,
+              "rationale": "Near alternate but all connections are lost.",
+              "cited_fields": [
+                "alternates[0].distance_nm=10"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "score": 0.1,
+              "rationale": "Far alternate, connections lost.",
+              "cited_fields": [
+                "alternates[1].distance_nm=165"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.05,
+              "rationale": "Long hold draws on an estimated reserve.",
+              "cited_fields": [
+                "fuel_reserve_min=78"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "HOLD40",
+              "reason": "A 40-minute hold draws on fuel_reserve_min=78, an estimate.",
+              "cited_field": "fuel_reserve_min=78"
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "reason": "Far alternate and all three connections lost.",
+              "cited_field": "alternates[1].distance_nm=165"
+            }
+          ]
+        },
+        {
+          "agent": "GROUND",
+          "round": 1,
+          "acceptable": [
+            "GATE_C14",
+            "SLOT-15",
+            "GHOLD20"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "GATE_C14",
+              "score": 0.95,
+              "rationale": "C14 is free (synthetic gate model) and keeps the AA1389 turn.",
+              "cited_fields": [
+                "gates.free[0]=C14",
+                "downstream_legs[0].FLIGHT_NUMBER=1389"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.8,
+              "rationale": "Earlier arrival protects the downstream turnaround.",
+              "cited_fields": [
+                "downstream_legs[0].SCHEDULED_DEPARTURE=828"
+              ]
+            },
+            {
+              "candidate_id": "GHOLD20",
+              "score": 0.7,
+              "rationale": "Low knock-on for the ramp crew.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.65,
+              "rationale": "Modest knock-on on the downstream legs.",
+              "cited_fields": [
+                "downstream_legs[0].SCHEDULED_DEPARTURE=828"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C30",
+              "score": 0.6,
+              "rationale": "Free in the gate model but further from the turn.",
+              "cited_fields": [
+                "gates.free[1]=C30"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.45,
+              "rationale": "Pushes the turnaround towards the shift change.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.4,
+              "rationale": "Moderate knock-on.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.2,
+              "rationale": "High est_knock_on_min on a contested gate.",
+              "cited_fields": [
+                "gates.assigned=C21"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "score": 0.15,
+              "rationale": "Strands the tail away from the hub.",
+              "cited_fields": [
+                "downstream_legs[0].FLIGHT_NUMBER=1389"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "score": 0.05,
+              "rationale": "Strands the tail, gate plan and three downstream legs.",
+              "cited_fields": [
+                "downstream_legs[0].FLIGHT_NUMBER=1389"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_AUS",
+              "reason": "Strands the tail; three downstream legs depend on it.",
+              "cited_field": "downstream_legs[0].FLIGHT_NUMBER=1389"
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "reason": "Tail ends up off-hub before AA1389.",
+              "cited_field": "downstream_legs[0].FLIGHT_NUMBER=1389"
+            }
+          ]
+        }
+      ],
+      "invalid_messages": [],
+      "intersection": []
+    },
+    {
+      "round": 2,
+      "messages": [
+        {
+          "agent": "ATC",
+          "round": 2,
+          "acceptable": [
+            "SLOT+15",
+            "GHOLD20",
+            "SLOT+30",
+            "GATE_C14"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.9,
+              "rationale": "A 15-minute shift moves this arrival off the DFW peak with dest_disruption=14 against nominal_aar=90.",
+              "cited_fields": [
+                "dest_disruption=14",
+                "nominal_aar=90"
+              ]
+            },
+            {
+              "candidate_id": "GHOLD20",
+              "score": 0.85,
+              "rationale": "Holding at MFE keeps the aircraft out of the DFW stream and off busy taxiways.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.75,
+              "rationale": "Regularises the stream but later than needed.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C14",
+              "score": 0.55,
+              "rationale": "Concession: tolerable for the runway; taxi pressure is moderate at taxi_congestion=1.4.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.4,
+              "rationale": "Pulls the flight into the peak hour.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C30",
+              "score": 0.5,
+              "rationale": "Neutral for the runway, longer taxi.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.35,
+              "rationale": "Airborne holding into a disrupted hour.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "score": 0.25,
+              "rationale": "Re-enters the sector later as a second arrival.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "score": 0.2,
+              "rationale": "Removes the flight but adds a later re-entry.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.1,
+              "rationale": "Longest airborne hold during the disruption peak.",
+              "cited_fields": [
+                "dest_disruption=14"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "HOLD40",
+              "reason": "Adds 40 minutes of airborne holding into the disrupted hour.",
+              "cited_field": "dest_disruption=14"
+            }
+          ]
+        },
+        {
+          "agent": "PILOT",
+          "round": 2,
+          "acceptable": [
+            "GATE_C14",
+            "SLOT+15",
+            "SLOT-15",
+            "GHOLD20"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "GATE_C14",
+              "score": 0.85,
+              "rationale": "No added airborne time and protects the AA2211 connection.",
+              "cited_fields": [
+                "fuel_reserve_min=78",
+                "connections[0].minutes_after_arrival=70"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.8,
+              "rationale": "Earliest arrival protects the three listed connections.",
+              "cited_fields": [
+                "connections[0].pax=14"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.8,
+              "rationale": "Small shift; the fuel figure is an estimate so short is better.",
+              "cited_fields": [
+                "fuel_reserve_min=78",
+                "crew_duty_remaining_min=180"
+              ]
+            },
+            {
+              "candidate_id": "GHOLD20",
+              "score": 0.65,
+              "rationale": "Concession: waiting at MFE adds no airborne time against fuel_reserve_min=78.",
+              "cited_fields": [
+                "fuel_reserve_min=78"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C30",
+              "score": 0.6,
+              "rationale": "Neutral for the flight deck.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.5,
+              "rationale": "Longer day for the crew.",
+              "cited_fields": [
+                "crew_duty_remaining_min=150"
+              ]
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.35,
+              "rationale": "Holding near weather with WEATHER_DELAY present.",
+              "cited_fields": [
+                "flight.WEATHER_DELAY=58"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "score": 0.3,
+              "rationale": "Near alternate but all connections are lost.",
+              "cited_fields": [
+                "alternates[0].distance_nm=10"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "score": 0.1,
+              "rationale": "Far alternate, connections lost.",
+              "cited_fields": [
+                "alternates[1].distance_nm=165"
+              ]
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.05,
+              "rationale": "Long hold draws on an estimated reserve.",
+              "cited_fields": [
+                "fuel_reserve_min=78"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "HOLD40",
+              "reason": "A 40-minute hold draws on fuel_reserve_min=78, an estimate.",
+              "cited_field": "fuel_reserve_min=78"
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "reason": "Far alternate and all three connections lost.",
+              "cited_field": "alternates[1].distance_nm=165"
+            }
+          ]
+        },
+        {
+          "agent": "GROUND",
+          "round": 2,
+          "acceptable": [
+            "GATE_C14",
+            "SLOT-15",
+            "GHOLD20",
+            "SLOT+15"
+          ],
+          "ranking": [
+            {
+              "candidate_id": "GATE_C14",
+              "score": 0.95,
+              "rationale": "C14 is free (synthetic gate model) and keeps the AA1389 turn.",
+              "cited_fields": [
+                "gates.free[0]=C14",
+                "downstream_legs[0].FLIGHT_NUMBER=1389"
+              ]
+            },
+            {
+              "candidate_id": "SLOT-15",
+              "score": 0.8,
+              "rationale": "Earlier arrival protects the downstream turnaround.",
+              "cited_fields": [
+                "downstream_legs[0].SCHEDULED_DEPARTURE=828"
+              ]
+            },
+            {
+              "candidate_id": "GHOLD20",
+              "score": 0.7,
+              "rationale": "Low knock-on for the ramp crew.",
+              "cited_fields": [
+                "taxi_congestion=1.4"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+15",
+              "score": 0.65,
+              "rationale": "Concession: the AA1389 turn still works with a 15-minute shift.",
+              "cited_fields": [
+                "downstream_legs[0].SCHEDULED_DEPARTURE=828"
+              ]
+            },
+            {
+              "candidate_id": "GATE_C30",
+              "score": 0.6,
+              "rationale": "Free in the gate model but further from the turn.",
+              "cited_fields": [
+                "gates.free[1]=C30"
+              ]
+            },
+            {
+              "candidate_id": "SLOT+30",
+              "score": 0.45,
+              "rationale": "Pushes the turnaround towards the shift change.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "HOLD20",
+              "score": 0.4,
+              "rationale": "Moderate knock-on.",
+              "cited_fields": []
+            },
+            {
+              "candidate_id": "HOLD40",
+              "score": 0.2,
+              "rationale": "High est_knock_on_min on a contested gate.",
+              "cited_fields": [
+                "gates.assigned=C21"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "score": 0.15,
+              "rationale": "Strands the tail away from the hub.",
+              "cited_fields": [
+                "downstream_legs[0].FLIGHT_NUMBER=1389"
+              ]
+            },
+            {
+              "candidate_id": "DIVERT_AUS",
+              "score": 0.05,
+              "rationale": "Strands the tail, gate plan and three downstream legs.",
+              "cited_fields": [
+                "downstream_legs[0].FLIGHT_NUMBER=1389"
+              ]
+            }
+          ],
+          "vetoes": [
+            {
+              "candidate_id": "DIVERT_AUS",
+              "reason": "Strands the tail; three downstream legs depend on it.",
+              "cited_field": "downstream_legs[0].FLIGHT_NUMBER=1389"
+            },
+            {
+              "candidate_id": "DIVERT_DAL",
+              "reason": "Tail ends up off-hub before AA1389.",
+              "cited_field": "downstream_legs[0].FLIGHT_NUMBER=1389"
+            }
+          ]
+        }
+      ],
+      "invalid_messages": [],
+      "intersection": [
+        "SLOT+15",
+        "GHOLD20",
+        "GATE_C14"
+      ]
+    }
+  ],
+  "recommendation": {
+    "scenario_id": "2015-04-24_AA334_N469AA",
+    "chosen": {
+      "candidate_id": "SLOT+15",
+      "kind": "slot_shift",
+      "params": {
+        "shift_min": 15
+      },
+      "est_delay_min": 15.0,
+      "est_knock_on_min": 10.0
+    },
+    "decided_by": "consensus",
+    "rounds_used": 2,
+    "rule_results": [
+      {
+        "rule_id": "R-WAKE-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 5.0,
+        "threshold": 5.0,
+        "source": "assumed",
+        "citation": "FAA JO 7110.65 para 5-5-4 (spacing behind assumed Heavy leader)"
+      },
+      {
+        "rule_id": "R-FUEL-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 63.0,
+        "threshold": 45.0,
+        "source": "estimated",
+        "citation": "14 CFR 121.639 (engine: final reserve floor)"
+      },
+      {
+        "rule_id": "R-GATE-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": "free",
+        "threshold": "free",
+        "source": "synthetic",
+        "citation": "synthetic gate model, seed 42"
+      },
+      {
+        "rule_id": "R-DUTY-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 135.0,
+        "threshold": 0.0,
+        "source": "synthetic",
+        "citation": "14 CFR Part 117 (FDP remaining)"
+      },
+      {
+        "rule_id": "R-TURN-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 53.0,
+        "threshold": 45.0,
+        "source": "assumed",
+        "citation": "assumed: airline minimum turnaround, narrowbody 45 min"
+      },
+      {
+        "rule_id": "R-AAR-01",
+        "candidate_id": "SLOT+15",
+        "passed": true,
+        "observed": 13.0,
+        "threshold": 18.0,
+        "source": "assumed",
+        "citation": "assumed: FAA published arrival rate, disruption cap"
+      }
+    ],
+    "reviewer_verdict": "MODIFY",
+    "reviewer_notes": [
+      "FUEL re-derived: SLOT+15 adds 15 airborne min; 78-15=63 >= 45 min; fuel_reserve_min=78 (estimated) -> PASS [14 CFR 121.639]",
+      "DUTY re-derived: SLOT+15 adds 15 min; 150-15=135 >= 0; crew_duty_remaining_min=150 (synthetic) -> PASS [14 CFR Part 117]",
+      "WAKE re-derived: behind assumed Heavy leader, L needs 5 NM; available spacing at effective rate 76/h is above it -> PASS [FAA JO 7110.65 5-5-4]",
+      "CITED: PILOT ranked SLOT+15 citing crew_duty_remaining_min=180; scenario has 150 (synthetic) -> mismatch"
+    ],
+    "human_decision": "pending",
+    "log_path": "runs/2015-04-24_AA334_N469AA.jsonl",
+    "fallback": null,
+    "reviewer_detail": {
+      "verdict": "MODIFY",
+      "notes": [
+        "FUEL re-derived: SLOT+15 adds 15 airborne min; 78-15=63 >= 45 min; fuel_reserve_min=78 (estimated) -> PASS [14 CFR 121.639]",
+        "DUTY re-derived: SLOT+15 adds 15 min; 150-15=135 >= 0; crew_duty_remaining_min=150 (synthetic) -> PASS [14 CFR Part 117]",
+        "WAKE re-derived: behind assumed Heavy leader, L needs 5 NM; available spacing at effective rate 76/h is above it -> PASS [FAA JO 7110.65 5-5-4]",
+        "CITED: PILOT ranked SLOT+15 citing crew_duty_remaining_min=180; scenario has 150 (synthetic) -> mismatch"
+      ],
+      "re_derived": [
+        {
+          "check": "FUEL",
+          "candidate_id": "SLOT+15",
+          "derived": 63,
+          "threshold": 45,
+          "passed": true,
+          "citation": "14 CFR 121.639"
+        },
+        {
+          "check": "DUTY",
+          "candidate_id": "SLOT+15",
+          "derived": 135,
+          "threshold": 0,
+          "passed": true,
+          "citation": "14 CFR Part 117"
+        },
+        {
+          "check": "WAKE",
+          "candidate_id": "SLOT+15",
+          "derived": 5.0,
+          "threshold": 5.0,
+          "passed": true,
+          "citation": "FAA JO 7110.65 para 5-5-4"
+        }
+      ],
+      "cited_mismatches": [
+        {
+          "agent": "PILOT",
+          "round": 2,
+          "candidate_id": "SLOT+15",
+          "path": "crew_duty_remaining_min",
+          "cited": "180",
+          "actual": 150,
+          "tolerance": 3.0
+        }
+      ],
+      "engine_disagreements": []
+    }
+  },
+  "fallback": {
+    "fired": false,
+    "reason": null,
+    "objective": null,
+    "n_eligible": null,
+    "excluded": []
+  },
+  "reviewer": {
+    "verdict": "MODIFY",
+    "notes": [
+      "FUEL re-derived: SLOT+15 adds 15 airborne min; 78-15=63 >= 45 min; fuel_reserve_min=78 (estimated) -> PASS [14 CFR 121.639]",
+      "DUTY re-derived: SLOT+15 adds 15 min; 150-15=135 >= 0; crew_duty_remaining_min=150 (synthetic) -> PASS [14 CFR Part 117]",
+      "WAKE re-derived: behind assumed Heavy leader, L needs 5 NM; available spacing at effective rate 76/h is above it -> PASS [FAA JO 7110.65 5-5-4]",
+      "CITED: PILOT ranked SLOT+15 citing crew_duty_remaining_min=180; scenario has 150 (synthetic) -> mismatch"
+    ],
+    "re_derived": [
+      {
+        "check": "FUEL",
+        "candidate_id": "SLOT+15",
+        "derived": 63,
+        "threshold": 45,
+        "passed": true,
+        "citation": "14 CFR 121.639"
+      },
+      {
+        "check": "DUTY",
+        "candidate_id": "SLOT+15",
+        "derived": 135,
+        "threshold": 0,
+        "passed": true,
+        "citation": "14 CFR Part 117"
+      },
+      {
+        "check": "WAKE",
+        "candidate_id": "SLOT+15",
+        "derived": 5.0,
+        "threshold": 5.0,
+        "passed": true,
+        "citation": "FAA JO 7110.65 para 5-5-4"
+      }
+    ],
+    "cited_mismatches": [
+      {
+        "agent": "PILOT",
+        "round": 2,
+        "candidate_id": "SLOT+15",
+        "path": "crew_duty_remaining_min",
+        "cited": "180",
+        "actual": 150,
+        "tolerance": 3.0
+      }
+    ],
+    "engine_disagreements": []
+  }
+}
