@@ -164,6 +164,20 @@ API key.
 
 In the UI sidebar, **Showcase AA334** and **Failure case** load these directly.
 
+## Story demo
+
+A guided, click-through case study for judges: one self-contained HTML file, no server, no network.
+
+```bash
+python scripts/build_story.py
+```
+
+Then open `demo/story.html` in any browser. Use Next / Back or the arrow keys; press `I` for the
+chapter index. The builder reads the saved runs in `runs/`, `eval/results/summary.csv`,
+`eval/results/per_scenario.csv` and `data/flights.csv` at build time and embeds them as JSON. Re-run
+it after any new results. Industry figures quoted in the story come from our briefs in `docs/`. They
+are labelled "reported in our industry brief" and are not our measurements.
+
 ## Results
 
 ### Evaluation (200 real delayed flights, Claude Haiku 5.5 agents)
