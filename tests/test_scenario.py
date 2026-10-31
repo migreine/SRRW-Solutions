@@ -1,6 +1,9 @@
 from src.scenario.builder import (
     EXCLUDED_ALTERNATES,
     _alternates,
+    arrival_hour_stats,
+    delayed_arrivals_in_hour,
+    planned_alternate_min,
     build_scenario,
     hhmm_to_min,
     load_flights,
@@ -27,7 +30,9 @@ def test_aa334_showcase():
     # The aircraft landed after its next leg was due out: the cascade the Ground agent sees.
     assert s.downstream_legs[0]["gap_after_actual_arrival_min"] < 0
     assert s.dest_disruption.source == "data" and s.dest_disruption.value > 0
-    assert [a["iata"] for a in s.alternates] == ["DAL", "ACT", "TYR"]
+    # DAL (9.8 nm) is skipped: inside MIN_ALTERNATE_NM, same terminal area and weather.
+    assert [a["iata"] for a in s.alternates] == ["ACT", "TYR", "SPS"]
+    assert all(a["distance_nm"] >= 30 for a in s.alternates)
 
 
 def test_row_0_builds():
@@ -74,3 +79,20 @@ def test_alternates_skip_missing_coordinates():
     assert _alternates("ECP") == []
     for dest in ("DFW", "ATL", "PNS", "MOB"):  # PNS and MOB are near ECP
         assert not {a["iata"] for a in _alternates(dest)} & EXCLUDED_ALTERNATES
+
+
+def test_fuel_and_duty_semantics():
+    s = build_scenario(AA334_ROW)
+    # fuel includes the 45 min final reserve plus the alternate time (plan-rohan section 0)
+    assert s.fuel_reserve_min.value >= 45 + planned_alternate_min(s.alternates)
+    # duty remainder is measured at SCHEDULED arrival, so a legal crew is non-negative there
+    assert 30 <= s.crew_duty_remaining_min.value <= 300
+
+
+def test_delayed_arrivals_helper_matches_scenario():
+    s = build_scenario(AA334_ROW)
+    n = delayed_arrivals_in_hour("DFW", s.flight["date"], s.flight["actual_arr_abs"])
+    assert n == s.dest_disruption.value
+    assert arrival_hour_stats("DFW", s.flight["date"], 1440 + 30)["day"] == arrival_hour_stats(
+        "DFW", "2015-04-25", 30
+    )["day"]

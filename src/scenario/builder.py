@@ -10,15 +10,36 @@ Dict shapes (the contract other modules read; add keys freely, never rename):
 - downstream_legs: [{row_index, airline, flight_number, origin, destination, sched_dep_abs,
   sched_arr_abs, departure_delay, arrival_delay, gap_after_actual_arrival_min}], same tail and date,
   scheduled after this flight. Partial: only delayed legs are in the data.
-- alternates: [{iata, name, distance_nm, lat, lon}], 3 nearest to the destination.
+- alternates: [{iata, name, distance_nm, lat, lon}], the 3 nearest to the destination that are at
+  least MIN_ALTERNATE_NM (30 nm) away. Closer airports (e.g. DAL at 9.8 nm from DFW) share the
+  destination's terminal area and weather, so they are not credible weather alternates. Empty when
+  the destination has no coordinates (ECP, PBG, UST).
 - gates: {airport, assigned_gate, min_turnaround_min, turnaround_source, occupancy, source}.
   occupancy maps gate id -> [[start_abs, end_abs], ...], the busy intervals of OTHER aircraft.
 - connections: [{row_index, flight_number, destination, sched_dep_abs, minutes_after_arrival,
   est_pax, source}], same-airline departures 45-180 min after actual arrival.
 
-fuel_reserve_min is discretionary endurance: minutes of extra airborne time available before the
-aircraft would land below the 14 CFR 121.639 requirement (destination + alternate + 45 min).
-crew_duty_remaining_min is measured at the actual (unmitigated) arrival time.
+Field semantics (binding for the rules engine and the reviewer, plan-rohan section 0 item 2):
+- fuel_reserve_min.value: minutes of flying time available beyond the planned arrival at the
+  destination, INCLUDING the 45 min final reserve. Built as
+  45 (14 CFR 121.639 final reserve) + planned_alternate_min (most distant listed alternate,
+  distance_nm / 7 nm per min, 420 kt assumed; 30 min assumed if there are no alternates)
+  + 5% contingency of AIR_TIME + seeded discretionary fuel (5-20 min). Tagged "estimated".
+  The reviewer passes FUEL iff value - airborne_extra >= 45; the rules engine is stricter and
+  also keeps the alternate time (value - airborne_extra >= planned_alternate_min + 45).
+- crew_duty_remaining_min.value: FDP minutes remaining at the SCHEDULED arrival (gate-in). A
+  legally scheduled crew has a non-negative remainder there, so the remainder is seeded in
+  [30, 300] (capped so the report time is at least 45 min before scheduled departure). FDP limit
+  13 h unaugmented, 17 h when the block time exceeds 9 h (augmented crew), both from 14 CFR 117
+  Tables B/C mid-range, assumed. The incurred ARRIVAL_DELAY is NOT subtracted here; the rules
+  engine subtracts it. Tagged "synthetic".
+- Times: ARRIVAL_TIME / actual_arr_abs are gate-in times (they already include TAXI_IN).
+
+Helpers for other modules (Scenario is frozen, so import these instead of adding fields):
+- planned_alternate_min(alternates) -> minutes to the most distant listed alternate.
+- delayed_arrivals_in_hour(dest, date_iso, abs_minute) -> delayed arrivals (data) at dest in the
+  clock hour containing abs_minute on the flight's date axis (abs_minute may be > 1440 or < 0).
+- arrival_hour_stats(dest, date_iso, abs_minute) -> {"delayed", "weather_delayed", "day", "hour"}.
 """
 
 from datetime import date, timedelta
@@ -40,6 +61,12 @@ HHMM_COLUMNS = [
     "ARRIVAL_TIME",
 ]
 EXCLUDED_ALTERNATES = {"ECP", "PBG", "UST"}  # no coordinates in airports.csv
+MIN_ALTERNATE_NM = 30.0  # assumed: closer airports share the destination's terminal area/weather
+CRUISE_NM_PER_MIN = 7.0  # 420 kt, assumed (same constant as the reviewer)
+FINAL_RESERVE_MIN = 45  # 14 CFR 121.639(c), 45 min at normal cruise
+DEFAULT_ALTERNATE_MIN = 30.0  # assumed alternate time when no alternate can be ranked
+CONTINGENCY_FRACTION = 0.05  # assumed 5% of trip (AIR_TIME), common airline practice
+DISCRETIONARY_RANGE = (5, 20)  # seeded discretionary/extra fuel in minutes, assumed
 EARTH_RADIUS_NM = 3440.065
 EPOCH = pd.Timestamp("2015-01-01")
 
@@ -53,6 +80,10 @@ NOMINAL_AAR = {
 DEFAULT_AAR = 40
 HEAVY_DISTANCE_MI = 2500  # longer routes assumed flown by widebodies
 FDP_LIMIT_MIN = 13 * 60  # 14 CFR 117 Table B mid-range, assumed (9-14 h by report time/segments)
+FDP_LIMIT_AUGMENTED_MIN = 17 * 60  # 14 CFR 117 Table C mid-range, assumed, block time > 9 h
+AUGMENTED_BLOCK_MIN = 9 * 60
+REPORT_BEFORE_DEP_MIN = 45  # assumed minimum report-to-departure time
+DUTY_REMAINING_RANGE = (30, 300)  # seeded FDP remainder at scheduled arrival, synthetic
 TURNAROUND_MIN = {"H": 90, "L": 45, "S": 30}  # assumed per aircraft class
 GATE_IDS = [f"{c}{n}" for c in "ABCD" for n in (2, 6, 12)]
 
@@ -104,12 +135,49 @@ def load_airports() -> pd.DataFrame:
 @lru_cache(maxsize=1)
 def _indexes():
     f = load_flights()
+    keys = ["arr_day_idx", "DESTINATION_AIRPORT", "arr_hour"]
     return {
-        "hour_counts": f.groupby(["arr_day_idx", "DESTINATION_AIRPORT", "arr_hour"]).size(),
+        "hour_counts": f.groupby(keys).size(),
+        "hour_weather_counts": f[f.WEATHER_DELAY > 0].groupby(keys).size(),
         "taxi_in_median": f.groupby("DESTINATION_AIRPORT").TAXI_IN.median(),
         "tail_day": f.groupby(["TAIL_NUMBER", "day_idx"]).indices,
         "airline_origin_day": f.groupby(["AIRLINE", "ORIGIN_AIRPORT", "day_idx"]).indices,
     }
+
+
+def _day_idx(date_iso: str) -> int:
+    return (pd.Timestamp(date_iso) - EPOCH).days
+
+
+def arrival_hour_stats(dest: str, date_iso: str, abs_minute: float) -> dict:
+    """Delayed and weather-delayed arrivals (data, proxy) at dest in the clock hour of abs_minute.
+
+    abs_minute is on the flight's date axis (minutes since local midnight of date_iso), so values
+    >= 1440 fall on the next day and negative values on the previous day.
+    """
+    m = int(np.floor(abs_minute))
+    day = _day_idx(date_iso) + m // 1440
+    hour = (m % 1440) // 60
+    idx = _indexes()
+    key = (day, dest, hour)
+    return {
+        "delayed": int(idx["hour_counts"].get(key, 0)),
+        "weather_delayed": int(idx["hour_weather_counts"].get(key, 0)),
+        "day": int(day),
+        "hour": int(hour),
+    }
+
+
+def delayed_arrivals_in_hour(dest: str, date_iso: str, abs_minute: float) -> int:
+    """Delayed arrivals (data, proxy: delayed flights only) at dest in the hour of abs_minute."""
+    return arrival_hour_stats(dest, date_iso, abs_minute)["delayed"]
+
+
+def planned_alternate_min(alternates: list[dict]) -> float:
+    """Minutes to the most distant listed alternate at 420 kt (assumed); default if none."""
+    if not alternates:
+        return DEFAULT_ALTERNATE_MIN
+    return round(max(a["distance_nm"] for a in alternates) / CRUISE_NM_PER_MIN, 1)
 
 
 def _clean(v):
@@ -160,6 +228,7 @@ def _alternates(dest: str, n: int = 3) -> list[dict]:
     dist = _haversine_nm(
         airports.loc[dest, "LATITUDE"], airports.loc[dest, "LONGITUDE"], cand.LATITUDE, cand.LONGITUDE
     )
+    dist = dist[dist >= MIN_ALTERNATE_NM]  # same terminal area and weather: not an alternate
     return [
         {
             "iata": iata,
@@ -252,21 +321,31 @@ def build_scenario(row_index: int, seed: int = 42) -> Scenario:
         note=f"no registry lookup; DISTANCE {int(row.DISTANCE)} mi {'>' if heavy else '<='} {HEAVY_DISTANCE_MI} -> {wake}",
     )
 
-    contingency = 0.05 * float(row.AIR_TIME)
-    extra = int(rng.integers(10, 31))
+    alternates = _alternates(dest)
+    alt_min = planned_alternate_min(alternates)
+    contingency = round(CONTINGENCY_FRACTION * float(row.AIR_TIME), 1)
+    extra = int(rng.integers(DISCRETIONARY_RANGE[0], DISCRETIONARY_RANGE[1] + 1))
+    alt_label = f"most distant alternate {max(alternates, key=lambda a: a['distance_nm'])['iata']}" if alternates else "no alternate ranked, assumed"
     fuel_reserve_min = Tagged(
-        value=round(contingency + extra, 1),
+        value=round(FINAL_RESERVE_MIN + alt_min + contingency + extra, 1),
         source="estimated",
-        note=f"5% contingency of AIR_TIME ({contingency:.1f} min) + {extra} min discretionary (seeded); "
-        "above the 121.639 destination+alternate+45 min requirement",
+        note=f"minutes beyond planned arrival incl. final reserve: {FINAL_RESERVE_MIN} final reserve "
+        f"(14 CFR 121.639) + {alt_min:g} to {alt_label} (420 kt assumed) + {contingency:g} contingency "
+        f"(5% of AIR_TIME {int(row.AIR_TIME)}) + {extra} discretionary (seeded)",
     )
 
-    report = int(row.sched_dep_abs) - 60 - int(rng.integers(0, 361))
-    remaining = FDP_LIMIT_MIN - (int(row.actual_arr_abs) - report)
+    block = int(row.SCHEDULED_TIME)
+    augmented = block > AUGMENTED_BLOCK_MIN
+    fdp_limit = FDP_LIMIT_AUGMENTED_MIN if augmented else FDP_LIMIT_MIN
+    lo, hi = DUTY_REMAINING_RANGE
+    hi = max(lo, min(hi, fdp_limit - block - REPORT_BEFORE_DEP_MIN))
+    remaining = int(rng.integers(lo, hi + 1))
+    report = int(row.sched_arr_abs) - (fdp_limit - remaining)
     crew_duty_remaining_min = Tagged(
         value=remaining,
         source="synthetic",
-        note=f"report at {report} min (seeded), FDP limit {FDP_LIMIT_MIN} min assumed, at actual arrival",
+        note=f"FDP remaining at SCHEDULED arrival (incurred delay not subtracted); report at {report} "
+        f"min (seeded), FDP limit {fdp_limit} min assumed ({'augmented, Table C' if augmented else 'Table B'})",
     )
 
     aar = NOMINAL_AAR.get(dest, DEFAULT_AAR)
@@ -283,7 +362,7 @@ def build_scenario(row_index: int, seed: int = 42) -> Scenario:
         dest_disruption=dest_disruption,
         taxi_congestion=taxi_congestion,
         downstream_legs=_downstream_legs(row),
-        alternates=_alternates(dest),
+        alternates=alternates,
         wake_category=wake_category,
         fuel_reserve_min=fuel_reserve_min,
         crew_duty_remaining_min=crew_duty_remaining_min,
