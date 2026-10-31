@@ -79,3 +79,4 @@ class Recommendation(BaseModel):
     reviewer_notes: list[str]
     human_decision: Literal["pending", "approved", "rejected"] = "pending"
     log_path: str
+    reviewer_detail: dict | None = None
