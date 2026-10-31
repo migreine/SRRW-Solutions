@@ -5,7 +5,10 @@ Menu (5-12 candidates; tail_swap is cut):
 - hold        HOLD20, HOLD40                       params {"minutes"}
 - divert      DIVERT_<IATA> to the 2 nearest alternates          params {"iata"}
 - gate_swap   GATE_<ID> x2, the two non-assigned gates whose free window best covers the
-              projected arrival                    params {"gate", "extra_taxi_min"}
+              projected arrival, capped at the destination's workbook spare_gates_at_any_time
+              (2-3 everywhere, so the cap does not bind)  params {"gate", "extra_taxi_min"}
+Ground-crew shift 8 h with 1.5x overtime (organiser workbook) is documented only
+(docs/constraints.md): no ground-crew shift times exist in the data, so it is not a cost here.
 - ground_hold GROUND_HOLD_<ORIGIN>                 params {"minutes", "airport"}
 A destination with no coordinates has no alternates, so the menu is 9 candidates without diverts.
 
@@ -32,6 +35,7 @@ to [15, 60] (assumed: moves the arrival out of the congested hour without burnin
 
 import math
 
+from src import constraints
 from src.schemas import Candidate, Scenario
 
 CRUISE_NM_PER_MIN = 7.0  # 420 kt, assumed (same as builder and reviewer)
@@ -127,7 +131,9 @@ def _gate_choices(s: Scenario) -> list[tuple[str, int]]:
         end = start + g["min_turnaround_min"]
         ranked.append((busy_overlap_min(intervals, start, end), -_slack_min(intervals, start, end), gate, extra))
     ranked.sort()
-    return [(gate, extra) for _, _, gate, extra in ranked[:N_GATE_SWAPS]]
+    # Never offer more swaps than the destination has spare gates (organiser workbook).
+    n = min(N_GATE_SWAPS, constraints.airport(s.flight["DESTINATION_AIRPORT"]).spare_gates)
+    return [(gate, extra) for _, _, gate, extra in ranked[:n]]
 
 
 def _ground_hold_minutes(s: Scenario) -> int:

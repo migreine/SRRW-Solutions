@@ -21,7 +21,7 @@ def test_scenario_validates_and_is_tagged():
     assert s.fuel_reserve_min == Tagged(value=105.1, source="estimated", note=s.fuel_reserve_min.note)
     assert s.crew_duty_remaining_min.source == "synthetic"
     assert s.wake_category.value == "L" and s.wake_category.source == "assumed"
-    assert {"iata": "AUS", "distance_nm": 190} in s.alternates and len(s.alternates) == 3
+    assert {"iata": "AUS", "distance_nm": 295} in s.alternates and len(s.alternates) == 3
     assert len(s.downstream_legs) == 3
 
 

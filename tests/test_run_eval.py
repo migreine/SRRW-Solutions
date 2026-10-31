@@ -116,7 +116,7 @@ def _patch_scenario(monkeypatch, **updates):
 
 
 def test_reviewer_reject_counted_from_real_reviewer(out_dir, monkeypatch):
-    # fuel 97.1: the reviewer rejects consensus SLOT+30 (97.1-30=67.1 < 27.1 to the most distant
+    # fuel 97.1: the reviewer rejects consensus SLOT+30 (97.1-30=67.1 < 42.1 to the most distant
     # alternate + 45 reserve = 72.1); the fallback re-picks SLOT-15, which is also the solver-only
     # pick (and passes review there).
     _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=97.1, source="estimated"))

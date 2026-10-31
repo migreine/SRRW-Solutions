@@ -6,18 +6,19 @@ after the fact; the reviewer module itself imports nothing from src/rules, optio
 All expected numbers worked by hand:
 
   fuel_reserve_min 105.1 (estimated), crew_duty_remaining_min 150 (synthetic), wake L (assumed),
-  nominal_aar 90 (assumed), dest_disruption 14 (data), alternate AUS 190 NM.
+  nominal_aar 90 (assumed), dest_disruption 14 (data), destination IAH, alternate AUS 295 NM.
 
-  FUEL  14 CFR 121.639: non-divert candidates keep the most distant alternate leg + 45 min reserve,
-        190 / 7 = 27.14 min + 45 = 72.14 min; a divert keeps only the 45 min reserve on arrival.
+  FUEL  organiser workbook 30 min final reserve; non-divert candidates also keep the most distant
+        alternate leg (14 CFR 121.639): 295 / 7 = 42.14 min + 30 = 72.14 min; a divert keeps only
+        the 30 min reserve on arrival.
         SLOT+15: 105.1 - 15 = 90.1 >= 72.14 pass | HOLD40: 105.1 - 40 = 65.1 < 72.14 FAIL
-        DIVERT_AUS: 190 / 7 = 27.14 min airborne, 105.1 - 27.14 = 77.96 >= 45 pass
+        DIVERT_AUS: 295 / 7 = 42.14 min airborne, 105.1 - 42.14 = 62.96 >= 30 pass
   DUTY  crew_duty_remaining_min is at SCHEDULED arrival, so the incurred delay is consumed too.
         make_scenario has no actual_arr_abs/sched_arr_abs, so incurred = flight.ARRIVAL_DELAY = 101.
         SLOT+15: 150 - 101 - 15 = 34 | HOLD40: 150 - 101 - 40 = 9
-        DIVERT_AUS: 150 - 101 - (27.14 + 60) = -38.14 FAIL (with duty 250: 61.86 pass)
-  WAKE  any follower behind an assumed Large leader = 3 NM; required = 3 / (140 / 3600) = 77.14 s
-        3 assumed arrival runways (reconciled with the rules engine, docs/calibration.md)
+        DIVERT_AUS: 150 - 101 - (42.14 + 60) = -53.14 FAIL (with duty 250: 46.86 pass)
+  WAKE  workbook wake_separation behind an assumed Large leader: H/L 3 NM ("any other pair"),
+        S 4 NM; required for L = 3 / (140 / 3600) = 77.14 s. IAH has 3 active runways (workbook)
         available per runway = 3600 * 3 runways / (90 - 14) = 142.11 s -> pass (every candidate)
         WAKE_FAIL variant (nominal_aar 160): 3600 * 3 / (160 - 14) = 73.97 s < 77.14 s -> FAIL
         boundary: aar - disruption = 140/h -> 77.14 s pass (equal), 141/h -> 76.60 s FAIL
@@ -26,12 +27,11 @@ All expected numbers worked by hand:
 import pytest
 
 from src.reviewer.safety import (
-    ASSUMED_ARRIVAL_RUNWAYS,
     ASSUMED_LEADER_CATEGORY,
     CIT_WAKE,
     CIT_WAKE_LEADER,
     CIT_WAKE_RUNWAYS,
-    WAKE_SEP_NM_BEHIND_LARGE,
+    FUEL_FINAL_RESERVE_MIN,
     review,
     review_detail,
 )
@@ -40,10 +40,11 @@ from src.schemas import AgentMessage, Candidate, Recommendation, RuleResult, Sce
 REQUIRED_S = 3 / (140 / 3600)  # 77.142857...
 AVAIL = 3600 * 3 / 76  # 142.105...
 AVAIL_FAIL = 3600 * 3 / 146  # 73.972...
-DIVERT_AIR = 190 / 7  # 27.142857...
-DIVERT_DELAY = DIVERT_AIR + 60  # 87.142857...
-FUEL = 105.1  # 78 min of margin under the old 45-min-only rule + 27.1 min AUS alternate time
-FUEL_NEED = DIVERT_AIR + 45  # 72.142857... non-divert threshold (most distant alternate + reserve)
+DIVERT_AIR = 295 / 7  # 42.142857...
+DIVERT_DELAY = DIVERT_AIR + 60  # 102.142857...
+FUEL = 105.1
+RESERVE = 30  # organiser workbook final reserve (was 45)
+FUEL_NEED = DIVERT_AIR + RESERVE  # 72.142857... non-divert threshold (most distant alternate + reserve)
 INCURRED = 101  # make_scenario flight.ARRIVAL_DELAY
 DUTY_OK = Tagged(value=250, source="synthetic")  # enough duty for DIVERT_AUS after the incurred delay
 
@@ -52,11 +53,11 @@ def make_scenario(**over) -> Scenario:
     base = dict(
         scenario_id="2015-01-01_AA334_N3DAAA",
         row_index=0,
-        flight={"AIRLINE": "AA", "FLIGHT_NUMBER": 334, "ARRIVAL_DELAY": 101, "DESTINATION_AIRPORT": "DFW"},
+        flight={"AIRLINE": "AA", "FLIGHT_NUMBER": 334, "ARRIVAL_DELAY": 101, "DESTINATION_AIRPORT": "IAH"},
         dest_disruption=Tagged(value=14, source="data"),
         taxi_congestion=Tagged(value=1.3, source="data"),
         downstream_legs=[],
-        alternates=[{"iata": "AUS", "distance_nm": 190}],
+        alternates=[{"iata": "AUS", "distance_nm": 295}],
         wake_category=Tagged(value="L", source="assumed"),
         fuel_reserve_min=Tagged(value=FUEL, source="estimated"),
         crew_duty_remaining_min=Tagged(value=150, source="synthetic"),
@@ -119,7 +120,7 @@ def entry(detail, check, cid):
 GOOD_CITES = [
     "fuel_reserve_min=105.1",
     "crew_duty_remaining_min=150",
-    "alternates[0].distance_nm=190",
+    "alternates[0].distance_nm=295",
     "flight.ARRIVAL_DELAY=101",
     "wake_category=l",  # strings are case-insensitive
     "dest_disruption",  # no "=": existence only
@@ -144,9 +145,8 @@ def consensus_turns(extra_cite=None):
 
 # ---- WAKE ----------------------------------------------------------------------------------------
 def test_wake_assumptions_are_named_and_cited_as_assumed():
-    assert ASSUMED_LEADER_CATEGORY == "L" and WAKE_SEP_NM_BEHIND_LARGE == 3.0
-    assert ASSUMED_ARRIVAL_RUNWAYS == 3  # same as the engine's ARRIVAL_RUNWAYS_ASSUMED
-    assert "assumed" in CIT_WAKE_LEADER and "assumed" in CIT_WAKE_RUNWAYS
+    assert ASSUMED_LEADER_CATEGORY == "L" and FUEL_FINAL_RESERVE_MIN == RESERVE
+    assert "assumed" in CIT_WAKE_LEADER and "organiser workbook" in CIT_WAKE_RUNWAYS
     assert "7110.65" in CIT_WAKE and CIT_WAKE_LEADER in CIT_WAKE and CIT_WAKE_RUNWAYS in CIT_WAKE
 
 
@@ -187,11 +187,12 @@ def test_wake_boundary(aar, passed):
     assert entry(d, "WAKE", "SLOT+15")["passed"] is passed
 
 
-@pytest.mark.parametrize("cat", ["H", "L", "S", "J"])
-def test_wake_separation_same_for_every_follower_behind_large(cat):
+@pytest.mark.parametrize("cat,nm", [("H", 3.0), ("L", 3.0), ("S", 4.0), ("J", 4.0)])
+def test_wake_separation_from_workbook_behind_large(cat, nm):
+    # Workbook: Large -> Small 4 NM, any other pair 3 NM; unknown follower (J) -> most conservative.
     d = review_detail(make_scenario(wake_category=Tagged(value=cat, source="assumed")), rec(SLOT15), [])
     w = entry(d, "WAKE", "SLOT+15")
-    assert w["inputs"]["sep_nm"] == 3.0 and w["threshold"] == pytest.approx(REQUIRED_S)
+    assert w["inputs"]["sep_nm"] == nm and w["threshold"] == pytest.approx(nm / (140 / 3600))
     assert w["passed"] is True and w["inputs"]["leader_category"] == "L"
 
 
@@ -231,7 +232,7 @@ def test_reject_hold40_fuel():
     verdict, notes = review(make_scenario(), rec(HOLD40), [])
     assert verdict == "REJECT"
     fuel_note = next(n for n in notes if n.startswith("FUEL re-derived"))
-    assert "needs 40 + 27.1 min to most distant alternate + 45 reserve = 112.1 min" in fuel_note
+    assert "needs 40 + 42.1 min to most distant alternate + 30 reserve = 112.1 min" in fuel_note
     assert "fuel_reserve_min=105.1 (estimated)" in fuel_note
     assert "leaves 65.1 min vs 72.1" in fuel_note and "FAIL" in fuel_note and "14 CFR 121.639" in fuel_note
     d = review_detail(make_scenario(), rec(HOLD40), [])
@@ -254,40 +255,40 @@ HOLD20 = Candidate(candidate_id="HOLD20", kind="hold", params={"minutes": 20}, e
 
 
 def test_non_divert_fails_when_most_distant_alternate_leg_not_covered():
-    # fuel 78, alternates DAL 12 NM and AUS 190 NM. HOLD20 leaves 78 - 20 = 58 min: enough for the
-    # bare 45 min final reserve, but not for 190 / 7 = 27.14 min to AUS (the most distant, not DAL)
-    # + 45 = 72.14 min -> FAIL.
-    alts = [{"iata": "DAL", "distance_nm": 12}, {"iata": "AUS", "distance_nm": 190}]
+    # fuel 78, alternates DAL 12 NM and AUS 295 NM. HOLD20 leaves 78 - 20 = 58 min: enough for the
+    # bare 30 min final reserve, but not for 295 / 7 = 42.14 min to AUS (the most distant, not DAL)
+    # + 30 = 72.14 min -> FAIL.
+    alts = [{"iata": "DAL", "distance_nm": 12}, {"iata": "AUS", "distance_nm": 295}]
     s = make_scenario(fuel_reserve_min=Tagged(value=78, source="estimated"), alternates=alts)
     d = review_detail(s, rec(HOLD20), [])
     f = entry(d, "FUEL", "HOLD20")
-    assert f["derived"] == pytest.approx(58) and f["derived"] >= 45
+    assert f["derived"] == pytest.approx(58) and f["derived"] >= RESERVE
     assert f["threshold"] == pytest.approx(FUEL_NEED) and f["passed"] is False
     assert f["inputs"]["alternate_min"] == pytest.approx(DIVERT_AIR)
     assert d["verdict"] == "REJECT"
     note = next(n for n in d["notes"] if n.startswith("FUEL re-derived: HOLD20"))
-    assert "27.1 min to most distant alternate" in note and "leaves 58 min vs 72.1 -> FAIL" in note
+    assert "42.1 min to most distant alternate" in note and "leaves 58 min vs 72.1 -> FAIL" in note
 
-    # Same fuel with no alternate listed: only the 45 min reserve applies, so the alternate leg was
+    # Same fuel with no alternate listed: only the 30 min reserve applies, so the alternate leg was
     # the sole reason for the failure.
     s = make_scenario(fuel_reserve_min=Tagged(value=78, source="estimated"), alternates=[])
     d = review_detail(s, rec(HOLD20), [])
     f = entry(d, "FUEL", "HOLD20")
-    assert f["threshold"] == pytest.approx(45) and f["passed"] is True and d["verdict"] == "APPROVE"
+    assert f["threshold"] == pytest.approx(RESERVE) and f["passed"] is True and d["verdict"] == "APPROVE"
 
 
 def test_divert_needs_only_final_reserve_on_arrival():
-    # fuel 75: DIVERT_AUS flies 27.14 min and lands with 75 - 27.14 = 47.86 >= 45 -> PASS (no
+    # fuel 75: DIVERT_AUS flies 42.14 min and lands with 75 - 42.14 = 32.86 >= 30 -> PASS (no
     # alternate leg after a divert). SLOT+15 flies less (15 min) but must keep the AUS leg:
-    # 75 - 15 = 60 < 72.14 -> FAIL. Duty 250 so DIVERT_AUS passes DUTY (250 - 101 - 87.14).
+    # 75 - 15 = 60 < 72.14 -> FAIL. Duty 250 so DIVERT_AUS passes DUTY (250 - 101 - 102.14).
     s = make_scenario(fuel_reserve_min=Tagged(value=75, source="estimated"), crew_duty_remaining_min=DUTY_OK)
     d = review_detail(s, rec(DIVERT), [], candidates=MENU)
     f = entry(d, "FUEL", "DIVERT_AUS")
     assert f["derived"] == pytest.approx(75 - DIVERT_AIR) and f["derived"] < FUEL_NEED
-    assert f["threshold"] == pytest.approx(45) and f["inputs"]["alternate_min"] == 0
+    assert f["threshold"] == pytest.approx(RESERVE) and f["inputs"]["alternate_min"] == 0
     assert f["passed"] is True and d["verdict"] == "APPROVE"
     note = next(n for n in d["notes"] if n.startswith("FUEL re-derived: DIVERT_AUS"))
-    assert "most distant alternate" not in note and "vs 45 -> PASS" in note
+    assert "most distant alternate" not in note and "vs 30 -> PASS" in note
     slot = entry(d, "FUEL", "SLOT+15")
     assert slot["derived"] == pytest.approx(60) and slot["threshold"] == pytest.approx(FUEL_NEED)
     assert slot["passed"] is False
@@ -382,21 +383,21 @@ def test_duty_agrees_with_engine_on_real_rows():
 def test_divert_aus_numbers():
     d = review_detail(make_scenario(), rec(DIVERT), [])
     assert entry(d, "FUEL", "DIVERT_AUS")["derived"] == pytest.approx(FUEL - DIVERT_AIR)
-    assert entry(d, "FUEL", "DIVERT_AUS")["threshold"] == pytest.approx(45)
+    assert entry(d, "FUEL", "DIVERT_AUS")["threshold"] == pytest.approx(RESERVE)
     assert entry(d, "FUEL", "DIVERT_AUS")["passed"] is True
-    # 150 - 101 incurred - 87.14 = -38.14: the incurred delay has used the crew's buffer
+    # 150 - 101 incurred - 102.14 = -53.14: the incurred delay has used the crew's buffer
     assert entry(d, "DUTY", "DIVERT_AUS")["derived"] == pytest.approx(150 - INCURRED - DIVERT_DELAY)
     assert entry(d, "DUTY", "DIVERT_AUS")["passed"] is False
     assert d["derived_delay_min"] == pytest.approx(DIVERT_DELAY)
     assert d["verdict"] == "REJECT"
     d = review_detail(make_scenario(crew_duty_remaining_min=DUTY_OK), rec(DIVERT), [])
     assert entry(d, "DUTY", "DIVERT_AUS")["derived"] == pytest.approx(250 - INCURRED - DIVERT_DELAY)
-    assert d["verdict"] == "APPROVE"  # est 87 vs 87.14 agrees
+    assert d["verdict"] == "APPROVE"  # est 87 vs 102.14: off 15.1 min but < 20% -> agrees
 
 
 def test_engine_disagreement_on_non_chosen_is_modify():
     rules = [
-        rr("R-DUTY-01", "DIVERT_AUS", True),  # reviewer fails it (-38.14 min left) -> disagreement
+        rr("R-DUTY-01", "DIVERT_AUS", True),  # reviewer fails it (-53.14 min left) -> disagreement
         rr("R-FUEL-01", "HOLD40", False),  # reviewer agrees (65.1 < 72.14)
         rr("R-FUEL-01", "SLOT+15", True),
     ]
@@ -406,13 +407,13 @@ def test_engine_disagreement_on_non_chosen_is_modify():
         {"rule_id": "R-DUTY-01", "candidate_id": "DIVERT_AUS", "engine_passed": True, "reviewer_passed": False}
     ]
     assert any(
-        n.startswith("ENGINE: R-DUTY-01 passed DIVERT_AUS, reviewer fails it") and "duty left -38.1 min" in n
+        n.startswith("ENGINE: R-DUTY-01 passed DIVERT_AUS, reviewer fails it") and "duty left -53.1 min" in n
         for n in d["notes"]
     )
 
 
 def test_engine_failing_chosen_is_reject():
-    s = make_scenario(crew_duty_remaining_min=DUTY_OK)  # reviewer passes DIVERT_AUS duty (61.86)
+    s = make_scenario(crew_duty_remaining_min=DUTY_OK)  # reviewer passes DIVERT_AUS duty (46.86)
     d = review_detail(s, rec(DIVERT, [rr("R-DUTY-01", "DIVERT_AUS", False)]), [])
     assert d["verdict"] == "REJECT"
     assert any("ENGINE: R-DUTY-01 failed chosen DIVERT_AUS" in n and "REJECT" in n for n in d["notes"])

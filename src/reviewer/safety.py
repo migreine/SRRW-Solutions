@@ -9,8 +9,8 @@ Written independently of src/rules/ (separate session, separate prompt, rules co
 rule_results never feed the re-derivation. The one way they affect the verdict is
 safety-conservative: if the engine failed the chosen candidate on any rule, the verdict is REJECT.
 
-Every constant below is ASSUMED: docs/regulatory_sources.md did not exist when this was written.
-Reconcile against that doc when it lands, never against src/rules/.
+Every constant below is ASSUMED. FUEL / DUTY / WAKE limits are read from the organiser workbook via
+src/constraints.py (shared data, the same values the engine reads); no logic from src/rules/.
 
 DUTY (2026-10-31): crew_duty_remaining_min is FDP left at the SCHEDULED arrival, so the delay the
 flight has already incurred (projected minus scheduled gate-in, from Scenario.flight) is consumed
@@ -26,25 +26,23 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
+from src import constraints
 from src.schemas import Candidate, Recommendation, Scenario, Tagged, Turn
 
 Verdict = Literal["APPROVE", "REJECT", "MODIFY"]
 
-# ---- constants (all assumed, pending docs/regulatory_sources.md) ---------------------------------
-FUEL_FINAL_RESERVE_MIN = 45.0  # 14 CFR 121.639
+# ---- constants (all assumed) ---------------------------------------------------------------------
+# FUEL / DUTY / WAKE limits come from the organiser workbook through src/constraints.py (shared
+# data only, no rule logic), the same loader the rules engine reads. docs/constraints.md.
+FUEL_FINAL_RESERVE_MIN = constraints.fuel_crew("final_reserve_min")  # 30 min holding (was 45)
+CREW_MAX_DUTY_MIN = constraints.fuel_crew("crew_max_duty_min")  # 13 h from report time
 CRUISE_NM_PER_MIN = 7.0  # 420 kt
 DIVERT_GROUND_MIN = 60.0  # ground time at the alternate
 
-# WAKE (FAA JO 7110.65 5-5-4). Required spacing is per runway, so the airport-wide arrival rate is
-# split over an assumed number of arrival runways before the two are compared.
-# Leader, separation, approach speed and runway count reconciled 2026-10-31 with the rules engine's
-# R-WAKE-01 assumed inputs (src/rules/engine.py LEADER_CATEGORY, WAKE_SEP_NM, APPROACH_KT,
-# ARRIVAL_RUNWAYS_ASSUMED) on explicit instruction; logic unchanged. docs/calibration.md.
-ASSUMED_LEADER_CATEGORY = "L"  # Large; typical hub leader (unchanged, engine now matches)
-WAKE_SEP_NM_BEHIND_LARGE = 3.0  # radar minimum; the same for every follower category (H/L/S)
-# Assumed (was 2): typical hub arrival-runway count (ATL, ORD, DFW, DEN run 3-4); with 2, the
-# assumed ATL/ORD/DFW/DEN nominal AARs (112-126/h) could not fit 3 NM at 140 kt on any day.
-ASSUMED_ARRIVAL_RUNWAYS = 3
+# WAKE. Required spacing is per runway, so the airport-wide arrival rate is split over the
+# destination's active runways (workbook) before the two are compared. Separation behind the
+# assumed leader comes from the workbook wake_separation table (Large -> Small 4 NM, else 3 NM).
+ASSUMED_LEADER_CATEGORY = "L"  # Large; typical hub leader (the workbook has no leader data)
 APPROACH_KT = 140.0
 MIN_EFFECTIVE_AAR = 1.0
 DELAY_REL_TOL = 0.20
@@ -52,18 +50,21 @@ DELAY_ABS_TOL_MIN = 5.0
 CITE_ABS_TOL = 1.0
 CITE_REL_TOL = 0.02
 
-CIT_FUEL = "14 CFR 121.639; 45-min final reserve: assumed"
+CIT_FUEL = (
+    f"organiser workbook: {FUEL_FINAL_RESERVE_MIN:g}-min final reserve (holding); alternate leg per "
+    f"14 CFR 121.639: assumed"
+)
 CIT_DIVERT = "assumed: 420 kt cruise = 7 NM/min, 60 min ground time at alternate"
 CIT_DUTY = (
-    "14 CFR 117; FDP left at scheduled arrival - delay already incurred - added delay >= 0 at "
-    "arrival: assumed"
+    f"organiser workbook: crew max duty {CREW_MAX_DUTY_MIN / 60:g} h from report (simplified 14 CFR "
+    f"117); FDP left at scheduled arrival - delay already incurred - added delay >= 0 at arrival: assumed"
 )
 CIT_WAKE_LEADER = (
-    "assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category"
+    "assumed: leader category L (Large); organiser workbook wake_separation NM behind it"
 )
-CIT_WAKE_RUNWAYS = "assumed: 3 arrival runways share the airport arrival rate"
+CIT_WAKE_RUNWAYS = "organiser workbook: destination active_runways share the airport arrival rate"
 CIT_WAKE_APPROACH = "assumed: 140 kt approach speed"
-CIT_WAKE = f"FAA JO 7110.65 5-5-4; {CIT_WAKE_LEADER}; {CIT_WAKE_RUNWAYS}; {CIT_WAKE_APPROACH}"
+CIT_WAKE = f"organiser workbook (from FAA JO 7110.65); {CIT_WAKE_LEADER}; {CIT_WAKE_RUNWAYS}; {CIT_WAKE_APPROACH}"
 CIT_DELAY = "assumed: reviewer delay tolerance 20% and 5 min"
 CIT_CITED = "reviewer cross-check vs Scenario, tolerance max(1.0, 2%): assumed"
 
@@ -277,14 +278,19 @@ def _check_duty(s: Scenario, c: Candidate, mo: dict) -> tuple[dict, str]:
 def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
     """Per-runway spacing available vs. the separation behind an assumed Large leader.
 
-    required_s  = 3 NM / (140 kt / 3600)                                  (77.1 s)
+    required_s  = workbook NM (Large -> follower) / (140 kt / 3600)       (3 NM: 77.1 s)
     available_s = 3600 * runways / max(nominal_aar - dest_disruption, 1)  (per-runway gap)
-    The follower's wake_category is recorded but does not change the 3 NM behind a Large leader.
+    runways = workbook active_runways at the destination. Unknown follower: most conservative NM.
     """
     cat_raw = str(s.wake_category.value).strip().upper()
     cat_src = s.wake_category.source
-    cat_note = "" if cat_raw in ("H", "L", "S") else f", unknown {s.wake_category.value!r}"
-    sep_nm = WAKE_SEP_NM_BEHIND_LARGE
+    known = cat_raw in ("H", "L", "S")
+    cat_note = "" if known else f", unknown {s.wake_category.value!r}"
+    leader = ASSUMED_LEADER_CATEGORY
+    sep_nm = (constraints.wake_sep_nm(leader, cat_raw) if known
+              else max(constraints.wake_sep_nm(leader, f) for f in ("H", "L", "S")))
+    dest = s.flight.get("DESTINATION_AIRPORT", "") if isinstance(s.flight, dict) else ""
+    runways = constraints.airport(dest).active_runways
     required_s = sep_nm / (APPROACH_KT / 3600.0)
     aar = _to_float(s.nominal_aar.value)
     dis = _to_float(s.dest_disruption.value)
@@ -292,7 +298,7 @@ def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
         eff, avail_s, passed = None, None, False
     else:
         eff = max(aar - dis, MIN_EFFECTIVE_AAR)
-        avail_s = 3600.0 * ASSUMED_ARRIVAL_RUNWAYS / eff
+        avail_s = 3600.0 * runways / eff
         passed = avail_s >= required_s
     entry = {
         "check": "WAKE",
@@ -306,7 +312,7 @@ def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
             "wake_source": cat_src,
             "leader_category": ASSUMED_LEADER_CATEGORY,
             "sep_nm": sep_nm,
-            "arrival_runways": ASSUMED_ARRIVAL_RUNWAYS,
+            "arrival_runways": runways,
             "nominal_aar": aar,
             "aar_source": s.nominal_aar.source,
             "dest_disruption": dis,
@@ -319,7 +325,7 @@ def _check_wake(s: Scenario, c: Candidate) -> tuple[dict, str]:
         f"an assumed Large leader needs {_fmt(sep_nm)} NM = {_fmt(required_s)} s at "
         f"{_fmt(APPROACH_KT)} kt; nominal_aar={_fmt(aar)} ({s.nominal_aar.source}) - "
         f"dest_disruption={_fmt(dis)} ({s.dest_disruption.source}) = {_fmt(eff)}/h over "
-        f"{ASSUMED_ARRIVAL_RUNWAYS} assumed arrival runways gives {_fmt(avail_s)} s per runway "
+        f"{runways} {dest or '?'} active runways (workbook) gives {_fmt(avail_s)} s per runway "
         f"-> {'PASS' if passed else 'FAIL'} [{CIT_WAKE}]."
     )
     return entry, note
