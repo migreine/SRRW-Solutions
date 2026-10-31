@@ -32,9 +32,14 @@ DIVERT_GROUND_MIN = 60.0  # ground time at the alternate
 
 # WAKE (FAA JO 7110.65 5-5-4). Required spacing is per runway, so the airport-wide arrival rate is
 # split over an assumed number of arrival runways before the two are compared.
-ASSUMED_LEADER_CATEGORY = "L"  # Large
+# Leader, separation, approach speed and runway count reconciled 2026-10-31 with the rules engine's
+# R-WAKE-01 assumed inputs (src/rules/engine.py LEADER_CATEGORY, WAKE_SEP_NM, APPROACH_KT,
+# ARRIVAL_RUNWAYS_ASSUMED) on explicit instruction; logic unchanged. docs/calibration.md.
+ASSUMED_LEADER_CATEGORY = "L"  # Large; typical hub leader (unchanged, engine now matches)
 WAKE_SEP_NM_BEHIND_LARGE = 3.0  # radar minimum; the same for every follower category (H/L/S)
-ASSUMED_ARRIVAL_RUNWAYS = 2
+# Assumed (was 2): typical hub arrival-runway count (ATL, ORD, DFW, DEN run 3-4); with 2, the
+# assumed ATL/ORD/DFW/DEN nominal AARs (112-126/h) could not fit 3 NM at 140 kt on any day.
+ASSUMED_ARRIVAL_RUNWAYS = 3
 APPROACH_KT = 140.0
 MIN_EFFECTIVE_AAR = 1.0
 DELAY_REL_TOL = 0.20
@@ -48,7 +53,7 @@ CIT_DUTY = "14 CFR 117; duty remaining >= 0 at arrival: assumed"
 CIT_WAKE_LEADER = (
     "assumed: leader category L (Large), 3 NM radar minimum behind it for every follower category"
 )
-CIT_WAKE_RUNWAYS = "assumed: 2 arrival runways share the airport arrival rate"
+CIT_WAKE_RUNWAYS = "assumed: 3 arrival runways share the airport arrival rate"
 CIT_WAKE_APPROACH = "assumed: 140 kt approach speed"
 CIT_WAKE = f"FAA JO 7110.65 5-5-4; {CIT_WAKE_LEADER}; {CIT_WAKE_RUNWAYS}; {CIT_WAKE_APPROACH}"
 CIT_DELAY = "assumed: reviewer delay tolerance 20% and 5 min"

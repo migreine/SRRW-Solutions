@@ -1,4 +1,8 @@
 from src.scenario.builder import (
+    ASSIGNED_GATE_NEXT_GAP,
+    ASSIGNED_GATE_PREV_GAP,
+    DISCRETIONARY_RANGE,
+    DUTY_REMAINING_RANGE,
     EXCLUDED_ALTERNATES,
     _alternates,
     arrival_hour_stats,
@@ -59,12 +63,17 @@ def test_seeded_and_locked():
 
 
 def test_assigned_gate_free_for_planned_turn():
+    # The gate plan is re-flowed to the projected gate-in (actual_arr_abs), docs/calibration.md.
     s = build_scenario(AA334_ROW)
     g = s.gates
-    start = s.flight["sched_arr_abs"]
+    start = s.flight["actual_arr_abs"]
     end = start + g["min_turnaround_min"]
     for busy_start, busy_end in g["occupancy"][g["assigned_gate"]]:
         assert busy_end <= start or busy_start >= end
+    # ...with the assumed buffers either side of the planned turn
+    (_, prev_end), (next_start, _) = g["occupancy"][g["assigned_gate"]]
+    assert ASSIGNED_GATE_PREV_GAP[0] <= start - prev_end < ASSIGNED_GATE_PREV_GAP[1]
+    assert ASSIGNED_GATE_NEXT_GAP[0] <= next_start - end < ASSIGNED_GATE_NEXT_GAP[1]
 
 
 def test_overnight_arrival_wraps():
@@ -86,7 +95,12 @@ def test_fuel_and_duty_semantics():
     # fuel includes the 45 min final reserve plus the alternate time (plan-rohan section 0)
     assert s.fuel_reserve_min.value >= 45 + planned_alternate_min(s.alternates)
     # duty remainder is measured at SCHEDULED arrival, so a legal crew is non-negative there
-    assert 30 <= s.crew_duty_remaining_min.value <= 300
+    lo, hi = DUTY_REMAINING_RANGE
+    assert 0 < lo <= s.crew_duty_remaining_min.value <= hi
+    # fuel margin above alternate + reserve = 5% contingency + seeded discretionary fuel
+    margin = s.fuel_reserve_min.value - 45 - planned_alternate_min(s.alternates)
+    contingency = round(0.05 * s.flight["AIR_TIME"], 1)
+    assert DISCRETIONARY_RANGE[0] <= round(margin - contingency) <= DISCRETIONARY_RANGE[1]
 
 
 def test_delayed_arrivals_helper_matches_scenario():

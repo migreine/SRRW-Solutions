@@ -11,9 +11,10 @@ Hand-built scenario, independent of tests/fixtures and src/rules. All expected n
         DIVERT_AUS: 190 / 7 = 27.14 min airborne, 105.1 - 27.14 = 77.96 >= 45 pass
   DUTY  SLOT+15: 150 - 15 = 135 | HOLD40: 150 - 40 = 110 | DIVERT_AUS: 150 - (27.14 + 60) = 62.86
   WAKE  any follower behind an assumed Large leader = 3 NM; required = 3 / (140 / 3600) = 77.14 s
-        available per runway = 3600 * 2 runways / (90 - 14) = 94.74 s -> pass (every candidate)
-        WAKE_FAIL variant (nominal_aar 120): 3600 * 2 / (120 - 14) = 67.92 s < 77.14 s -> FAIL
-        boundary: aar - disruption = 93/h -> 77.42 s pass, 94/h -> 76.60 s FAIL
+        3 assumed arrival runways (reconciled with the rules engine, docs/calibration.md)
+        available per runway = 3600 * 3 runways / (90 - 14) = 142.11 s -> pass (every candidate)
+        WAKE_FAIL variant (nominal_aar 160): 3600 * 3 / (160 - 14) = 73.97 s < 77.14 s -> FAIL
+        boundary: aar - disruption = 140/h -> 77.14 s pass (equal), 141/h -> 76.60 s FAIL
 """
 
 import pytest
@@ -31,8 +32,8 @@ from src.reviewer.safety import (
 from src.schemas import AgentMessage, Candidate, Recommendation, RuleResult, Scenario, Tagged, Turn
 
 REQUIRED_S = 3 / (140 / 3600)  # 77.142857...
-AVAIL = 3600 * 2 / 76  # 94.736...
-AVAIL_FAIL = 3600 * 2 / 106  # 67.924...
+AVAIL = 3600 * 3 / 76  # 142.105...
+AVAIL_FAIL = 3600 * 3 / 146  # 73.972...
 DIVERT_AIR = 190 / 7  # 27.142857...
 DIVERT_DELAY = DIVERT_AIR + 60  # 87.142857...
 FUEL = 105.1  # 78 min of margin under the old 45-min-only rule + 27.1 min AUS alternate time
@@ -60,8 +61,8 @@ def make_scenario(**over) -> Scenario:
 
 
 def wake_fail_scenario(**over) -> Scenario:
-    """Busy destination: 120/h nominal, only 14 disrupted -> 106/h, too tight for 3 NM."""
-    return make_scenario(nominal_aar=Tagged(value=120, source="assumed"), **over)
+    """Busy destination: 160/h nominal, only 14 disrupted -> 146/h, too tight for 3 NM on 3 runways."""
+    return make_scenario(nominal_aar=Tagged(value=160, source="assumed"), **over)
 
 
 SLOT15 = Candidate(candidate_id="SLOT+15", kind="slot_shift", params={"shift_min": 15}, est_delay_min=15, est_knock_on_min=0)
@@ -136,7 +137,7 @@ def consensus_turns(extra_cite=None):
 # ---- WAKE ----------------------------------------------------------------------------------------
 def test_wake_assumptions_are_named_and_cited_as_assumed():
     assert ASSUMED_LEADER_CATEGORY == "L" and WAKE_SEP_NM_BEHIND_LARGE == 3.0
-    assert ASSUMED_ARRIVAL_RUNWAYS == 2
+    assert ASSUMED_ARRIVAL_RUNWAYS == 3  # same as the engine's ARRIVAL_RUNWAYS_ASSUMED
     assert "assumed" in CIT_WAKE_LEADER and "assumed" in CIT_WAKE_RUNWAYS
     assert "7110.65" in CIT_WAKE and CIT_WAKE_LEADER in CIT_WAKE and CIT_WAKE_RUNWAYS in CIT_WAKE
 
@@ -148,10 +149,10 @@ def test_wake_passes_at_fixture_numbers():
         assert w["threshold"] == pytest.approx(REQUIRED_S)
         assert w["derived"] == pytest.approx(AVAIL)
         assert w["passed"] is True
-    assert w["inputs"]["effective_aar"] == 76 and w["inputs"]["arrival_runways"] == 2
+    assert w["inputs"]["effective_aar"] == 76 and w["inputs"]["arrival_runways"] == 3
     assert d["verdict"] == "APPROVE"
     assert any(
-        n.startswith("WAKE re-derived: SLOT+15") and "77.1 s" in n and "94.7 s per runway" in n and "PASS" in n
+        n.startswith("WAKE re-derived: SLOT+15") and "77.1 s" in n and "142.1 s per runway" in n and "PASS" in n
         for n in d["notes"]
     )
 
@@ -164,16 +165,16 @@ def test_wake_fails_at_busy_destination_and_engine_pass_is_disagreement():
     assert all(not entry(d, "WAKE", c.candidate_id)["passed"] for c in MENU)  # airport-level
     assert entry(d, "FUEL", "SLOT+15")["passed"] and entry(d, "DUTY", "SLOT+15")["passed"]
     assert d["verdict"] == "REJECT"
-    assert any(n.startswith("WAKE re-derived: SLOT+15") and "67.9 s" in n and "FAIL" in n for n in d["notes"])
+    assert any(n.startswith("WAKE re-derived: SLOT+15") and "74 s" in n and "FAIL" in n for n in d["notes"])
     assert d["engine_disagreements"] == [
         {"rule_id": "R-WAKE-01", "candidate_id": "SLOT+15", "engine_passed": True, "reviewer_passed": False}
     ]
-    assert any("required 77.1 s, available 67.9 s" in n for n in d["notes"])
+    assert any("required 77.1 s, available 74 s" in n for n in d["notes"])
 
 
-@pytest.mark.parametrize("aar,passed", [(107, True), (108, False)])
+@pytest.mark.parametrize("aar,passed", [(154, True), (155, False)])
 def test_wake_boundary(aar, passed):
-    # 107 - 14 = 93/h -> 77.42 s >= 77.14 s; 108 - 14 = 94/h -> 76.60 s < 77.14 s
+    # 3 runways: 154 - 14 = 140/h -> 77.14 s >= 77.14 s; 155 - 14 = 141/h -> 76.60 s < 77.14 s
     d = review_detail(make_scenario(nominal_aar=Tagged(value=aar, source="assumed")), rec(SLOT15), [])
     assert entry(d, "WAKE", "SLOT+15")["passed"] is passed
 
@@ -187,9 +188,9 @@ def test_wake_separation_same_for_every_follower_behind_large(cat):
 
 
 def test_wake_disruption_floor():
-    # nominal 10 - disruption 14 -> effective floor 1/h -> 7200 s available
+    # nominal 10 - disruption 14 -> effective floor 1/h -> 3600 * 3 runways = 10800 s available
     d = review_detail(make_scenario(nominal_aar=Tagged(value=10, source="assumed")), rec(SLOT15), [])
-    assert entry(d, "WAKE", "SLOT+15")["derived"] == pytest.approx(7200)
+    assert entry(d, "WAKE", "SLOT+15")["derived"] == pytest.approx(10800)
 
 
 # ---- (1) APPROVE ----------------------------------------------------------------------------------

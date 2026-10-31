@@ -155,9 +155,9 @@ def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkey
 
 
 def test_reviewer_wake_fail_everywhere_escalates(out_dir, monkeypatch):
-    # nominal_aar 120: 7200 / (120-14) = 67.9 s < 77.1 s, so WAKE fails for every candidate
-    # (airport-level); nothing is eligible after exclusion -> chosen=None, escalate.
-    _patch_scenario(monkeypatch, nominal_aar=Tagged(value=120, source="assumed"))
+    # nominal_aar 160: 3 runways, 10800 / (160-14) = 74.0 s < 77.1 s, so WAKE fails for every
+    # candidate (airport-level); nothing is eligible after exclusion -> chosen=None, escalate.
+    _patch_scenario(monkeypatch, nominal_aar=Tagged(value=160, source="assumed"))
     result = run_one(0, "fixture", out_dir=out_dir)
     rec = Recommendation.model_validate(result["recommendation"])
     assert rec.chosen is None and rec.decided_by == "fallback"

@@ -7,11 +7,14 @@ synthetic). docs/regulatory_sources.md is not written yet, so regulation values 
 "(verify)" and every other constant is labelled "assumed".
 
 - R-WAKE-01  FAA JO 7110.65 5-5-4. Per runway, not airport-wide: the arrival flow per runway in the
-  candidate's arrival hour must leave at least the wake spacing behind an assumed Heavy leader.
+  candidate's arrival hour must leave at least the wake spacing behind an assumed leader.
     demand      = BASE_LOAD * nominal_aar + delayed arrivals in that hour (data) + 1 (this flight)
-    available_s = 3600 * runways / demand            (runways: ARRIVAL_RUNWAYS table, assumed)
-    required_s  = {H: 4, L: 5, S: 6}[wake] nm / 140 kt * 3600   (Heavy leader, conservative)
-  Divert: evaluated at the alternate (default AAR and 1 runway).
+    available_s = 3600 * runways / demand            (runways: ARRIVAL_RUNWAYS_ASSUMED = 3)
+    required_s  = WAKE_SEP_NM[LEADER_CATEGORY][wake] nm / 140 kt * 3600
+                  (Large leader assumed: H 3, L 3, S 4 nm)
+  Leader, separation, approach speed and runway count are the same assumed inputs as the
+  reviewer's WAKE re-derivation (docs/calibration.md); the demand formulas still differ.
+  Divert: evaluated at the alternate (default AAR, same assumed runway count).
 - R-FUEL-01  14 CFR 121.639. airborne extra from src.options.menu.airborne_extra_min.
     non-divert: fuel_reserve_min - extra >= planned_alternate_min + 45 (alternate still reachable)
     divert:     fuel_reserve_min - extra >= 45 on arrival at the alternate
@@ -19,8 +22,9 @@ synthetic). docs/regulatory_sources.md is not written yet, so regulation values 
 - R-DUTY-01  14 CFR 117. crew_duty_remaining_min (at scheduled arrival) - incurred ARRIVAL_DELAY
   - added delay (divert = full disruption) >= -DUTY_EXTENSION_MIN. DUTY_EXTENSION_MIN = 0 by
   default (no extension assumed: a 14 CFR 117.19 extension of up to 2 h needs PIC concurrence, a
-  human decision). Setting it to 120 roughly halves the all-candidates-fail rows on the eval sample
-  (74 -> 35 of 200).
+  human decision). Before the 2026-10-31 calibration, setting it to 120 roughly halved the
+  all-candidates-fail rows on the eval sample (74 -> 35 of 200); after it, 27 of 200 rows have no
+  passing candidate with the default 0 (docs/calibration.md).
 - R-GATE-01  synthetic gate model. The assigned (or swapped) gate must be free over
   [new arrival, new arrival + min turnaround]. ARRIVAL_TIME is gate-in, so TAXI_IN is already in
   the arrival time; a swap's extra_taxi_min is in the new arrival. n/a for diverts.
@@ -30,7 +34,8 @@ synthetic). docs/regulatory_sources.md is not written yet, so regulation values 
   already incurred cannot be undone by any option: added <= TURN_ADDED_MAX_MIN (30, assumed).
   n/a if there is no downstream leg or the next known leg starts elsewhere (chain partial).
 - R-AAR-01   assumed nominal rate. Same demand proxy as WAKE vs a cap reduced by weather:
-    cap = nominal_aar * (1 - WX_CAP_REDUCTION * weather share of delayed arrivals in that hour).
+    cap = nominal_aar * (1 - WX_CAP_REDUCTION * weather share of delayed arrivals in that hour),
+    WX_CAP_REDUCTION = 0.25 (assumed).
   Limits: flights.csv holds delayed flights only, so demand is a proxy and BASE_LOAD is assumed.
 """
 
@@ -53,18 +58,26 @@ from src.schemas import Candidate, RuleResult, Scenario
 RULE_IDS = ["R-WAKE-01", "R-FUEL-01", "R-DUTY-01", "R-GATE-01", "R-TURN-01", "R-AAR-01"]
 _STRENGTH = {"data": 0, "estimated": 1, "assumed": 2, "synthetic": 3}
 
-APPROACH_KT = 140  # assumed final approach speed
-WAKE_SEP_NM_BEHIND_HEAVY = {"H": 4, "L": 5, "S": 6}  # FAA JO 7110.65 5-5-4 (verify)
-# Arrival runways in simultaneous use, assumed (not verified against airport diagrams/ASPM).
-# DFW commonly runs quad arrivals (17L/17C/18R/13R in south flow).
-ARRIVAL_RUNWAYS = {
-    "ATL": 3, "ORD": 3, "DFW": 4, "DEN": 3, "IAH": 2, "LAX": 2, "SFO": 2, "LAS": 2, "PHX": 2,
-    "CLT": 3, "MSP": 2, "DTW": 2, "SEA": 2, "EWR": 1, "LGA": 1, "JFK": 2, "BOS": 2, "MCO": 2,
-    "MIA": 2, "DCA": 1,
-}
-DEFAULT_RUNWAYS = 1
+# WAKE assumed inputs, reconciled 2026-10-31 with the reviewer's constants (src/reviewer/safety.py:
+# ASSUMED_LEADER_CATEGORY, WAKE_SEP_NM_BEHIND_LARGE, APPROACH_KT, ASSUMED_ARRIVAL_RUNWAYS) so both
+# derive the same required and per-runway spacing. docs/calibration.md.
+APPROACH_KT = 140  # assumed final approach speed (same as reviewer)
+# Assumed leader category (was "H"): the typical leader at the four hubs is a Large narrowbody;
+# Heavies are a small share of hub arrivals. A Heavy-led pair (4-6 nm) is not modelled per hour.
+LEADER_CATEGORY = "L"
+# FAA JO 7110.65 5-5-4 legacy minima (verify), leader -> follower -> nm. Distances unchanged.
+# Behind a Large: 3 nm radar minimum, 4 nm Small behind Large on final.
+WAKE_SEP_NM = {"H": {"H": 4, "L": 5, "S": 6}, "L": {"H": 3, "L": 3, "S": 4}}
+WAKE_SEP_NM_BEHIND_HEAVY = WAKE_SEP_NM["H"]  # kept for reference/imports
+# Arrival runways in simultaneous use, one assumed value for every airport (was a per-airport
+# table, ATL/ORD/DEN 3, DFW 4, others 1-2, default 1). The reviewer can only take one number, and
+# 3 is the typical hub figure (ATL 26R/27L/28; ORD, DFW, DEN 3-4); it is also the smallest count
+# for which the assumed ATL AAR of 126/h fits 3 nm spacing at 140 kt (46.7/h per runway).
+ARRIVAL_RUNWAYS_ASSUMED = 3
 BASE_LOAD = 0.6  # assumed share of nominal AAR filled by on-time arrivals in any hour
-WX_CAP_REDUCTION = 0.4  # assumed: AAR cut by up to 40% when all delayed arrivals are weather
+# Assumed (was 0.4): AAR cut when all delayed arrivals in the hour are weather. VMC -> IMC called
+# rates at the large hubs drop by roughly 15-30% (FAA airport capacity profiles, not verified).
+WX_CAP_REDUCTION = 0.25
 DUTY_EXTENSION_MIN = 0  # 14 CFR 117.19 allows up to 120 with PIC concurrence; not assumed
 TURN_ADDED_MAX_MIN = 30  # assumed: max extra next-leg delay an option may add
 
@@ -93,15 +106,17 @@ def _demand(s: Scenario, airport: str, minute: float) -> tuple[float, dict, int]
 def wake(s: Scenario, c: Candidate) -> RuleResult:
     airport, minute = arrival_point(s, c)
     demand, stats, aar = _demand(s, airport, minute)
-    runways = ARRIVAL_RUNWAYS.get(airport, DEFAULT_RUNWAYS)
+    runways = ARRIVAL_RUNWAYS_ASSUMED
     cat = str(s.wake_category.value)
-    sep_nm = WAKE_SEP_NM_BEHIND_HEAVY.get(cat, 6)
+    seps = WAKE_SEP_NM[LEADER_CATEGORY]
+    sep_nm = seps.get(cat, max(seps.values()))  # unknown follower: most conservative
     required_s = sep_nm / APPROACH_KT * 3600
     available_s = 3600 * runways / demand
+    leader = {"H": "Heavy", "L": "Large"}.get(LEADER_CATEGORY, LEADER_CATEGORY)
     return _r(
         "R-WAKE-01", c, available_s >= required_s, available_s, required_s,
         _weakest(s.wake_category.source, "assumed", "data"),
-        f"FAA JO 7110.65 5-5-4 (verify): {sep_nm} nm {cat} behind assumed Heavy at {APPROACH_KT} kt "
+        f"FAA JO 7110.65 5-5-4 (verify): {sep_nm} nm {cat} behind assumed {leader} at {APPROACH_KT} kt "
         f"(assumed); {airport} {stats['hour']:02d}:00 demand {demand:.1f}/h = {BASE_LOAD} x AAR {aar} "
         f"(assumed) + {stats['delayed']} delayed (data) + 1, over {runways} runway(s) (assumed)",
     )

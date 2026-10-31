@@ -16,6 +16,7 @@ Dict shapes (the contract other modules read; add keys freely, never rename):
   the destination has no coordinates (ECP, PBG, UST).
 - gates: {airport, assigned_gate, min_turnaround_min, turnaround_source, occupancy, source}.
   occupancy maps gate id -> [[start_abs, end_abs], ...], the busy intervals of OTHER aircraft.
+  The plan is built around the projected gate-in actual_arr_abs (re-flowed to the latest ETA).
 - connections: [{row_index, flight_number, destination, sched_dep_abs, minutes_after_arrival,
   est_pax, source}], same-airline departures 45-180 min after actual arrival.
 
@@ -24,12 +25,14 @@ Field semantics (binding for the rules engine and the reviewer, plan-rohan secti
   destination, INCLUDING the 45 min final reserve. Built as
   45 (14 CFR 121.639 final reserve) + planned_alternate_min (most distant listed alternate,
   distance_nm / 7 nm per min, 420 kt assumed; 30 min assumed if there are no alternates)
-  + 5% contingency of AIR_TIME + seeded discretionary fuel (5-20 min). Tagged "estimated".
+  + 5% contingency of AIR_TIME + seeded discretionary fuel (DISCRETIONARY_RANGE, 15-40 min).
+  Tagged "estimated".
   The reviewer passes FUEL iff value - airborne_extra >= 45; the rules engine is stricter and
   also keeps the alternate time (value - airborne_extra >= planned_alternate_min + 45).
 - crew_duty_remaining_min.value: FDP minutes remaining at the SCHEDULED arrival (gate-in). A
   legally scheduled crew has a non-negative remainder there, so the remainder is seeded in
-  [30, 300] (capped so the report time is at least 45 min before scheduled departure). FDP limit
+  DUTY_REMAINING_RANGE [60, 420] (capped so the report time is at least 45 min before scheduled
+  departure; docs/calibration.md). FDP limit
   13 h unaugmented, 17 h when the block time exceeds 9 h (augmented crew), both from 14 CFR 117
   Tables B/C mid-range, assumed. The incurred ARRIVAL_DELAY is NOT subtracted here; the rules
   engine subtracts it. Tagged "synthetic".
@@ -66,7 +69,10 @@ CRUISE_NM_PER_MIN = 7.0  # 420 kt, assumed (same constant as the reviewer)
 FINAL_RESERVE_MIN = 45  # 14 CFR 121.639(c), 45 min at normal cruise
 DEFAULT_ALTERNATE_MIN = 30.0  # assumed alternate time when no alternate can be ranked
 CONTINGENCY_FRACTION = 0.05  # assumed 5% of trip (AIR_TIME), common airline practice
-DISCRETIONARY_RANGE = (5, 20)  # seeded discretionary/extra fuel in minutes, assumed
+# Seeded discretionary/extra fuel in minutes, assumed. Calibrated 2026-10-31 (was (5, 20)): every
+# eval row is weather- or late-aircraft-delayed, and dispatch adds holding/extra fuel when
+# destination weather or ATC flow delays are forecast (typically ~15-45 min). docs/calibration.md
+DISCRETIONARY_RANGE = (15, 40)
 EARTH_RADIUS_NM = 3440.065
 EPOCH = pd.Timestamp("2015-01-01")
 
@@ -83,9 +89,23 @@ FDP_LIMIT_MIN = 13 * 60  # 14 CFR 117 Table B mid-range, assumed (9-14 h by repo
 FDP_LIMIT_AUGMENTED_MIN = 17 * 60  # 14 CFR 117 Table C mid-range, assumed, block time > 9 h
 AUGMENTED_BLOCK_MIN = 9 * 60
 REPORT_BEFORE_DEP_MIN = 45  # assumed minimum report-to-departure time
-DUTY_REMAINING_RANGE = (30, 300)  # seeded FDP remainder at scheduled arrival, synthetic
+# Seeded FDP remainder at scheduled arrival, synthetic. Calibrated 2026-10-31 (was (30, 300)):
+# the leg can sit anywhere in the duty day. Lower end ~1 h = the delay buffer schedulers keep on the
+# last leg of a long day (a 117.19 extension needs PIC concurrence, so pairings are not built to the
+# limit); upper end ~7 h = first leg of a typical 8-10 h, 3-4 leg duty day. Assumed, not measured.
+DUTY_REMAINING_RANGE = (60, 420)
 TURNAROUND_MIN = {"H": 90, "L": 45, "S": 30}  # assumed per aircraft class
 GATE_IDS = [f"{c}{n}" for c in "ABCD" for n in (2, 6, 12)]
+# Synthetic gate model, seeded. The assigned gate is planned around the PROJECTED gate-in
+# (actual_arr_abs): airline gate plans are re-flowed to the latest ETA once a delay is known.
+# Calibrated 2026-10-31 (was: planned around the SCHEDULED arrival with 10-29 / 5-25 min gaps).
+# Idle gap before our gate-in (previous occupant gone) and after our planned turn (next occupant
+# due), minutes, [lo, hi). Assumed: hub gate plans keep a >= 10-15 min buffer between occupants
+# and idle gaps of up to ~1 h between arrival banks.
+ASSIGNED_GATE_PREV_GAP = (10, 41)
+ASSIGNED_GATE_NEXT_GAP = (15, 61)
+OTHER_GATE_BUSY = (40, 91)  # assumed occupancy per other aircraft (unchanged)
+OTHER_GATE_IDLE = (20, 150)  # assumed idle gap between other aircraft, ~43% utilisation (unchanged)
 
 
 def hhmm_to_min(v) -> int | None:
@@ -264,22 +284,25 @@ def _connections(row: pd.Series, rng: np.random.Generator, limit: int = 6) -> li
 
 
 def _gates(row: pd.Series, turnaround: int, rng: np.random.Generator) -> dict:
-    """Synthetic gate model, seeded per row so assignments are locked per scenario."""
-    sched_arr = int(row.sched_arr_abs)
+    """Synthetic gate model, seeded per row so assignments are locked per scenario.
+
+    Planned around the projected gate-in (actual_arr_abs), see ASSIGNED_GATE_* above.
+    """
+    planned_arr = int(row.actual_arr_abs)
     assigned = GATE_IDS[int(rng.integers(len(GATE_IDS)))]
     occupancy = {}
     for gate in GATE_IDS:
         if gate == assigned:
-            # Free for the planned turn, then the next aircraft is due a short gap later.
-            prev_end = sched_arr - int(rng.integers(10, 30))
-            next_start = sched_arr + turnaround + int(rng.integers(5, 26))
+            # Free for the planned turn, then the next aircraft is due a gap later.
+            prev_end = planned_arr - int(rng.integers(*ASSIGNED_GATE_PREV_GAP))
+            next_start = planned_arr + turnaround + int(rng.integers(*ASSIGNED_GATE_NEXT_GAP))
             occupancy[gate] = [[prev_end - 60, prev_end], [next_start, next_start + 60]]
             continue
-        intervals, t = [], sched_arr - 180 + int(rng.integers(0, 60))
-        while t < sched_arr + 420:
-            length = int(rng.integers(40, 91))
+        intervals, t = [], planned_arr - 180 + int(rng.integers(0, 60))
+        while t < planned_arr + 420:
+            length = int(rng.integers(*OTHER_GATE_BUSY))
             intervals.append([t, t + length])
-            t += length + int(rng.integers(20, 150))
+            t += length + int(rng.integers(*OTHER_GATE_IDLE))
         occupancy[gate] = intervals
     return {
         "airport": row.DESTINATION_AIRPORT,

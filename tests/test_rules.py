@@ -53,13 +53,15 @@ def test_aa334_has_failures_and_a_safe_option(aa334):
 
 
 def test_hold40_fails_fuel_hold_shorter_needs_less(aa334):
-    s, _, rr = aa334
+    s, cands, rr = aa334
     by = _by(rr)
     hold40 = by[("HOLD40", "R-FUEL-01")]
     assert not hold40.passed
     assert hold40.observed == pytest.approx(s.fuel_reserve_min.value - 40, abs=0.1)
     assert by[("HOLD20", "R-FUEL-01")].observed > hold40.observed
-    assert by[("GATE_C6", "R-FUEL-01")].passed and by[("GROUND_HOLD_MFE", "R-FUEL-01")].passed
+    assert by[("HOLD20", "R-FUEL-01")].passed  # extra fuel covers a 20 min hold (calibrated)
+    gate_swap = next(c.candidate_id for c in cands if c.kind == "gate_swap")
+    assert by[(gate_swap, "R-FUEL-01")].passed and by[("GROUND_HOLD_MFE", "R-FUEL-01")].passed
     # diverts only need the 45 min final reserve on arrival at the alternate
     assert by[("DIVERT_ACT", "R-FUEL-01")].threshold == 45
 
@@ -89,3 +91,21 @@ def test_unknown_param_does_not_crash(aa334):
     odd = Candidate(candidate_id="DIVERT_XXX", kind="divert", params={"iata": "XXX"},
                     est_delay_min=0, est_knock_on_min=0)
     assert len(check_all(s, [odd])) == 6
+
+
+def test_wake_inputs_match_reviewer_and_distances_unchanged(aa334):
+    # Reconciled assumed inputs (docs/calibration.md): leader, separation, approach speed, runways.
+    from src.reviewer import safety
+    from src.rules import engine
+
+    assert engine.LEADER_CATEGORY == safety.ASSUMED_LEADER_CATEGORY == "L"
+    assert engine.APPROACH_KT == safety.APPROACH_KT
+    assert engine.ARRIVAL_RUNWAYS_ASSUMED == safety.ASSUMED_ARRIVAL_RUNWAYS
+    for follower in ("H", "L"):  # the categories the builder emits
+        assert engine.WAKE_SEP_NM[engine.LEADER_CATEGORY][follower] == safety.WAKE_SEP_NM_BEHIND_LARGE
+    # FAA JO 7110.65 5-5-4 distances are not weakened
+    assert engine.WAKE_SEP_NM["H"] == {"H": 4, "L": 5, "S": 6}
+    assert engine.WAKE_SEP_NM["L"]["S"] == 4
+    s, _, rr = aa334
+    wake = _by(rr)[("SLOT+15", "R-WAKE-01")]
+    assert wake.threshold == pytest.approx(safety.WAKE_SEP_NM_BEHIND_LARGE / safety.APPROACH_KT * 3600, abs=0.1)
