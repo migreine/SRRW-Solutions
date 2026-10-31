@@ -1,6 +1,9 @@
-pandas>=3.1
-numpy>=2.5
-pydantic>=2.14
-anthropic>=2.3
-streamlit>=1.66
-pytest>=9.2
+# Exact versions the test suite, the 200-row evaluation and the live agent calls were verified on
+# (Python 3.14.7). pandas 3 needs Python >= 3.11.
+pandas==3.0.5
+numpy==2.3.5
+pydantic==2.13.5
+anthropic==1.2.0
+streamlit==1.66.1
+python-dotenv==1.2.3
+pytest==9.1.1

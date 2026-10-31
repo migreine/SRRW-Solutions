@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
+# Organisers' track brief: kept locally, not redistributed in the public repo
+problem statement/
 # Per-row eval run files (~60 MB); regenerate with python -m eval.run_eval
 eval/results/runs/
 eval/costtest/
