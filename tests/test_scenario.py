@@ -1,7 +1,8 @@
+import pytest
+
 from src.scenario.builder import (
     ASSIGNED_GATE_NEXT_GAP,
     ASSIGNED_GATE_PREV_GAP,
-    DISCRETIONARY_RANGE,
     DUTY_REMAINING_RANGE,
     EXCLUDED_ALTERNATES,
     _alternates,
@@ -92,15 +93,20 @@ def test_alternates_skip_missing_coordinates():
 
 def test_fuel_and_duty_semantics():
     s = build_scenario(AA334_ROW)
-    # fuel includes the 45 min final reserve plus the alternate time (plan-rohan section 0)
-    assert s.fuel_reserve_min.value >= 45 + planned_alternate_min(s.alternates)
+    # fuel = workbook 30 min final reserve + alternate time + 45 min spare fuel on arrival
+    assert s.fuel_reserve_min.value == pytest.approx(30 + planned_alternate_min(s.alternates) + 45, abs=0.1)
+    assert "organiser workbook" in s.fuel_reserve_min.note
     # duty remainder is measured at SCHEDULED arrival, so a legal crew is non-negative there
     lo, hi = DUTY_REMAINING_RANGE
     assert 0 < lo <= s.crew_duty_remaining_min.value <= hi
-    # fuel margin above alternate + reserve = 5% contingency + seeded discretionary fuel
-    margin = s.fuel_reserve_min.value - 45 - planned_alternate_min(s.alternates)
-    contingency = round(0.05 * s.flight["AIR_TIME"], 1)
-    assert DISCRETIONARY_RANGE[0] <= round(margin - contingency) <= DISCRETIONARY_RANGE[1]
+    assert "max duty 780 min from report" in s.crew_duty_remaining_min.note
+
+
+def test_workbook_airport_limits_in_scenario():
+    s = build_scenario(AA334_ROW)  # DFW: Large hub, 90 ops/h, 45 min turnaround
+    assert s.nominal_aar.value == 45 and s.nominal_aar.source == "assumed"
+    assert "organiser workbook" in s.nominal_aar.note
+    assert s.gates["min_turnaround_min"] == 45
 
 
 def test_delayed_arrivals_helper_matches_scenario():
@@ -114,7 +120,7 @@ def test_delayed_arrivals_helper_matches_scenario():
 
 # ---- edge cases -------------------------------------------------------------------------------
 from src.options.menu import generate_candidates  # noqa: E402
-from src.rules.engine import check_all  # noqa: E402
+from src.rules.engine import RULE_IDS, check_all  # noqa: E402
 
 SCHED_ARR_2400_ROW = 86285  # SCHEDULED_ARRIVAL 2400, departs 21:35
 ARR_TIME_2400_ROW = 78  # ARRIVAL_TIME 2400, scheduled 23:35, +25 min
@@ -144,7 +150,7 @@ def test_missing_destination_coordinates():
     assert "no alternate ranked" in s.fuel_reserve_min.note  # 30 min default alternate time
     cands = generate_candidates(s)
     assert len(cands) >= 5 and not any(c.kind == "divert" for c in cands)
-    assert len(check_all(s, cands)) == 6 * len(cands)
+    assert len(check_all(s, cands)) == len(RULE_IDS) * len(cands)
 
 
 def test_no_downstream_legs_and_unmatched_tail():

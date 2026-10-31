@@ -22,20 +22,19 @@ Dict shapes (the contract other modules read; add keys freely, never rename):
 
 Field semantics (binding for the rules engine and the reviewer, plan-rohan section 0 item 2):
 - fuel_reserve_min.value: minutes of flying time available beyond the planned arrival at the
-  destination, INCLUDING the 45 min final reserve. Built as
-  45 (14 CFR 121.639 final reserve) + planned_alternate_min (most distant listed alternate,
+  destination, INCLUDING the final reserve. Built from the organiser workbook (docs/constraints.md):
+  30 min final reserve + planned_alternate_min (most distant listed alternate,
   distance_nm / 7 nm per min, 420 kt assumed; 30 min assumed if there are no alternates)
-  + 5% contingency of AIR_TIME + seeded discretionary fuel (DISCRETIONARY_RANGE, 15-40 min).
-  Tagged "estimated".
-  The reviewer passes FUEL iff value - airborne_extra >= 45; the rules engine is stricter and
-  also keeps the alternate time (value - airborne_extra >= planned_alternate_min + 45).
+  + 45 min spare fuel on arrival (includes the 5% contingency). Tagged "estimated".
+  Engine and reviewer both pass FUEL iff value - airborne_extra >= alternate + 30 (divert: >= 30).
 - crew_duty_remaining_min.value: FDP minutes remaining at the SCHEDULED arrival (gate-in). A
   legally scheduled crew has a non-negative remainder there, so the remainder is seeded in
   DUTY_REMAINING_RANGE [60, 420] (capped so the report time is at least 45 min before scheduled
-  departure; docs/calibration.md). FDP limit
-  13 h unaugmented, 17 h when the block time exceeds 9 h (augmented crew), both from 14 CFR 117
-  Tables B/C mid-range, assumed. The incurred ARRIVAL_DELAY is NOT subtracted here; the rules
-  engine subtracts it. Tagged "synthetic".
+  departure; docs/calibration.md). Max duty 13 h from report time for every flight (organiser
+  workbook). The incurred ARRIVAL_DELAY is NOT subtracted here; the rules engine subtracts it.
+  Tagged "synthetic".
+- nominal_aar: workbook max_runway_ops_per_hour x 0.5 arrival share (assumed). gates
+  min_turnaround_min: workbook per destination airport.
 - Times: ARRIVAL_TIME / actual_arr_abs are gate-in times (they already include TAXI_IN).
 
 Helpers for other modules (Scenario is frozen, so import these instead of adding fields):
@@ -52,6 +51,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from src import constraints
 from src.schemas import Scenario, Tagged
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -66,35 +66,35 @@ HHMM_COLUMNS = [
 EXCLUDED_ALTERNATES = {"ECP", "PBG", "UST"}  # no coordinates in airports.csv
 MIN_ALTERNATE_NM = 30.0  # assumed: closer airports share the destination's terminal area/weather
 CRUISE_NM_PER_MIN = 7.0  # 420 kt, assumed (same constant as the reviewer)
-FINAL_RESERVE_MIN = 45  # 14 CFR 121.639(c), 45 min at normal cruise
+# Organiser workbook fuel_and_crew (src/constraints.py, docs/constraints.md). Minutes of holding;
+# we treat a minute of holding fuel as a minute of airborne extra (assumed).
+FINAL_RESERVE_MIN = constraints.fuel_crew("final_reserve_min")  # 30 min holding (was 45, 121.639)
+CONTINGENCY_FRACTION = constraints.fuel_crew("contingency_fraction")  # 5% of trip (AIR_TIME)
+# Spare fuel on arrival above final reserve + alternate (was seeded U[15, 40] + 5% contingency).
+# The 5% contingency is assumed to be part of this spare, not added on top.
+SPARE_FUEL_ON_ARRIVAL_MIN = constraints.fuel_crew("spare_fuel_on_arrival_min")  # 45 min holding
 DEFAULT_ALTERNATE_MIN = 30.0  # assumed alternate time when no alternate can be ranked
-CONTINGENCY_FRACTION = 0.05  # assumed 5% of trip (AIR_TIME), common airline practice
-# Seeded discretionary/extra fuel in minutes, assumed. Calibrated 2026-10-31 (was (5, 20)): every
-# eval row is weather- or late-aircraft-delayed, and dispatch adds holding/extra fuel when
-# destination weather or ATC flow delays are forecast (typically ~15-45 min). docs/calibration.md
-DISCRETIONARY_RANGE = (15, 40)
 EARTH_RADIUS_NM = 3440.065
 EPOCH = pd.Timestamp("2015-01-01")
 
-# Approximate good-weather arrival acceptance rates (arrivals per hour). Not verified against
-# FAA ASPM; always tagged "assumed".
-NOMINAL_AAR = {
-    "ATL": 126, "ORD": 112, "DFW": 118, "DEN": 112, "LAX": 84, "SFO": 54, "LAS": 60, "IAH": 80,
-    "PHX": 76, "CLT": 80, "MSP": 80, "DTW": 80, "SEA": 60, "EWR": 40, "LGA": 40, "JFK": 44,
-    "BOS": 60, "MCO": 70, "MIA": 68, "DCA": 36,
-}
-DEFAULT_AAR = 40
+
+def nominal_aar(iata: str) -> float:
+    """Arrival capacity/h: workbook max_runway_ops_per_hour x ARRIVAL_SHARE (0.5, assumed)."""
+    return constraints.airport(iata).arrival_capacity_per_hour
+
+
 HEAVY_DISTANCE_MI = 2500  # longer routes assumed flown by widebodies
-FDP_LIMIT_MIN = 13 * 60  # 14 CFR 117 Table B mid-range, assumed (9-14 h by report time/segments)
-FDP_LIMIT_AUGMENTED_MIN = 17 * 60  # 14 CFR 117 Table C mid-range, assumed, block time > 9 h
-AUGMENTED_BLOCK_MIN = 9 * 60
+# Organiser workbook: flight crew max duty 13 h from report time, every flight (was 13 h Table B,
+# 17 h augmented when block > 9 h; the augmented case is dropped to follow the workbook).
+FDP_LIMIT_MIN = int(constraints.fuel_crew("crew_max_duty_min"))
 REPORT_BEFORE_DEP_MIN = 45  # assumed minimum report-to-departure time
 # Seeded FDP remainder at scheduled arrival, synthetic. Calibrated 2026-10-31 (was (30, 300)):
 # the leg can sit anywhere in the duty day. Lower end ~1 h = the delay buffer schedulers keep on the
 # last leg of a long day (a 117.19 extension needs PIC concurrence, so pairings are not built to the
 # limit); upper end ~7 h = first leg of a typical 8-10 h, 3-4 leg duty day. Assumed, not measured.
 DUTY_REMAINING_RANGE = (60, 420)
-TURNAROUND_MIN = {"H": 90, "L": 45, "S": 30}  # assumed per aircraft class
+# Min turnaround now per destination airport from the organiser workbook (was assumed per class,
+# H 90 / L 45 / S 30): constraints.airport(dest).min_turnaround_min.
 GATE_IDS = [f"{c}{n}" for c in "ABCD" for n in (2, 6, 12)]
 # Synthetic gate model, seeded. The assigned gate is planned around the PROJECTED gate-in
 # (actual_arr_abs): airline gate plans are re-flowed to the latest ETA once a delay is known.
@@ -347,19 +347,19 @@ def build_scenario(row_index: int, seed: int = 42) -> Scenario:
     alternates = _alternates(dest)
     alt_min = planned_alternate_min(alternates)
     contingency = round(CONTINGENCY_FRACTION * float(row.AIR_TIME), 1)
-    extra = int(rng.integers(DISCRETIONARY_RANGE[0], DISCRETIONARY_RANGE[1] + 1))
+    spare = SPARE_FUEL_ON_ARRIVAL_MIN
     alt_label = f"most distant alternate {max(alternates, key=lambda a: a['distance_nm'])['iata']}" if alternates else "no alternate ranked, assumed"
     fuel_reserve_min = Tagged(
-        value=round(FINAL_RESERVE_MIN + alt_min + contingency + extra, 1),
+        value=round(FINAL_RESERVE_MIN + alt_min + spare, 1),
         source="estimated",
-        note=f"minutes beyond planned arrival incl. final reserve: {FINAL_RESERVE_MIN} final reserve "
-        f"(14 CFR 121.639) + {alt_min:g} to {alt_label} (420 kt assumed) + {contingency:g} contingency "
-        f"(5% of AIR_TIME {int(row.AIR_TIME)}) + {extra} discretionary (seeded)",
+        note=f"minutes beyond planned arrival incl. final reserve: {FINAL_RESERVE_MIN:g} final reserve "
+        f"+ {alt_min:g} to {alt_label} (420 kt assumed) + {spare:g} spare fuel on arrival, which "
+        f"includes {contingency:g} unburnt contingency (5% of AIR_TIME {int(row.AIR_TIME)}); "
+        f"{constraints.NOTE}",
     )
 
     block = int(row.SCHEDULED_TIME)
-    augmented = block > AUGMENTED_BLOCK_MIN
-    fdp_limit = FDP_LIMIT_AUGMENTED_MIN if augmented else FDP_LIMIT_MIN
+    fdp_limit = FDP_LIMIT_MIN
     lo, hi = DUTY_REMAINING_RANGE
     hi = max(lo, min(hi, fdp_limit - block - REPORT_BEFORE_DEP_MIN))
     remaining = int(rng.integers(lo, hi + 1))
@@ -368,14 +368,15 @@ def build_scenario(row_index: int, seed: int = 42) -> Scenario:
         value=remaining,
         source="synthetic",
         note=f"FDP remaining at SCHEDULED arrival (incurred delay not subtracted); report at {report} "
-        f"min (seeded), FDP limit {fdp_limit} min assumed ({'augmented, Table C' if augmented else 'Table B'})",
+        f"min (seeded), max duty {fdp_limit} min from report ({constraints.NOTE})",
     )
 
-    aar = NOMINAL_AAR.get(dest, DEFAULT_AAR)
-    nominal_aar = Tagged(
-        value=aar,
-        source="assumed",
-        note="approximate FAA rate, unverified" if dest in NOMINAL_AAR else "default for unlisted airport",
+    lim = constraints.airport(dest)
+    nominal_aar_t = Tagged(
+        value=lim.arrival_capacity_per_hour,
+        source=constraints.SOURCE,
+        note=f"{constraints.NOTE}: {lim.max_runway_ops_per_hour} runway ops/h x {constraints.ARRIVAL_SHARE} "
+        f"arrival share (assumed)" + ("" if lim.listed else f"; {dest} not listed, default row"),
     )
 
     return Scenario(
@@ -389,7 +390,7 @@ def build_scenario(row_index: int, seed: int = 42) -> Scenario:
         wake_category=wake_category,
         fuel_reserve_min=fuel_reserve_min,
         crew_duty_remaining_min=crew_duty_remaining_min,
-        gates=_gates(row, TURNAROUND_MIN[wake], rng),
+        gates=_gates(row, lim.min_turnaround_min, rng),
         connections=_connections(row, rng),
-        nominal_aar=nominal_aar,
+        nominal_aar=nominal_aar_t,
     )

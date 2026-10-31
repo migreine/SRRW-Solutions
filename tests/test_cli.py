@@ -40,9 +40,9 @@ def test_fixture_mode_end_to_end(out_dir):
     assert rec.log_path == str(log_path) and rec.human_decision == "pending"
     assert data["fallback"]["fired"] is False
 
-    # Real reviewer: SLOT+30 passes FUEL 105.1-30=75.1 >= 27.1 (most distant alternate AUS) + 45 =
-    # 72.1, DUTY 150-101 incurred-30=19, WAKE 142.1 s >= 77.1 s. DIVERT_AUS: 150-101-(190/7+60) =
-    # -38.1 -> the reviewer fails it on duty, as the engine does, so there is no disagreement.
+    # Real reviewer: SLOT+30 passes FUEL 105.1-30=75.1 >= 42.1 (most distant alternate AUS) + 30 =
+    # 72.1, DUTY 150-101 incurred-30=19, WAKE 189.5 s >= 77.1 s (4 runways). DIVERT_AUS:
+    # 150-101-(295/7+60) = -53.1 -> the reviewer fails it on duty, as the engine does.
     rv = data["reviewer"]
     assert rv["verdict"] == "APPROVE" == rec.reviewer_verdict
     assert rv["engine_disagreements"] == []
@@ -105,10 +105,10 @@ def _events(result, out_dir, name):
 
 
 def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkeypatch):
-    # fuel 97.1 (old 70 + 27.1 alternate time): consensus SLOT+30 leaves 97.1-30=67.1 < 27.1 to the
-    # most distant alternate (AUS) + 45 reserve = 72.1 -> REJECT. Reviewer also fails HOLD40
-    # (97.1-40=57.1). DIVERT_AUS passes FUEL (only the 45 min reserve on arrival, 97.1-27.1=70) but
-    # fails DUTY (150-101 incurred-87.1 < 0), as the engine does. The fallback excludes DIVERT_AUS,
+    # fuel 97.1: consensus SLOT+30 leaves 97.1-30=67.1 < 42.1 to the most distant alternate (AUS)
+    # + 30 reserve = 72.1 -> REJECT. Reviewer also fails HOLD40 (97.1-40=57.1). DIVERT_AUS passes
+    # FUEL (only the 30 min reserve on arrival, 97.1-42.1=55) but fails DUTY
+    # (150-101 incurred-102.1 < 0), as the engine does. The fallback excludes DIVERT_AUS,
     # HOLD40 and SLOT+30 and picks SLOT-15 (objective -15+30=15) from
     # SLOT+15/SLOT-15/HOLD20/GATE_B12/GROUND_HOLD_MFE.
     _patch_scenario(monkeypatch, fuel_reserve_min=Tagged(value=97.1, source="estimated"))
@@ -157,9 +157,9 @@ def test_reviewer_rejects_consensus_pick_and_fallback_takes_over(out_dir, monkey
 
 
 def test_reviewer_wake_fail_everywhere_escalates(out_dir, monkeypatch):
-    # nominal_aar 160: 3 runways, 10800 / (160-14) = 74.0 s < 77.1 s, so WAKE fails for every
-    # candidate (airport-level); nothing is eligible after exclusion -> chosen=None, escalate.
-    _patch_scenario(monkeypatch, nominal_aar=Tagged(value=160, source="assumed"))
+    # nominal_aar 210: DFW 4 active runways (workbook), 14400 / (210-14) = 73.5 s < 77.1 s, so WAKE
+    # fails for every candidate (airport-level); nothing is eligible after exclusion -> escalate.
+    _patch_scenario(monkeypatch, nominal_aar=Tagged(value=210, source="assumed"))
     result = run_one(0, "fixture", out_dir=out_dir)
     rec = Recommendation.model_validate(result["recommendation"])
     assert rec.chosen is None and rec.decided_by == "fallback"

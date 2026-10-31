@@ -6,10 +6,10 @@ The flight row is the real data/flights.csv row 123017 (AA334 MFE->DFW, 24 Apr 2
 hhmm times converted to minutes since midnight. Everything else is hand-picked and tagged.
 
 Designed outcomes:
-- HOLD40 fails R-FUEL-01 (14 CFR 121.639: 105.1 - 40 = 65.1 min < 27.1 min to the most distant
-  alternate, AUS 190 NM / 7 NM per min, + 45 min final reserve = 72.1 min).
-- DIVERT_AUS passes R-FUEL-01: after a divert the alternate is the destination, so only the 45 min
-  final reserve is kept on arrival (105.1 - 27.1 = 78 min >= 45).
+- HOLD40 fails R-FUEL-01 (105.1 - 40 = 65.1 min < 42.1 min to the most distant alternate, AUS
+  295 NM / 7 NM per min, + 30 min organiser-workbook final reserve = 72.1 min).
+- DIVERT_AUS passes R-FUEL-01: after a divert the alternate is the destination, so only the 30 min
+  final reserve is kept on arrival (105.1 - 42.1 = 63 min >= 30).
 - DIVERT_AUS fails R-DUTY-01 (engine's delay estimate 165 min > 150 min duty remaining).
 - Every other (rule, candidate) pair passes.
 - Fallback objective (delay + knock_on, default weights): SLOT-15 = 15 is the best passing pick,
@@ -34,11 +34,14 @@ CANDIDATE_IDS = [
     "GROUND_HOLD_MFE",
 ]
 
-# 78 min of usable margin + 27.1 min to the most distant alternate (AUS 190 NM at 7 NM per min).
-ALTERNATE_MIN = round(190 / 7.0, 1)  # 27.1, as src/scenario/builder.py planned_alternate_min
+# 33 min of usable margin over 42.1 min to the most distant alternate (AUS 295 NM at 7 NM per min)
+# + 30 min final reserve. AUS moved from 190 NM when the reserve went 45 -> 30, so every threshold
+# (72.1 min) and designed outcome is unchanged (docs/constraints.md).
+AUS_NM = 295
+ALTERNATE_MIN = round(AUS_NM / 7.0, 1)  # 42.1, as src/scenario/builder.py planned_alternate_min
 FUEL_RESERVE_MIN = 105.1
 CREW_DUTY_REMAINING_MIN = 150
-FUEL_THRESHOLD_MIN = 45  # 14 CFR 121.639 final reserve
+FUEL_THRESHOLD_MIN = 30  # organiser workbook final reserve (was 45, 14 CFR 121.639)
 
 
 def _flight_row() -> dict:
@@ -128,7 +131,7 @@ def fixture_scenario() -> Scenario:
         alternates=[
             {"iata": "DAL", "distance_nm": 12},
             {"iata": "ACT", "distance_nm": 78},
-            {"iata": "AUS", "distance_nm": 190},
+            {"iata": "AUS", "distance_nm": AUS_NM},
         ],
         wake_category=Tagged(value="L", source="assumed", note="A321 fleet default, no registry"),
         fuel_reserve_min=Tagged(
@@ -183,7 +186,7 @@ def _airborne_extra_min(c: Candidate) -> float:
     if c.kind == "slot_shift":
         return float(max(c.params["shift_min"], 0))
     if c.kind == "divert":
-        return round(190 / 7.0, 1)
+        return round(AUS_NM / 7.0, 1)
     return 0.0
 
 
