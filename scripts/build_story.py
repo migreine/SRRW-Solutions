@@ -10,7 +10,9 @@ no network requests). Re-run after any new results:
 from __future__ import annotations
 
 import csv
+import functools
 import json
+import math
 import re
 import sys
 from collections import Counter
@@ -28,6 +30,7 @@ FAILURE_LOG = ROOT / "runs" / "failure_showcase.jsonl"
 SUMMARY = ROOT / "eval" / "results" / "summary.csv"
 PER_SCENARIO = ROOT / "eval" / "results" / "per_scenario.csv"
 FLIGHTS = ROOT / "data" / "flights.csv"
+AIRPORTS = ROOT / "data" / "airports.csv"
 FAILURE_DOC = ROOT / "docs" / "failure_case.md"
 BRIEF_RD = ROOT / "docs" / "waseem_industry_rd.md"
 BRIEF_RE = ROOT / "docs" / "waseem_reverse_engineer.md"
@@ -256,6 +259,57 @@ def log_timeline(events: list[dict]) -> list[dict]:
     return out
 
 
+@functools.lru_cache(maxsize=1)
+def airport_coords() -> dict:
+    out: dict = {}
+    with open(AIRPORTS, encoding="utf-8", errors="replace", newline="") as fh:
+        for r in csv.DictReader(fh):
+            try:
+                out[r["IATA_CODE"]] = (float(r["LATITUDE"]), float(r["LONGITUDE"]))
+            except (TypeError, ValueError, KeyError):
+                pass
+    return out
+
+
+def bearing_nm(a: tuple, b: tuple) -> tuple[float, float]:
+    """True bearing (deg) and great-circle distance (nm) from a to b, both (lat, lon)."""
+    lat1, lon1, lat2, lon2 = map(math.radians, (*a, *b))
+    d = lon2 - lon1
+    y = math.sin(d) * math.cos(lat2)
+    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(d)
+    brg = (math.degrees(math.atan2(y, x)) + 360) % 360
+    h = math.sin((lat2 - lat1) / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(d / 2) ** 2
+    return round(brg, 1), round(2 * 3440.065 * math.asin(math.sqrt(h)), 1)
+
+
+SCOPE_RANGES_NM = (40, 60, 80, 100, 120, 160, 200, 240, 320)
+
+
+def scope_geo(scn: dict) -> dict | None:
+    """Geometry for the story's radar scope: alternates and origin by bearing from the destination.
+
+    Display only. Positions come from airports.csv; the aircraft blip is drawn schematically.
+    """
+    f = scn.get("flight") or {}
+    co = airport_coords()
+    dest, org = f.get("DESTINATION_AIRPORT"), f.get("ORIGIN_AIRPORT")
+    if dest not in co:
+        return None
+    alts = []
+    for a in scn.get("alternates") or []:
+        if a.get("lat") is None or a.get("lon") is None:
+            continue
+        b, n = bearing_nm(co[dest], (a["lat"], a["lon"]))
+        alts.append({"iata": a["iata"], "brg": b, "nm": n})
+    origin = None
+    if org in co:
+        b, n = bearing_nm(co[dest], co[org])
+        origin = {"iata": org, "brg": b, "nm": n}
+    far = max([a["nm"] for a in alts] or [50]) * 1.15
+    rng = next((r for r in SCOPE_RANGES_NM if r >= far), SCOPE_RANGES_NM[-1])
+    return {"dest": {"iata": dest}, "origin": origin, "alternates": alts, "range_nm": rng}
+
+
 def digest_run(run: dict, events: list[dict] | None = None) -> dict:
     scn = run["scenario"]
     f = scn["flight"]
@@ -346,6 +400,7 @@ def digest_run(run: dict, events: list[dict] | None = None) -> dict:
             "candidate_id": rev.get("candidate_id"),
         },
         "timeline": log_timeline(events or []),
+        "scope": scope_geo(scn),
     }
 
 
@@ -435,158 +490,302 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SRRW: one disrupted arrival, start to finish</title>
 <style>
+/* Two worlds side by side. Left: the radar console (phosphor green on black), fixed, following the
+   scroll. Right: the briefing, a cool chart-paper page set in airport-signage type (Bahnschrift/DIN),
+   with a flight track running down its left edge that fills as you pass each phase. Chart convention:
+   magenta marks the chosen route. */
 :root{
-  /* Ops-desk palette: apron concrete, console steel, buff flight strips, airfield sign yellow/black,
-     grease-pencil red and tick green. */
-  --bg:#D6DBDE; --bg2:#E7EBED; --panel:#F6F7F7; --line:#A9B3B9; --grid:#C4CBCF;
-  --fg:#16191C; --dim:#4F5B64; --steel:#27323B; --strip:#F2E6C4; --strip-edge:#D9C68F;
-  --yellow:#F5C400; --black:#16191C;
-  --green:#2E7D32; --amber:#8F5F00; --red:#C62828; --cyan:#1F5F8B; --violet:#6A3FA0;
-  --mono:Consolas,"Cascadia Mono","SF Mono",Menlo,"DejaVu Sans Mono",monospace;
-  --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
-  --sign:"Bahnschrift SemiBold SemiConden","Bahnschrift","DIN Alternate","DIN Condensed","Arial Narrow",sans-serif;
-  --pencil:"Ink Free","Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  --paper:#F1F4F0; --card:#FFFFFF; --ink:#0D1A14; --ink-2:#36443D; --ink-3:#66766D; --line:#DCE3DD; --line-2:#C5CFC8;
+  --go:#12804A; --caution:#B26A00; --stop:#C2362B; --route:#B0249E; --sky:#0B6AA2; --teal:#0D8577; --violet:#6D3FD6; --orange:#C2531A;
+  --red:var(--stop); --green:var(--go); --amber:var(--caution);
+  --c-atc:#2563EB; --c-pilot:#0D8577; --c-ground:#15803D; --c-rules:#B26A00; --c-review:#6D3FD6; --c-human:#0D1A14;
+  --display:"Bahnschrift","DIN Alternate","DIN Next","Barlow Semi Condensed","Arial Narrow",sans-serif;
+  --sans:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+  --rail-w:340px; --spine-x:44px;
+  --shadow:0 1px 2px rgba(13,26,20,.05),0 10px 30px -14px rgba(13,26,20,.18);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:20px;line-height:1.45}
-body{background:var(--bg)}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(176,36,158,.16)}
+:focus-visible{outline:2px solid var(--sky);outline-offset:3px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes glow{0%,100%{text-shadow:0 0 4px rgba(51,255,51,.4)}50%{text-shadow:0 0 8px rgba(51,255,51,.6),0 0 16px rgba(51,255,51,.2)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes hazard{0%,100%{opacity:.45}50%{opacity:.9}}
+@keyframes blink{0%,60%,100%{opacity:1}70%,90%{opacity:.15}}
+@keyframes flip{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@keyframes cue{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+/* ================= LEFT: radar console ================= */
+.rail{
+  --bg-deep:#050805; --bg-mid:#0a0e0a; --bg-surface:#0f140f; --bg-raised:#141a14; --bg-overlay:#1a221a;
+  --border-dim:#121e12; --border-mid:#1a2e1a; --border-bright:#243a24;
+  --nominal:#33ff33; --warning:#ffaa00; --critical:#ff3333;
+  --text-primary:#d0e8d0; --text-secondary:#98bb98; --text-dim:#6a8e6a; --text-muted:#4a6a4a;
+  --c-atc:#4488ff; --c-pilot:#33ccff; --c-ground:#33ff33; --c-rules:#ffaa00; --c-review:#aa88ff; --c-human:#d0e8d0;
+  --rmono:"IBM Plex Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
+  position:fixed;inset:0 auto 0 0;width:var(--rail-w);z-index:20;overflow:auto;
+  background:radial-gradient(420px 320px at 50% 26%,rgba(51,255,51,.06),transparent 70%),var(--bg-mid);
+  border-right:1px solid var(--border-mid);box-shadow:4px 0 24px rgba(0,0,0,.35);
+  color:var(--text-primary);font-family:var(--rmono);display:flex;flex-direction:column;
+  scrollbar-width:thin;scrollbar-color:var(--border-bright) transparent}
+.rail :focus-visible{outline-color:var(--nominal)}
+.rail.hidden{display:none}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+.brand svg{width:28px;height:28px;flex-shrink:0}
+.brand-name{font-size:14px;font-weight:600;letter-spacing:.12em}
+.brand-sub{font-size:11px;color:var(--text-dim)}
+.rail-status{display:flex;justify-content:space-between;align-items:center;padding:0 14px 10px;font-size:11px}
+.live{display:flex;gap:6px;align-items:center;color:var(--nominal);letter-spacing:.08em;font-weight:600}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--nominal);box-shadow:0 0 6px var(--nominal);animation:pulse 2s ease-in-out infinite}
+.counter{font-weight:600;letter-spacing:.08em;font-variant-numeric:tabular-nums;color:var(--text-primary)}
+.scn{font-size:10.5px;color:var(--text-dim);margin-top:2px;letter-spacing:.02em}
+.flash{display:flex;gap:4px;flex-wrap:wrap;padding:0 14px 12px}
+.fchip{display:flex;align-items:center;gap:5px;padding:2px 7px;border:1px solid var(--border-mid);border-radius:6px;
+  background:var(--bg-surface);font-size:10px;letter-spacing:.06em;color:var(--text-muted);
+  transition:color .25s ease,border-color .25s ease,box-shadow .25s ease,background-color .25s ease}
+.fchip i{width:5px;height:5px;border-radius:50%;background:#2a332a}
+.fchip.on{color:var(--ac);border-color:var(--ac);font-weight:600;
+  background:color-mix(in srgb,var(--ac) 10%,var(--bg-surface));box-shadow:0 0 8px color-mix(in srgb,var(--ac) 35%,transparent)}
+.fchip.on i{background:var(--ac);box-shadow:0 0 6px var(--ac);animation:pulse 2s ease-in-out infinite}
+.ph{padding:8px 14px;border-top:1px solid var(--border-mid);border-bottom:1px solid var(--border-mid);
+  background:linear-gradient(180deg,var(--bg-overlay),var(--bg-mid));display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pt{font-size:12px;font-weight:600;color:var(--nominal);letter-spacing:.1em;text-transform:uppercase;animation:glow 4s ease-in-out infinite}
+.pm{font-size:11px;color:var(--text-dim);letter-spacing:.04em}
+.scope-wrap{position:relative;width:calc(100% - 28px);max-width:300px;aspect-ratio:1;margin:12px auto 10px}
+.scope-wrap > #scope, .scope-wrap > #scope svg{position:absolute;inset:0;width:100%;height:100%}
+.sweep{position:absolute;inset:7.14%;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg,transparent 0deg 290deg,rgba(51,255,51,.03) 300deg,rgba(51,255,51,.24) 360deg);
+  animation:spin 4s linear infinite}
+#scope .wx{animation:hazard 3s ease-in-out infinite}
+#scope .blinking{animation:blink 1s steps(1,end) infinite}
+.readout{margin:0 14px 14px;padding:8px 10px;border:1px solid var(--border-dim);border-radius:8px;background:var(--bg-deep);font-size:11.5px;line-height:1.75}
+.readout div{display:flex;justify-content:space-between;gap:10px}
+.readout span{color:var(--text-dim);letter-spacing:.06em}
+.readout b{color:var(--text-primary);font-weight:500;text-align:right;animation:flip .35s ease-out both}
+.readout b.ok{color:var(--nominal)} .readout b.no{color:var(--critical)} .readout b.mid{color:var(--warning)} .readout b.dim{color:var(--text-secondary)}
+.readout .note{display:block;color:var(--text-dim);font-size:10.5px;line-height:1.4;margin-top:6px;border-top:1px solid var(--border-dim);padding-top:6px}
+nav#index{display:flex;flex-direction:column;padding:6px 8px 12px;position:relative}
+nav#index a{display:flex;gap:10px;align-items:center;padding:6px 10px;border-radius:8px;color:var(--text-secondary);
+  font-size:12.5px;cursor:pointer;border:1px solid transparent;transition:background-color .15s ease,color .15s ease}
+nav#index a .n{color:var(--text-dim);font-weight:600;font-variant-numeric:tabular-nums}
+nav#index a .d{width:7px;height:7px;border-radius:50%;border:1px solid var(--text-dim);flex-shrink:0;margin-left:auto}
+nav#index a.past .d{background:var(--text-dim)}
+nav#index a:hover{background:var(--bg-raised);color:var(--text-primary)}
+nav#index a.on{border-color:var(--nominal);background:rgba(51,255,51,.08);color:var(--nominal);box-shadow:0 0 6px rgba(51,255,51,.1)}
+nav#index a.on .n{color:var(--nominal)}
+nav#index a.on .d{background:var(--nominal);border-color:var(--nominal);box-shadow:0 0 6px var(--nominal)}
+.rail-foot{margin-top:auto;padding:10px 14px;border-top:1px solid var(--border-dim);font-size:10.5px;color:var(--text-dim)}
+
+/* ================= RIGHT: the briefing ================= */
+main#stage{margin-left:var(--rail-w);position:relative;outline:none}
+.spine{position:fixed;top:0;bottom:0;left:calc(var(--rail-w) + var(--spine-x));width:2px;background:var(--line);z-index:5}
+.spine i{display:block;width:100%;height:0;background:linear-gradient(180deg,var(--sky),var(--route));transition:height .12s linear}
+.chap,.hero{position:relative;padding:112px 64px 112px calc(var(--spine-x) + 64px);border-top:1px solid var(--line)}
+.chap > *{max-width:1180px}
+.chap > h1{max-width:21ch}
+.chap > p.lead{max-width:60ch}
+.chap::after{content:attr(data-n);position:absolute;top:84px;right:56px;font-family:var(--display);font-weight:700;
+  font-size:168px;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--line-2);letter-spacing:-.02em;pointer-events:none;z-index:0}
+.chap > *:not(.node){position:relative;z-index:1}
+.node{position:absolute;left:calc(var(--spine-x) - 8px);top:118px;width:18px;height:18px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--line-2);z-index:6;transition:border-color .3s ease,background-color .3s ease,box-shadow .3s ease}
+.chap.past .node{border-color:var(--sky);background:var(--sky)}
+.chap.on .node{border-color:var(--route);background:var(--card);box-shadow:0 0 0 6px rgba(176,36,158,.14)}
+.chap.on .node::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--route)}
+
+/* hero: the flight progress strip */
+.hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;border-top:0;
+  background:radial-gradient(900px 500px at 85% 10%,rgba(11,106,162,.08),transparent 60%),radial-gradient(700px 500px at 10% 100%,rgba(176,36,158,.06),transparent 60%)}
+.hero .node{top:50%;border-color:var(--route);background:var(--route)}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.hero h1{font-family:var(--display);font-weight:700;font-stretch:87.5%;font-size:clamp(46px,6.4vw,104px);line-height:.96;letter-spacing:-.02em;
+  margin:18px 0 18px;max-width:14ch;color:var(--ink)}
+.hero h1 em{font-style:normal;color:var(--route)}
+.hero .sub{font-size:20px;color:var(--ink-2);margin:0 0 40px;max-width:46ch}
+.strip{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));align-items:stretch;max-width:980px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.strip > div{padding:16px 20px;border-left:1px solid var(--line)}
+.strip > div:first-child{border-left:0;background:var(--ink);color:#fff;display:flex;flex-direction:column;justify-content:center;min-width:170px}
+.strip .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.strip > div:first-child .k{color:#9fb3a8}
+.strip .v{font-family:var(--display);font-weight:600;font-size:28px;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.strip > div:first-child .v{font-size:36px;letter-spacing:.02em}
+.strip .v.mid{color:var(--caution)}
+.cue{margin-top:44px;display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:14px}
+.cue svg{animation:cue 2s ease-in-out infinite}
+
+/* chapter type */
+.kicker{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--sky)}
+.kicker::before{content:"";width:22px;height:2px;background:currentColor}
+h1{font-family:var(--display);font-weight:700;font-stretch:87.5%;font-size:clamp(34px,3.7vw,58px);line-height:1.02;letter-spacing:-.015em;
+  margin:18px 0 14px;max-width:20ch;color:var(--ink);text-wrap:balance}
+h2{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:44px 0 16px;
+  display:flex;align-items:center;gap:14px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h3{font-size:17px;font-weight:600;margin:0 0 6px;color:var(--ink);letter-spacing:-.005em}
+p.lead{font-size:19px;color:var(--ink-2);max-width:60ch;margin:0 0 28px}
+.small{font-size:14px}
+.dim{color:var(--ink-3)}
 .mono{font-family:var(--mono)}
-:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
-/* console frame */
-header{display:flex;align-items:center;gap:18px;padding:10px 26px;background:var(--steel);color:#EEF1F2;position:sticky;top:0;z-index:5}
-.brand{font-family:var(--sign);letter-spacing:.14em;color:var(--yellow);font-size:15px;text-transform:uppercase}
-.brand b{display:block;color:#EEF1F2;font-size:24px;letter-spacing:.01em;font-family:var(--sign);font-weight:600;text-transform:none}
-.spacer{flex:1}
-.counter{font-family:var(--sign);color:#C9D0D4;font-size:20px;letter-spacing:.06em}
-.btn{font:inherit;font-family:var(--sign);font-size:19px;letter-spacing:.03em;background:var(--panel);color:var(--fg);border:2px solid var(--black);border-radius:3px;padding:7px 18px;cursor:pointer}
-header .btn{background:transparent;color:#EEF1F2;border-color:#7E8B93}
-.btn:hover{background:var(--bg2)} header .btn:hover{background:#34414B}
-.btn[disabled]{opacity:.35;cursor:default}
-.btn.primary{background:var(--black);border-color:var(--black);color:var(--yellow)}
-.btn.primary:hover{background:#2A2F33}
-/* progress = taxiway centreline: yellow dashes fill as you taxi through the story */
-.progress{height:8px;background:var(--black)}
-.progress i{display:block;height:100%;width:0;transition:width .35s;
-  background:repeating-linear-gradient(90deg,var(--yellow) 0 22px,transparent 22px 34px)}
-/* .radar is now an airfield location sign (yellow on black) */
-.radar{flex:none;display:grid;place-items:center;min-width:56px;height:46px;padding:0 10px;background:var(--black);
-  color:var(--yellow);border:2px solid var(--yellow);font-family:var(--sign);font-weight:700;font-size:22px;letter-spacing:.04em}
-.mandatory{display:inline-block;background:var(--red);color:#fff;font-family:var(--sign);font-weight:700;font-size:44px;
-  letter-spacing:.04em;padding:14px 30px;border:4px solid #fff;outline:4px solid var(--red);text-transform:uppercase}
-.blip{display:none}
-@media (prefers-reduced-motion:reduce){.progress i{transition:none}}
-/* layout */
-.wrap{display:flex;min-height:calc(100vh - 140px)}
-nav#index{width:300px;flex:none;border-right:2px solid var(--line);padding:14px 10px;background:var(--bg2);font-size:16px}
-nav#index.hidden{display:none}
-nav#index a{display:flex;gap:10px;padding:7px 10px;color:var(--dim);text-decoration:none;cursor:pointer;border-left:4px solid transparent}
-nav#index a .n{font-family:var(--sign);color:var(--fg);min-width:26px;font-weight:600}
-nav#index a.on{background:var(--black);color:#fff;border-left-color:var(--yellow)}
-nav#index a.on .n{color:var(--yellow)}
-nav#index a:hover{color:var(--fg)}
-nav#index a.on:hover{color:#fff}
-main{flex:1;padding:28px 44px 34px;max-width:1500px}
-footer{display:flex;align-items:center;gap:14px;padding:10px 26px;background:var(--steel);color:#C9D0D4;position:sticky;bottom:0}
-footer .btn{background:transparent;color:#EEF1F2;border-color:#7E8B93}
-footer .btn.primary{background:var(--yellow);border-color:var(--yellow);color:var(--black)}
-.keys{color:#AEB8BE;font-size:15px;font-family:var(--mono)}
-/* type: chapter kicker is a location sign; headings set in the signage face */
-.kicker{display:inline-block;font-family:var(--sign);font-weight:700;background:var(--black);color:var(--yellow);
-  letter-spacing:.08em;font-size:17px;text-transform:uppercase;padding:4px 12px}
-h1{font-family:var(--sign);font-weight:600;font-size:54px;line-height:1.02;letter-spacing:-.01em;margin:14px 0 12px;max-width:1150px}
-h2{font-family:var(--sign);font-size:28px;font-weight:600;margin:26px 0 10px;color:var(--fg);
-  border-bottom:3px solid var(--black);display:inline-block;padding-bottom:2px}
-h3{font-family:var(--sign);font-weight:600;font-size:23px;margin:0 0 6px}
-p.lead{font-size:22px;color:#2B343B;max-width:1080px;margin:6px 0 16px}
-.dim{color:var(--dim)}
-.small{font-size:16px}
-.grid{display:grid;gap:14px}
-.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media (max-width:1100px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}nav#index{display:none}main{padding:20px 16px}h1{font-size:40px}}
-@media (max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}}
-/* cards are console panels; the colour bar on the left marks status like a strip holder */
-.card{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--line);padding:14px 16px}
-.card.hl{border-left-color:var(--green)}
-.card.warn{border-left-color:var(--yellow)}
-.card.bad{border-left-color:var(--red)}
-.big{font-family:var(--sign);font-size:46px;font-weight:700;line-height:1.02}
-.chip{display:inline-block;font-family:var(--mono);font-size:14px;padding:0 7px;border:1px solid;margin:2px 4px 2px 0;white-space:nowrap;background:#fff}
-.src-data{color:#1E5B22;border-color:#1E5B22}
-.src-estimated{color:var(--cyan);border-color:var(--cyan)}
-.src-assumed{color:var(--amber);border-color:var(--amber);background:#FFF6D6}
-.src-synthetic{color:var(--violet);border-color:var(--violet);border-style:dashed}
-.src-brief{color:#5B4A1A;border-color:#9C8440;background:var(--strip)}
-.ok{color:var(--green)}.no{color:var(--red)}.mid{color:var(--amber)}
-.tag{font-family:var(--mono);font-size:14px;color:var(--dim)}
-.pain{display:inline-flex;align-items:center;gap:6px;font-family:var(--sign);font-weight:600;font-size:16px;letter-spacing:.02em;
-  color:var(--black);background:var(--yellow);padding:2px 9px;margin:2px 6px 2px 0}
-.cite{font-family:var(--mono);font-size:14px;color:var(--dim)}
-.brief-note{font-size:15px;color:#5B4A1A}
-table{border-collapse:collapse;width:100%;font-size:17px;background:var(--panel)}
-th,td{border-bottom:1px solid var(--grid);padding:6px 8px;text-align:left;vertical-align:top}
-th{color:var(--dim);font-weight:600;font-family:var(--sign);font-size:16px;letter-spacing:.03em;background:var(--bg2)}
-td.c{text-align:center}
-.cell{cursor:pointer;font-family:var(--mono);font-weight:700}
-.cell.pass{color:var(--green)}.cell.fail{color:#fff;background:var(--red)}
-.cell.sel{outline:3px solid var(--yellow);outline-offset:-3px}
-.agent{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.agent svg{width:38px;height:38px;flex:none}
-/* a ranked pick or a veto is a flight strip: buff paper, a stub on the left, data in mono */
-.bubble{background:var(--strip);border:1px solid var(--strip-edge);border-left:14px solid var(--strip-edge);padding:7px 12px;margin:7px 0;font-size:17px}
-.bubble.veto{border-left-color:var(--red)}
-.score{font-family:var(--mono);color:var(--amber);font-weight:700}
-/* signature: grease-pencil marks, the way controllers annotate strips */
-.pencil{font-family:var(--pencil);font-size:20px;line-height:1.1;display:inline-block;margin:0 10px 2px 0;white-space:nowrap}
-.pencil.tick{color:var(--green)}
-.pencil.tick::before{content:"\2713";margin-right:3px;font-weight:700}
-.pencil.strike{color:var(--red);text-decoration:line-through;text-decoration-thickness:3px}
-.pencil.ring{color:var(--fg);border:2.5px solid var(--red);border-radius:50% 46% 52% 44%;padding:0 8px;transform:rotate(-2deg)}
-/* audit timeline */
-.tl{border-left:3px solid var(--black);margin-left:10px;padding-left:18px}
-.tl .ev{position:relative;padding:4px 0;font-size:16px}
-.tl .ev::before{content:"";position:absolute;left:-27px;top:11px;width:12px;height:12px;background:var(--green);border:2px solid var(--panel)}
-.tl .ev.e-fallback_fired::before,.tl .ev.e-reviewer_verdict.rej::before{background:var(--red)}
-.tl .ev.e-agent_message::before{background:var(--cyan)}
-.tl .ev.e-rule_check::before{background:var(--yellow)}
-.stamp{display:inline-block;font-family:var(--sign);font-weight:700;font-size:36px;letter-spacing:.08em;padding:2px 18px;border:4px solid;transform:rotate(-3deg)}
-.banner{padding:14px 18px;font-size:22px;font-weight:600;font-family:var(--sign);letter-spacing:.01em}
-.banner.red{background:var(--red);color:#fff}
-.banner.green{background:var(--panel);border-left:8px solid var(--green)}
-.tile .big{font-size:58px}
-.tile .def{font-size:15px;color:var(--dim);margin-top:6px}
-.thesis{font-family:var(--sign);font-size:34px;line-height:1.2;font-weight:600;background:var(--black);color:var(--yellow);padding:16px 24px;margin:26px 0}
-.toast{margin-top:10px;font-size:17px;min-height:26px}
-.svgbox svg{width:100%;height:auto;display:block}
-.svgbox{background:var(--panel);border:1px solid var(--line)}
-.legend{font-size:15px;color:var(--dim)}
-ul.tight{margin:6px 0;padding-left:22px}ul.tight li{margin:4px 0}
+.ok{color:var(--go)} .no{color:var(--stop)} .mid{color:var(--caution)}
+b.ok,b.no,b.mid{font-weight:700}
+
+/* panels */
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:var(--shadow);min-width:0;
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 1px 2px rgba(13,26,20,.05),0 18px 40px -18px rgba(13,26,20,.25)}
+.card:has(> table){overflow-x:auto}
+.card:has(> table):hover{transform:none}
+.card.hl{border-color:rgba(18,128,74,.4);box-shadow:0 0 0 4px rgba(18,128,74,.07),var(--shadow)}
+.card.warn{border-color:rgba(178,106,0,.35);background:linear-gradient(180deg,#FFF8EC,var(--card))}
+.tag{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+.big{font-family:var(--display);font-weight:600;font-size:44px;line-height:1.05;color:var(--ink);font-variant-numeric:tabular-nums;margin:6px 0 6px;overflow-wrap:anywhere}
+.chip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;letter-spacing:.02em;
+  border:1px solid transparent;margin:2px 4px 2px 0;white-space:nowrap;vertical-align:middle;line-height:1.5}
+.src-data{color:#0E6B3D;background:#E3F4EA;border-color:#C4E7D2}
+.src-estimated{color:#0B6A60;background:#E0F3F0;border-color:#BFE6E0}
+.src-assumed{color:#8A5200;background:#FCF0D9;border-color:#F2DCB0}
+.src-synthetic{color:#A3410F;background:#FCE7DB;border-color:#F4CDB6}
+.src-brief{color:#0B5A8A;background:#E2F0F9;border-color:#C1DEF0}
+.pain{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--caution);border:1px dashed rgba(178,106,0,.4);
+  border-radius:999px;padding:2px 10px;margin:3px 6px 3px 0}
+.legend{font-size:13px;color:var(--ink-3);margin-top:10px}
+.cite{font-size:12.5px;color:var(--ink-3);margin-top:6px}
+.bubble{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:14px;color:var(--ink-2);overflow-wrap:anywhere}
+.bubble b{color:var(--ink)}
+.score{float:right;color:var(--go);font-weight:700;font-family:var(--mono)}
+.agent{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.agent svg{width:38px;height:38px;flex-shrink:0}
+.comms{border-top:4px solid var(--ac)}
+.comms h3{color:var(--ac)}
+.pencil{display:inline-block;font-size:12px;padding:1px 8px;margin:2px 4px 2px 0;border-radius:999px;border:1px solid;font-family:var(--mono)}
+.pencil.strike{color:var(--stop);border-color:rgba(194,54,43,.35);background:#FDEDEB;text-decoration:line-through}
+.pencil.ring{color:var(--go);border-color:rgba(18,128,74,.4);background:#E3F4EA;font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--sans);font-weight:700}
+.banner{padding:14px 18px;border-radius:12px;font-size:16px;font-weight:500}
+.banner.green{background:#E6F4EC;color:#0E5C35;border:1px solid #C4E7D2}
+.banner.red{background:#FDECEA;color:#8F2219;border:1px solid #F5C9C3;font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{font-size:11px;letter-spacing:.06em;color:var(--ink-3);text-align:left;font-weight:700;padding:8px;border-bottom:1px solid var(--line-2);vertical-align:bottom}
+td{padding:8px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+.c{text-align:center}
+td.cell{cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.04em;transition:box-shadow .15s ease}
+td.cell.pass{color:var(--go)}
+td.cell.fail{color:#9E2318;background:#FBE3E0}
+td.cell:hover{box-shadow:inset 0 0 0 1px var(--line-2)}
+td.cell.sel{box-shadow:inset 0 0 0 2px var(--route)}
+.stamp{display:inline-block;padding:6px 16px;border-radius:999px;font-weight:700;letter-spacing:.12em;font-size:16px;font-family:var(--sans)}
+.stamp.ok{color:#fff;background:var(--go)} .stamp.mid{color:#fff;background:var(--caution)} .stamp.no{color:#fff;background:var(--stop)}
+.tl{display:flex;flex-direction:column;max-height:440px;overflow:auto;font-size:12.5px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-family:var(--mono)}
+.ev{padding:7px 12px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.ev .tag{color:var(--ink-3);font-weight:400;letter-spacing:0;text-transform:none;font-size:12px}
+.ev b{color:var(--ev,var(--ink-2))}
+.e-agent_message{--ev:var(--teal)} .e-rule_check{--ev:var(--caution)} .e-reviewer_verdict{--ev:var(--violet)}
+.e-fallback_fired{--ev:var(--orange)} .e-consensus,.e-recommendation,.e-intersection{--ev:var(--go)} .e-human_decision{--ev:var(--ink)}
+.ev.rej{background:#FDECEA}
+.toast{margin:14px 0 8px;padding:10px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--line);font-size:14px}
+.btn{font:inherit;font-size:15px;font-weight:600;padding:10px 20px;min-height:44px;background:var(--card);color:var(--ink);border:1px solid var(--line-2);
+  border-radius:999px;cursor:pointer;transition:transform .1s ease,box-shadow .2s ease,background-color .2s ease}
+.btn:hover{box-shadow:var(--shadow)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--go);border-color:var(--go);color:#fff}
+.thesis{margin:56px 0 28px;font-family:var(--display);font-weight:700;font-stretch:87.5%;font-size:clamp(32px,3.6vw,56px);line-height:1.04;letter-spacing:-.015em;max-width:22ch}
+.thesis::after{content:"";display:block;width:120px;height:4px;margin-top:20px;background:linear-gradient(90deg,var(--sky),var(--route));border-radius:2px}
+.mandatory{display:inline-block;padding:12px 26px;border:2px solid var(--stop);color:var(--stop);border-radius:999px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;background:#fff}
+.chap .mandatory{margin:0}
+.chap div[style*="justify-content:center"]{justify-content:flex-start!important}
+.svgbox{background:var(--card)}
+.svgbox svg{display:block;width:100%;height:auto}
+ul.tight{margin:8px 0;padding-left:0;list-style:none}
+ul.tight li{position:relative;padding-left:20px;margin:7px 0}
+ul.tight li::before{content:"";position:absolute;left:2px;top:.6em;width:8px;height:2px;background:var(--sky)}
 .cand{display:flex;flex-direction:column;gap:4px}
-.bar{height:8px;background:var(--grid);overflow:hidden}.bar i{display:block;height:100%;background:var(--black)}
-.flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
-.flow .step{flex:1;min-width:150px}
+.bar{height:6px;background:var(--paper);border-radius:3px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--caution),var(--orange));border-radius:3px}
+.flow{display:flex;gap:18px;flex-wrap:wrap}
+.flow .step{flex:1;min-width:170px;position:relative}
+.flow .step:not(:last-child)::after{content:"";position:absolute;right:-14px;top:50%;width:10px;height:2px;background:var(--line-2)}
+.mx-wrap{grid-template-columns:minmax(0,1fr)}
+.mx-wrap > div:last-child{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
+.mx-wrap > div:last-child > .card{margin-top:0!important}
+@media (max-width:960px){.mx-wrap > div:last-child{grid-template-columns:minmax(0,1fr)}}
+.tile .def{font-size:12.5px;color:var(--ink-3);margin-top:8px;font-family:var(--mono)}
+
+/* scroll reveal (only once the observer is running) */
+.reveal .chap > *:not(.node){opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+.reveal .chap.in > *:not(.node){opacity:1;transform:none}
+.reveal .chap.in > *:nth-child(3){transition-delay:.06s} .reveal .chap.in > *:nth-child(4){transition-delay:.12s}
+.reveal .chap.in > *:nth-child(5){transition-delay:.18s} .reveal .chap.in > *:nth-child(n+6){transition-delay:.24s}
+
+/* ================= responsive ================= */
+@media (max-width:1180px){
+  .g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .chap::after{font-size:120px}
+}
+@media (max-width:960px){
+  .rail{position:sticky;inset:auto;top:0;width:auto;height:auto;max-height:none;flex-direction:row;flex-wrap:wrap;align-items:center;
+    box-shadow:0 4px 18px rgba(0,0,0,.3);border-right:0;border-bottom:1px solid var(--border-mid)}
+  .rail .brand{padding:8px 12px}
+  .rail .scope-wrap{width:96px;margin:6px 12px;order:-1}
+  .rail .readout,.rail nav#index,.rail .ph,.rail .rail-foot,.rail .brand-sub,.rail .scn{display:none}
+  .rail .flash{padding:0 12px 8px;width:100%}
+  .rail .rail-status{margin-left:auto;padding:8px 12px}
+  main#stage{margin-left:0}
+  .spine{display:none}
+  .chap,.hero{padding:72px 20px}
+  .node{display:none}
+  .chap::after{font-size:84px;top:60px;right:16px}
+  .g3,.g2{grid-template-columns:minmax(0,1fr)}
+  .grid[style]{grid-template-columns:minmax(0,1fr)!important}
+  .strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .strip > div:first-child{grid-column:1 / -1}
+  .strip > div:nth-child(2){border-left:0}
+}
+@media (max-width:600px){
+  .g4{grid-template-columns:minmax(0,1fr)}
+  .rail .flash{display:none}
+  .chap::after{display:none}
+  .rail{flex-wrap:nowrap}
+  .rail .scope-wrap{width:58px;margin:6px 4px 6px 10px}
+  .rail .brand{padding:8px 4px}
+  .rail .brand svg,.rail .live{display:none}
+  .rail .brand-name{font-size:11.5px}
+  .strip .v{font-size:22px;white-space:nowrap}
+  .strip > div:first-child .v{font-size:28px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .sweep{display:none}
+  .reveal .chap > *:not(.node){opacity:1;transform:none}
+}
 </style>
 </head>
 <body>
 <noscript><p style="padding:30px">This story needs JavaScript enabled (no network access required).</p></noscript>
-<header>
-  <div class="radar" aria-hidden="true">OPS</div>
-  <div class="brand">SRRW SOLUTIONS · DISRUPTION DESK<b>One disrupted arrival, start to finish</b></div>
-  <div class="spacer"></div>
-  <button class="btn" id="toggleIndex" title="Chapter index (I)">☰ Chapters</button>
-  <div class="counter" id="counter"></div>
-</header>
-<div class="progress"><i id="bar"></i></div>
-<div class="wrap">
-  <nav id="index" aria-label="Chapter index"></nav>
-  <main id="stage" tabindex="-1" aria-live="polite"></main>
-</div>
-<footer>
-  <button class="btn" id="prev">◀ Back</button>
-  <button class="btn primary" id="next">Next ▶</button>
-  <span class="keys">← → arrow keys · Home/End · I = index</span>
-  <div class="spacer"></div>
-  <span class="keys" id="foot"></span>
-</footer>
+<aside class="rail" id="rail" aria-label="Radar console">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="10" fill="#04150a"/><path d="M32 32 L13 9 A30 30 0 0 1 51 9 Z" fill="#2dff6b" opacity="0.22"/><circle cx="32" cy="32" r="24" fill="none" stroke="#2dff6b" stroke-width="2" opacity="0.55"/><line x1="32" y1="4" x2="32" y2="9" stroke="#2dff6b" stroke-width="2" opacity="0.6"/><line x1="32" y1="55" x2="32" y2="60" stroke="#2dff6b" stroke-width="2" opacity="0.6"/><line x1="4" y1="32" x2="9" y2="32" stroke="#2dff6b" stroke-width="2" opacity="0.6"/><line x1="55" y1="32" x2="60" y2="32" stroke="#2dff6b" stroke-width="2" opacity="0.6"/><polygon points="32,20 39,44 32,39 25,44" fill="#39ff7a"/></svg>
+    <div><div class="brand-name">SRRW · DISRUPTION DESK</div><div class="brand-sub">AI-assisted, human-decided</div><div class="scn" id="scn"></div></div>
+  </div>
+  <div class="rail-status"><span class="live" title="Replays saved runs; nothing is called live"><i></i>RECORDED RUN</span><span class="counter" id="counter"></span></div>
+  <div class="flash" id="flash" role="list" aria-label="Who acts in this phase"></div>
+  <div class="ph"><span class="pt" id="scopeTitle">Scope</span><span class="pm" id="scopeRange"></span></div>
+  <div class="scope-wrap"><div id="scope"></div><div class="sweep" aria-hidden="true"></div></div>
+  <div class="readout" id="readout"></div>
+  <div class="ph"><span class="pt">Sequence</span><span class="pm">10 phases</span></div>
+  <nav id="index" aria-label="Chapters"></nav>
+  <div class="rail-foot">← → jump between phases</div>
+</aside>
+<div class="spine" aria-hidden="true"><i id="bar"></i></div>
+<main id="stage" tabindex="-1"></main>
 <script type="application/json" id="story-data">__DATA__</script>
 <script>
 (function(){
@@ -613,22 +812,22 @@ const verdictCls = v => v === "APPROVE" ? "ok" : v === "REJECT" ? "no" : "mid";
 
 /* ---------- hand-drawn icons ---------- */
 const ICON = {
-  ATC:`<svg viewBox="0 0 40 40" fill="none" stroke="#1F5F8B" stroke-width="2"><path d="M14 38 L16 18 H24 L26 38"/><path d="M11 18 H29 L27 11 H13 Z"/><path d="M20 11 V5"/><circle cx="20" cy="4" r="1.6" fill="#1F5F8B"/><path d="M15 28 H25"/></svg>`,
-  PILOT:`<svg viewBox="0 0 40 40" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M8 16 Q20 6 32 16 L30 19 H10 Z"/><path d="M17 12 L20 9 L23 12"/><circle cx="20" cy="26" r="7"/><path d="M4 22 L13 24 M36 22 L27 24"/></svg>`,
-  GROUND:`<svg viewBox="0 0 40 40" fill="none" stroke="#8F5F00" stroke-width="2"><rect x="5" y="17" width="22" height="11" rx="2"/><path d="M27 21 H33 L36 25 V28 H27"/><circle cx="11" cy="31" r="3"/><circle cx="29" cy="31" r="3"/><path d="M9 17 V11 H19 V17"/></svg>`,
-  REVIEW:`<svg viewBox="0 0 40 40" fill="none" stroke="#6A3FA0" stroke-width="2"><path d="M20 4 L34 9 V19 C34 28 27 34 20 36 C13 34 6 28 6 19 V9 Z"/><path d="M13 20 L18 25 L27 15"/></svg>`,
-  HUMAN:`<svg viewBox="0 0 40 40" fill="none" stroke="#16191C" stroke-width="2"><circle cx="20" cy="12" r="6"/><path d="M8 36 C8 26 14 22 20 22 C26 22 32 26 32 36"/><path d="M27 6 L31 2 M31 8 L36 6"/></svg>`,
-  PHONE:`<svg viewBox="0 0 40 40" fill="none" stroke="#8F5F00" stroke-width="2"><path d="M10 6 L16 6 L18 14 L14 17 C16 22 18 24 23 26 L26 22 L34 24 L34 30 C34 33 31 35 28 34 C17 31 9 23 6 12 C5 9 7 6 10 6 Z"/></svg>`,
-  CODE:`<svg viewBox="0 0 40 40" fill="none" stroke="#2E7D32" stroke-width="2"><rect x="4" y="7" width="32" height="26" rx="3"/><path d="M15 15 L10 20 L15 25 M25 15 L30 20 L25 25 M22 13 L18 27"/></svg>`,
-  warn:`<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#8F5F00" stroke-width="1.6"><path d="M8 2 L15 14 H1 Z"/><path d="M8 6 V10 M8 12 V12.5"/></svg>`,
-  slot_shift:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1F5F8B" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7 V12 L16 14"/></svg>`,
-  hold:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#8F5F00" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="4"/><path d="M17 5 L20 8 L17 11"/></svg>`,
-  divert:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#C62828" stroke-width="2"><path d="M4 20 V12 C4 8 8 6 12 6 H20"/><path d="M16 2 L20 6 L16 10"/></svg>`,
-  gate_swap:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2E7D32" stroke-width="2"><path d="M4 8 H18 L15 5 M20 16 H6 L9 19"/></svg>`,
-  ground_hold:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#6A3FA0" stroke-width="2"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`,
+  ATC:`<svg viewBox="0 0 40 40" fill="none" stroke="#2563EB" stroke-width="2"><path d="M14 38 L16 18 H24 L26 38"/><path d="M11 18 H29 L27 11 H13 Z"/><path d="M20 11 V5"/><circle cx="20" cy="4" r="1.6" fill="#2563EB"/><path d="M15 28 H25"/></svg>`,
+  PILOT:`<svg viewBox="0 0 40 40" fill="none" stroke="#0D8577" stroke-width="2"><path d="M8 16 Q20 6 32 16 L30 19 H10 Z"/><path d="M17 12 L20 9 L23 12"/><circle cx="20" cy="26" r="7"/><path d="M4 22 L13 24 M36 22 L27 24"/></svg>`,
+  GROUND:`<svg viewBox="0 0 40 40" fill="none" stroke="#15803D" stroke-width="2"><rect x="5" y="17" width="22" height="11" rx="2"/><path d="M27 21 H33 L36 25 V28 H27"/><circle cx="11" cy="31" r="3"/><circle cx="29" cy="31" r="3"/><path d="M9 17 V11 H19 V17"/></svg>`,
+  REVIEW:`<svg viewBox="0 0 40 40" fill="none" stroke="#6D3FD6" stroke-width="2"><path d="M20 4 L34 9 V19 C34 28 27 34 20 36 C13 34 6 28 6 19 V9 Z"/><path d="M13 20 L18 25 L27 15"/></svg>`,
+  HUMAN:`<svg viewBox="0 0 40 40" fill="none" stroke="#0D1A14" stroke-width="2"><circle cx="20" cy="12" r="6"/><path d="M8 36 C8 26 14 22 20 22 C26 22 32 26 32 36"/><path d="M27 6 L31 2 M31 8 L36 6"/></svg>`,
+  PHONE:`<svg viewBox="0 0 40 40" fill="none" stroke="#B26A00" stroke-width="2"><path d="M10 6 L16 6 L18 14 L14 17 C16 22 18 24 23 26 L26 22 L34 24 L34 30 C34 33 31 35 28 34 C17 31 9 23 6 12 C5 9 7 6 10 6 Z"/></svg>`,
+  CODE:`<svg viewBox="0 0 40 40" fill="none" stroke="#15803D" stroke-width="2"><rect x="4" y="7" width="32" height="26" rx="3"/><path d="M15 15 L10 20 L15 25 M25 15 L30 20 L25 25 M22 13 L18 27"/></svg>`,
+  warn:`<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#B26A00" stroke-width="1.6"><path d="M8 2 L15 14 H1 Z"/><path d="M8 6 V10 M8 12 V12.5"/></svg>`,
+  slot_shift:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2563EB" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7 V12 L16 14"/></svg>`,
+  hold:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#B26A00" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="4"/><path d="M17 5 L20 8 L17 11"/></svg>`,
+  divert:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#C2362B" stroke-width="2"><path d="M4 20 V12 C4 8 8 6 12 6 H20"/><path d="M16 2 L20 6 L16 10"/></svg>`,
+  gate_swap:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#15803D" stroke-width="2"><path d="M4 8 H18 L15 5 M20 16 H6 L9 19"/></svg>`,
+  ground_hold:`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#6D3FD6" stroke-width="2"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>`,
 };
 const kindLabel = {slot_shift:"Arrival slot shift", hold:"Airborne hold", divert:"Divert", gate_swap:"Gate swap", ground_hold:"Ground hold at origin"};
-const roleView = {ATC:"TRACON traffic manager · sees arrival rate, wake, taxi", PILOT:"Flight crew + dispatch · sees fuel, duty, alternates", GROUND:"Ramp / gate control · sees gates, next legs, connections"};
+const roleView = {ATC:"runway, wake, taxi", PILOT:"fuel, duty, alternates", GROUND:"gates, next legs, connections"};
 
 function ruleOf(run, cand, rule){ return run.rules.find(r => r.candidate_id===cand && r.rule_id===rule); }
 function failsOf(run, cand){ return run.rules.filter(r => r.candidate_id===cand && !r.passed).map(r => r.rule_id); }
@@ -642,66 +841,65 @@ function cascadeSVG(legs){
   const W=1200, left=210, right=110, rowH=62, top=36, Hh=top+legs.length*rowH+20;
   const x = m => left + (m-t0)/(t1-t0)*(W-left-right);
   let s = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Timeline of the aircraft's legs">`;
-  for (let m=t0; m<=t1; m+=120){ s += `<line x1="${x(m)}" y1="${top-10}" x2="${x(m)}" y2="${Hh-14}" stroke="#C4CBCF"/><text x="${x(m)}" y="${top-16}" fill="#4F5B64" font-size="15" text-anchor="middle" font-family="Consolas,monospace">${hhmm(m)}</text>`; }
+  for (let m=t0; m<=t1; m+=120){ s += `<line x1="${x(m)}" y1="${top-10}" x2="${x(m)}" y2="${Hh-14}" stroke="#DCE3DD"/><text x="${x(m)}" y="${top-16}" fill="#66766D" font-size="15" text-anchor="middle" font-family="IBM Plex Mono,Cascadia Mono,Consolas,monospace">${hhmm(m)}</text>`; }
   legs.forEach((l,i)=>{
     const y = top + i*rowH + 8;
-    const col = l.arr_delay >= 180 ? "#C62828" : "#8F5F00";
-    s += `<text x="10" y="${y+17}" fill="#16191C" font-size="19" font-family="Consolas,monospace" font-weight="700">${esc(l.flight)}</text>`;
-    s += `<text x="10" y="${y+39}" fill="#4F5B64" font-size="15" font-family="Consolas,monospace">${esc(l.origin)}→${esc(l.dest)}</text>`;
-    s += `<rect x="${x(l.sched_dep)}" y="${y}" width="${Math.max(3,x(l.sched_arr)-x(l.sched_dep))}" height="16" fill="none" stroke="#4F5B64" stroke-dasharray="5 4" rx="3"/>`;
+    const col = l.arr_delay >= 180 ? "#C2362B" : "#B26A00";
+    s += `<text x="10" y="${y+17}" fill="#0D1A14" font-size="19" font-family="IBM Plex Mono,Cascadia Mono,Consolas,monospace" font-weight="700">${esc(l.flight)}</text>`;
+    s += `<text x="10" y="${y+39}" fill="#66766D" font-size="15" font-family="IBM Plex Mono,Cascadia Mono,Consolas,monospace">${esc(l.origin)}→${esc(l.dest)}</text>`;
+    s += `<rect x="${x(l.sched_dep)}" y="${y}" width="${Math.max(3,x(l.sched_arr)-x(l.sched_dep))}" height="16" fill="none" stroke="#66766D" stroke-dasharray="5 4" rx="3"/>`;
     s += `<rect x="${x(l.act_dep)}" y="${y+22}" width="${Math.max(3,x(l.act_arr)-x(l.act_dep))}" height="18" fill="${col}" opacity=".85" rx="3"/>`;
     s += `<line x1="${x(l.sched_arr)}" y1="${y+8}" x2="${x(l.act_arr)}" y2="${y+31}" stroke="${col}" stroke-width="1.5" stroke-dasharray="3 3"/>`;
-    s += `<text x="${x(l.act_arr)+8}" y="${y+37}" fill="${col}" font-size="20" font-weight="700" font-family="Consolas,monospace">+${l.arr_delay}</text>`;
+    s += `<text x="${x(l.act_arr)+8}" y="${y+37}" fill="${col}" font-size="20" font-weight="700" font-family="IBM Plex Mono,Cascadia Mono,Consolas,monospace">+${l.arr_delay}</text>`;
   });
   return s + `</svg>`;
 }
 
 /* ---------- chapters ---------- */
 const CH = [];
+const briefChip = b => `<span class="chip src-brief" title="${esc(b.cite)}">reported in our industry brief</span>`;
 
-CH.push({t:"The duty manager's problem", r(){
+CH.push({t:"The problem", r(){
   const legs = D.tail_day.legs, first = legs[0], last = legs[legs.length-1];
   const tot = legs.reduce((a,l)=>a+l.arr_delay,0);
-  const calls = briefFig("calls"), lag = briefFig("lag"), cost = briefFig("cost"), casc = briefFig("cascade");
+  const figs = ["calls","lag","cost"].map(briefFig).filter(Boolean);
   return `
-  <div class="kicker">Chapter 1 · the user</div>
-  <h1>An ops-control duty manager, a storm at the hub, and a phone</h1>
-  <p class="lead">When weather cuts a hub's arrival rate, the airline's duty manager has to get three parties who each own one piece of the answer to agree on one plan, today by calling them one after another.</p>
+  <div class="kicker">Chapter 1 · the problem</div>
+  <h1>A storm at the hub, three parties to agree, one phone</h1>
+  <p class="lead">Today the airline's duty manager calls each party in turn until they agree.</p>
   <div class="flow">
-    ${[["PHONE","Call 1 · TRACON / TMU","arrival slot, holding, arrival-rate cap"],["PILOT","Call 2 · Crew via dispatch","fuel, alternates, duty time (VHF / ACARS)"],["GROUND","Call 3 · Ramp / gate control","gate, ground crew, next departure"],["PHONE","Call 4… · back to TRACON","when crew or ramp says no, start again"]]
+    ${[["PHONE","TRACON","slots, holding"],["PILOT","Crew","fuel, duty time"],["GROUND","Ramp","gates, next departure"],["PHONE","TRACON again","if anyone says no"]]
       .map(([ic,a,b])=>`<div class="card step"><div class="agent">${ICON[ic]}<h3>${a}</h3></div><div class="dim small">${b}</div></div>`).join("")}
   </div>
-  <p class="small">${pain("phone")}${pain("ramp")}${pain("atc")}</p>
-  <div class="grid g3" style="margin-top:8px">
-    ${[calls,lag,cost].filter(Boolean).map(b=>`<div class="card"><div class="big mid">${esc(b.figure)}</div><div>${esc(b.label)}</div><div style="margin-top:6px">${brief()}</div><div class="cite">${esc(b.cite)}</div></div>`).join("")}
+  <div class="grid g3" style="margin-top:14px">
+    ${figs.map(b=>`<div class="card"><div class="big mid">${esc(b.figure)}</div><div class="small">${esc(b.label)}</div><div style="margin-top:6px">${briefChip(b)}</div></div>`).join("")}
   </div>
-  <h2>While the calls go on, the delay rides the aircraft all day: ${esc(D.tail_day.tail)}, ${esc(D.tail_day.date)}</h2>
+  <h2>Meanwhile the delay rides the aircraft all day · ${esc(D.tail_day.tail)}</h2>
   <div class="card svgbox">${cascadeSVG(legs)}
-    <div class="legend">dashed outline = scheduled · filled bar = actual (scheduled + reported delay) · local times · source: data/flights.csv ${chip("data")}</div></div>
-  <p class="lead" style="margin-top:12px">${esc(first.flight)} ${esc(first.origin)}→${esc(first.dest)} arrived <b class="mid mono">+${first.arr_delay} min</b> (${first.weather_delay} weather, ${first.late_aircraft_delay} late aircraft). By the last leg, ${esc(last.flight)} ${esc(last.origin)}→${esc(last.dest)}, the same aircraft was <b class="no mono">+${last.arr_delay} min</b>. Arrival delays across its ${legs.length} legs: <span class="mono">${legs.map(l=>l.arr_delay).join(" → ")}</span> (${num(tot)} min in total). ${pain("cascade")}</p>
-  ${casc?`<p class="brief-note">${brief()} ${esc(casc.figure)} ${esc(casc.label)}. <span class="cite">${esc(casc.cite)}</span></p>`:""}`;
+    <div class="legend">dashed = scheduled · bar = actual · ${chip("data")} flights.csv</div></div>
+  <p class="lead" style="margin-top:12px">${esc(first.flight)} landed <b class="mid">+${first.arr_delay} min</b>. By ${esc(last.flight)} the same aircraft was <b class="no">+${last.arr_delay} min</b>: ${num(tot)} min of delay in one day.</p>`;
 }});
 
 CH.push({t:"The disruption", r(){
   const f = S.flight;
-  const painFor = {fuel_reserve_min:"fuel", crew_duty_remaining_min:"duty", nominal_aar:"atc", dest_disruption:"atc"};
-  const labels = {dest_disruption:"Delayed arrivals at destination, that hour", taxi_congestion:"Taxi congestion index", wake_category:"Wake category", fuel_reserve_min:"Fuel beyond planned arrival (min)", crew_duty_remaining_min:"Crew duty left at sched. arrival (min)", nominal_aar:"Nominal arrival rate (per hour)"};
-  const facts = S.facts.map(x=>`<div class="card"><div class="tag">${esc(x.key)}</div><div class="big" style="font-size:34px">${esc(x.value)}</div><div>${esc(labels[x.key]||x.key)} ${chip(x.source)}</div><div class="dim small">${esc(x.note)}</div>${painFor[x.key]?`<div>${pain(painFor[x.key])}</div>`:""}</div>`).join("");
+  const labels = {dest_disruption:"Delayed arrivals that hour", taxi_congestion:"Taxi congestion", wake_category:"Wake category", fuel_reserve_min:"Spare fuel (min)", crew_duty_remaining_min:"Crew duty left (min)", nominal_aar:"Arrival rate / hour"};
+  const card = (tag, big, src, sub) => `<div class="card"><div class="tag">${tag}</div><div class="big" style="font-size:30px">${big}</div>${src}${sub?`<div class="dim small">${sub}</div>`:""}</div>`;
   return `
   <div class="kicker">Chapter 2 · the disruption</div>
-  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}, ${esc(f.date)}: flying into the storm</h1>
-  <p class="lead">One row of the US DOT 2015 file (row ${esc(S.row_index)}) becomes a scenario. Every value carries a source tag, so the duty manager can see what is real and what we had to fill in.</p>
-  <div>${chip("data")} from flights.csv / airports.csv ${chip("estimated")} derived from data ${chip("assumed")} our constant, unverified ${chip("synthetic")} seeded stand-in, no real source</div>
+  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}, ${esc(f.date)}</h1>
+  <p class="lead">One row of the US DOT 2015 data becomes a scenario. Every value is tagged with its source.</p>
+  <div class="small">${chip("data")} real ${chip("estimated")} derived ${chip("assumed")} our constant ${chip("synthetic")} stand-in</div>
   <div class="grid g4" style="margin-top:12px">
-    <div class="card"><div class="tag">TAIL_NUMBER</div><div class="big" style="font-size:34px">${esc(f.TAIL_NUMBER)}</div>${chip("data")}</div>
-    <div class="card"><div class="tag">SCHEDULED → ACTUAL ARRIVAL</div><div class="big" style="font-size:34px">${hhmmInt(f.SCHEDULED_ARRIVAL)} → ${hhmmInt(f.ARRIVAL_TIME)}</div>${chip("data")}</div>
-    <div class="card"><div class="tag">ARRIVAL_DELAY</div><div class="big mid" style="font-size:34px">+${esc(f.ARRIVAL_DELAY)} min</div>${chip("data")}<div class="dim small">WEATHER ${esc(f.WEATHER_DELAY)} · LATE_AIRCRAFT ${esc(f.LATE_AIRCRAFT_DELAY)}</div></div>
-    <div class="card"><div class="tag">NEXT LEGS SAME TAIL</div><div class="big" style="font-size:34px">${S.downstream.length}</div>${chip("data")}<div class="dim small">${S.downstream.length?`next: ${esc(S.downstream[0].airline)}${esc(S.downstream[0].flight_number)} ${esc(S.downstream[0].origin)}→${esc(S.downstream[0].destination)}, turn gap ${esc(S.downstream[0].gap_after_actual_arrival_min)} min`:""}</div>${pain("cascade")}</div>
+    ${card("Aircraft", esc(f.TAIL_NUMBER), chip("data"))}
+    ${card("Sched → actual arrival", `${hhmm(f.SCHEDULED_ARRIVAL)} → ${hhmm(f.ARRIVAL_TIME)}`, chip("data"))}
+    ${card("Arrival delay", `<span class="mid">+${esc(f.ARRIVAL_DELAY)} min</span>`, chip("data"), `weather ${esc(f.WEATHER_DELAY)} · late aircraft ${esc(f.LATE_AIRCRAFT_DELAY)}`)}
+    ${card("Later legs today", S.downstream.length, chip("data"))}
   </div>
-  <div class="grid g3" style="margin-top:14px">${facts}
-    <div class="card"><div class="tag">gates</div><div class="big" style="font-size:34px">${esc(S.gates.assigned_gate)}</div><div>Assigned gate at ${esc(S.gates.airport)} ${chip(S.gates.source)}</div><div class="dim small">min turnaround ${esc(S.gates.min_turnaround_min)} min ${chip(S.gates.turnaround_source)}</div>${pain("ramp")}</div>
-    <div class="card"><div class="tag">connections</div><div class="big" style="font-size:34px">${S.connections.n} flights · ${S.connections.pax} pax</div><div>Onward connections at risk ${chip(S.connections.source)}</div><div class="dim small">tightest leaves ${esc(S.connections.first_min_after)} min after arrival</div></div>
-    <div class="card"><div class="tag">alternates</div><div class="big" style="font-size:30px">${S.alternates.map(a=>esc(a.iata)).join(" · ")}</div><div>Nearest alternates ${chip("data")}</div><div class="dim small">${S.alternates.map(a=>`${esc(a.iata)} ${num(a.distance_nm,1)} nm`).join(" · ")} (airports.csv lat/long)</div></div>
+  <div class="grid g3" style="margin-top:14px">
+    ${S.facts.map(x=>card(esc(labels[x.key]||x.key), esc(x.value), chip(x.source))).join("")}
+    ${card("Gate", esc(S.gates.assigned_gate), chip(S.gates.source), `turnaround ${esc(S.gates.min_turnaround_min)} min`)}
+    ${card("Connections at risk", `${S.connections.n} · ${S.connections.pax} pax`, chip(S.connections.source))}
+    ${card("Alternates", S.alternates.map(a=>esc(a.iata)).join(" · "), chip("data"), S.alternates.map(a=>`${esc(a.iata)} ${num(a.distance_nm)} nm`).join(" · "))}
   </div>`;
 }});
 
@@ -709,141 +907,126 @@ CH.push({t:"The menu", r(){
   const maxK = Math.max(...S.candidates.map(c=>c.est_knock_on_min));
   return `
   <div class="kicker">Chapter 3 · the menu</div>
-  <h1>Code writes the menu: ${S.candidates.length} options, no free-text plans</h1>
-  <p class="lead">The agents may only rank, accept or veto options from this fixed list. Every delay and knock-on number below is a deterministic model estimate, not an LLM guess and not a measured outcome.</p>
+  <h1>${S.candidates.length} options, written by code</h1>
+  <p class="lead">Agents can only rank or veto these. Delays are model estimates.</p>
   <div class="grid g4">${S.candidates.map(c=>`<div class="card cand">
-    <div class="agent" style="margin:0">${ICON[c.kind]||""}<span class="mono" style="font-size:22px;font-weight:700">${esc(c.candidate_id)}</span></div>
+    <div class="agent" style="margin:0">${ICON[c.kind]||""}<span style="font-size:19px;font-weight:700">${esc(c.candidate_id)}</span></div>
     <div class="dim small">${esc(kindLabel[c.kind]||c.kind)}</div>
-    <div class="mono">delay <b class="${c.est_delay_min<0?"ok":"mid"}">${signed(c.est_delay_min)} min</b></div>
-    <div class="mono small">knock-on ${num(c.est_knock_on_min,1)} min</div>
+    <div>delay <b class="${c.est_delay_min<0?"ok":"mid"}">${signed(c.est_delay_min)} min</b></div>
+    <div class="small dim">knock-on ${num(c.est_knock_on_min)} min</div>
     <div class="bar"><i style="width:${(c.est_knock_on_min/maxK*100).toFixed(1)}%"></i></div></div>`).join("")}</div>
-  <p class="small dim" style="margin-top:12px">Knock-on = estimated added delay carried into the aircraft's later legs that day (model estimate). ${pain("cascade")}</p>`;
+  <p class="legend">Knock-on = delay carried into the aircraft's later legs.</p>`;
 }});
 
 function agentCard(m, run){
-  const top = m.ranking.slice(0,3);
-  return `<div class="card">
+  const [top, ...rest] = m.ranking;
+  return `<div class="card comms" style="--ac:${AC[m.agent]}">
     <div class="agent">${ICON[m.agent]}<div><h3 style="margin:0">${esc(m.agent)}</h3><div class="dim small">${esc(roleView[m.agent]||"")}</div></div></div>
-    <div class="small">Accepts <b class="mono">${m.acceptable.length}/${run.candidates.length}</b>: ${m.acceptable.map(a=>`<span class="pencil tick">${esc(a)}</span>`).join("")}</div>
-    ${top.map((r,i)=>`<div class="bubble"><span class="mono">#${i+1} <b>${esc(r.candidate_id)}</b></span> <span class="score">${esc(r.score)}</span><br>${esc(r.rationale)}<br>${(r.cited_fields||[]).map(c=>`<span class="chip src-estimated">${esc(c)}</span>`).join("")}</div>`).join("")}
-    ${m.vetoes.map(v=>`<div class="bubble veto"><span class="pencil strike">${esc(v.candidate_id)}</span> <span class="no mono">VETO</span><br>${esc(v.reason)}<br><span class="chip src-estimated">${esc(v.cited_field)}</span></div>`).join("")}
+    <div class="small">Accepts <b>${m.acceptable.length}/${run.candidates.length}</b></div>
+    ${top?`<div class="bubble"><b>${esc(top.candidate_id)}</b> <span class="score">${esc(top.score)}</span><br>${esc(top.rationale)}<br>${(top.cited_fields||[]).map(c=>`<span class="chip src-estimated">${esc(c)}</span>`).join("")}</div>`:""}
+    ${rest.length?`<div class="small dim" style="margin-top:8px">then ${rest.slice(0,3).map(r=>`${esc(r.candidate_id)} <span class="ok">${esc(r.score)}</span>`).join(" · ")}</div>`:""}
+    ${m.vetoes.length?`<div class="small" style="margin-top:8px">Vetoes ${m.vetoes.map(v=>`<span class="pencil strike" title="${esc(v.reason)}">${esc(v.candidate_id)}</span>`).join("")}</div>`:""}
   </div>`;
 }
 
-CH.push({t:"Three agents negotiate", r(){
+CH.push({t:"Agents negotiate", r(){
   const rounds = S.turns.map(t=>`
-    <h2>Round ${t.round}${t.invalid?` · <span class="no">${t.invalid} invalid message(s)</span>`:""}</h2>
+    <h2>Round ${t.round}${t.invalid?` · <span class="no">${t.invalid} invalid</span>`:""}</h2>
     <div class="grid g3">${t.messages.map(m=>agentCard(m,S)).join("")}</div>
-    <div class="banner green" style="margin-top:12px">All three accept (${t.intersection.length}): <span class="mono">${t.intersection.map(esc).join(" · ")}</span></div>`).join("");
-  const liveBlock = L ? `<h2>Same flight, Sonnet agents (${esc(L.meta.model)})</h2>
-    <div class="card small">${L.turns.map(t=>`Round ${t.round}: top picks ${t.messages.map(m=>`<b>${esc(m.agent)}</b> <span class="mono">${esc(m.ranking[0]&&m.ranking[0].candidate_id)}</span>`).join(" · ")}; all accept <span class="mono">${t.intersection.map(esc).join(", ")}</span>`).join("<br>")}
-    <br>Decision: <b class="mono">${esc(L.recommendation.chosen&&L.recommendation.chosen.candidate_id)}</b> by ${esc(L.recommendation.decided_by)}, reviewer <b class="${verdictCls(L.recommendation.reviewer_verdict)}">${esc(L.recommendation.reviewer_verdict)}</b> · $${num(L.meta.cost_usd,4)} · ${num(L.meta.latency_s,1)} s. A different model, a narrower agreement, the same final pick.</div>` : "";
+    <div class="banner green" style="margin-top:12px">All three accept: ${t.intersection.map(esc).join(" · ")}</div>`).join("");
+  const LC = L && L.recommendation.chosen;
   return `
-  <div class="kicker">Chapter 4 · negotiation (${esc(S.meta.model)})</div>
-  <h1>Three separate agents, each seeing only its own domain</h1>
-  <p class="lead">Instead of sequential calls, ATC, PILOT and GROUND answer in structured JSON: what they accept, their ranking with the data fields they relied on, and what they veto and why. None of them sees the rule results.</p>
-  <p class="small">${pain("phone")}${pain("ramp")}</p>
-  ${rounds}${liveBlock}`;
+  <div class="kicker">Chapter 4 · negotiation · ${esc(S.meta.model)}</div>
+  <h1>Three agents, each seeing only its own data</h1>
+  <p class="lead">They rank, accept and veto in structured JSON. None of them sees the rule results.</p>
+  ${rounds}
+  ${L?`<p class="small dim" style="margin-top:14px">Same flight with ${esc(L.meta.model)}: also picked <b class="ok">${esc(LC&&LC.candidate_id)}</b> (${esc(L.recommendation.decided_by)}, reviewer ${esc(L.recommendation.reviewer_verdict)}).</p>`:""}`;
 }});
 
 function matrix(run, opts){
   opts = opts || {};
   const chosen = run.recommendation.chosen && run.recommendation.chosen.candidate_id;
   const agreed = new Set((run.turns[run.turns.length-1]||{intersection:[]}).intersection);
-  let h = `<table class="mono" id="${opts.id||"mx"}"><tr><th>candidate</th>${run.rule_ids.map(r=>`<th class="c">${esc(r)}<br>${chip(run.rule_source[r])}</th>`).join("")}</tr>`;
+  let h = `<table id="${opts.id||"mx"}"><tr><th>option</th>${run.rule_ids.map(r=>`<th class="c">${esc(r)}<br>${chip(run.rule_source[r])}</th>`).join("")}</tr>`;
   run.candidates.forEach(c=>{
     h += `<tr><td>${chosen===c.candidate_id?"★ ":""}${esc(c.candidate_id)} ${agreed.has(c.candidate_id)?'<span class="pencil ring" title="all three agents accept">agreed</span>':""}</td>`;
     run.rule_ids.forEach(r=>{ const x = ruleOf(run,c.candidate_id,r);
-      h += x ? `<td class="c cell ${x.passed?"pass":"fail"}" data-c="${esc(c.candidate_id)}" data-r="${esc(r)}">${x.passed?"PASS":"FAIL"}</td>` : `<td class="c dim">–</td>`; });
+      h += x ? `<td tabindex="0" class="c cell ${x.passed?"pass":"fail"}" data-c="${esc(c.candidate_id)}" data-r="${esc(r)}">${x.passed?"PASS":"FAIL"}</td>` : `<td class="c dim">–</td>`; });
     h += `</tr>`;
   });
   return h + `</table>`;
-}
-function topPickList(run, label){
-  return `<div class="card"><h3>${esc(label)}</h3>${run.top_picks.map(p=>`<div class="small mono">r${p.round} ${esc(p.agent)} → <b>${esc(p.candidate_id)}</b> ${p.fails.length?`<span class="no">FAIL ${p.fails.map(esc).join(", ")}</span>`:`<span class="ok">passes all</span>`}</div>`).join("")}</div>`;
 }
 function wireMatrix(run, id, detailId){
   const tbl = document.getElementById(id), det = document.getElementById(detailId);
   if (!tbl) return;
   const show = (c,r) => { const x = ruleOf(run,c,r); if(!x) return;
     tbl.querySelectorAll(".cell").forEach(e=>e.classList.toggle("sel", e.dataset.c===c && e.dataset.r===r));
-    det.innerHTML = `<div class="mono"><b>${esc(x.rule_id)}</b> × <b>${esc(x.candidate_id)}</b>: <b class="${x.passed?"ok":"no"}">${x.passed?"PASS":"FAIL"}</b> · observed ${esc(x.observed)} vs threshold ${esc(x.threshold)} ${chip(x.source)}</div><div class="small" style="margin-top:6px">${esc(x.citation)}</div>`; };
+    det.innerHTML = `<div><b>${esc(x.rule_id)}</b> × <b>${esc(x.candidate_id)}</b>: <b class="${x.passed?"ok":"no"}">${x.passed?"PASS":"FAIL"}</b></div><div class="small" style="margin-top:4px">observed ${esc(x.observed)} vs limit ${esc(x.threshold)} ${chip(x.source)}</div><div class="small dim" style="margin-top:6px">${esc(x.citation)}</div>`; };
   tbl.addEventListener("click", e=>{ const td = e.target.closest(".cell"); if (td) show(td.dataset.c, td.dataset.r); });
+  tbl.addEventListener("keydown", e=>{ if (e.key!=="Enter" && e.key!==" ") return; const td = e.target.closest && e.target.closest(".cell"); if (td){ e.preventDefault(); show(td.dataset.c, td.dataset.r); } });
   const firstFail = run.rules.find(r=>!r.passed) || run.rules[0];
   if (firstFail) show(firstFail.candidate_id, firstFail.rule_id);
 }
 
 CH.push({t:"Code checks the rules", r(){
   const tf = metric("agent_top_pick_rule_fail_rate");
-  const byA = ["ATC","PILOT","GROUND"].map(a=>metric("agent_top_pick_rule_fail_rate_"+a)).map((m,i)=>m?`${["ATC","PILOT","GROUND"][i]} ${pct(m.value)} (n=${m.n})`:"").filter(Boolean).join(" · ");
   const nFail = S.rules.filter(r=>!r.passed).length;
   return `
-  <div class="kicker">Chapter 5 · the rules engine (deterministic)</div>
-  <h1>${S.candidates.length} options × ${S.rule_ids.length} rules = ${S.rules.length} checks, ${nFail} FAIL</h1>
-  <p class="lead">Consensus means all three agents accept an option <b>and</b> it passes every rule. Click any cell for the rule's citation and the data it used. ★ = recommended · ∩ = all three agents accept.</p>
-  <p class="small">${pain("fuel")}${pain("duty")}${pain("ramp")}${pain("atc")}</p>
-  <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)">
+  <div class="kicker">Chapter 5 · rules engine · deterministic</div>
+  <h1>${S.rules.length} checks, ${nFail} fail</h1>
+  <p class="lead">Consensus = all three agents accept <b>and</b> it passes every rule. Click a cell for its source.</p>
+  <div class="grid mx-wrap">
     <div class="card">${matrix(S,{id:"mx1"})}</div>
     <div><div class="card hl" id="mx1d"></div>
-      <h2>Top picks vs rules they could not see</h2>
-      ${topPickList(S, `${fl(S.flight)} · ${S.meta.model}`)}
-      ${L?topPickList(L, `${fl(L.flight)} · ${L.meta.model}`):""}
-      ${topPickList(F, `${fl(F.flight)} (Chapter 8) · ${F.meta.model}`)}
-      ${tf?`<div class="card warn" style="margin-top:10px"><div class="big mid">${pct(tf.value)}</div><div>of ${num(tf.n)} valid agent messages across 200 flights had a top pick that breaks ≥1 rule; every one was caught by the engine.</div><div class="dim small">${esc(byA)}</div></div>`:""}
+      <div class="card"><h3>Agents' top picks</h3>${S.top_picks.map(p=>`<div class="small">${esc(p.agent)} → <b>${esc(p.candidate_id)}</b> ${p.fails.length?`<span class="no">fails ${p.fails.map(esc).join(", ")}</span>`:`<span class="ok">passes</span>`}</div>`).join("")}</div>
+      ${tf?`<div class="card warn" style="margin-top:12px"><div class="big mid">${pct(tf.value)}</div><div class="small">of agent top picks across 200 flights broke a rule they could not see. The engine caught every one.</div></div>`:""}
     </div></div>`;
 }, after(){ wireMatrix(S,"mx1","mx1d"); }});
 
-CH.push({t:"The independent reviewer", r(){
+CH.push({t:"Independent reviewer", r(){
   const R = S.reviewer, cid = R.candidate_id;
-  const mine = R.re_derived.filter(x=>x.candidate_id===cid);
   const cands = [...new Set(R.re_derived.map(x=>x.candidate_id))];
   const checks = [...new Set(R.re_derived.map(x=>x.check))];
   const cell = (c,k) => { const x = R.re_derived.find(y=>y.candidate_id===c && y.check===k); return x?`<td class="c ${x.passed?"ok":"no"}">${num(x.derived,1)} / ${num(x.threshold,1)}</td>`:"<td></td>"; };
   return `
-  <div class="kicker">Chapter 6 · second pair of eyes (deterministic, written separately)</div>
-  <h1>The reviewer redoes the fuel, duty and wake arithmetic from the raw scenario</h1>
-  <div class="grid" style="grid-template-columns:auto 1fr;align-items:center">
-    <div class="agent">${ICON.REVIEW}</div>
-    <div><span class="stamp ${verdictCls(R.verdict)}">${esc(R.verdict)}</span> <span class="mono" style="margin-left:16px">on ${esc(cid)}</span></div></div>
+  <div class="kicker">Chapter 6 · reviewer · written separately</div>
+  <h1>A second check redoes the fuel, duty and wake maths</h1>
+  <div class="agent" style="margin-top:6px">${ICON.REVIEW}<span class="stamp ${verdictCls(R.verdict)}">${esc(R.verdict)}</span><span style="margin-left:8px">${esc(cid)}</span></div>
   <div class="grid g3" style="margin-top:14px">
-    <div class="card"><div class="big">${R.engine_disagreements.length}</div>engine disagreements</div>
-    <div class="card"><div class="big">${esc(R.citations_checked)}</div>agent citations checked against the scenario</div>
-    <div class="card"><div class="big ${R.cited_mismatches.length?"no":"ok"}">${R.cited_mismatches.length}</div>cited values that did not match the data</div>
+    <div class="card"><div class="big">${R.engine_disagreements.length}</div><div class="small">disagreements with the rules engine</div></div>
+    <div class="card"><div class="big">${esc(R.citations_checked)}</div><div class="small">agent citations checked</div></div>
+    <div class="card"><div class="big ${R.cited_mismatches.length?"no":"ok"}">${R.cited_mismatches.length}</div><div class="small">citations that did not match the data</div></div>
   </div>
-  <h2>Reviewer notes for ${esc(cid)}</h2>
-  ${R.notes.map(n=>`<div class="bubble mono small">${esc(n).replace(/PASS/g,'<b class="ok">PASS</b>').replace(/FAIL/g,'<b class="no">FAIL</b>')}</div>`).join("")}
-  <p class="small">${pain("fuel")}${pain("duty")}${pain("atc")}</p>
-  <h2>Re-derived for every option (derived / threshold)</h2>
-  <div class="card"><table class="mono"><tr><th>candidate</th>${checks.map(k=>`<th class="c">${esc(k)}</th>`).join("")}</tr>
+  <h2>Re-derived per option · value / limit</h2>
+  <div class="card"><table><tr><th>option</th>${checks.map(k=>`<th class="c">${esc(k)}</th>`).join("")}</tr>
     ${cands.map(c=>`<tr><td>${c===cid?"★ ":""}${esc(c)}</td>${checks.map(k=>cell(c,k)).join("")}</tr>`).join("")}</table>
-    <div class="legend">FUEL: minutes of fuel left vs alternate + 45-min reserve · DUTY: minutes of duty left at arrival vs 0 · WAKE: seconds per runway vs wake spacing needed</div></div>`;
+    <div class="legend">FUEL min left · DUTY min left · WAKE seconds per runway</div></div>`;
 }});
 
 function timeline(run){
-  return `<div class="tl">${run.timeline.map(e=>`<div class="ev e-${esc(e.event)} ${e.event==="reviewer_verdict"&&/REJECT/.test(e.text)?"rej":""}"><span class="tag">${esc((e.ts||"").slice(11,23))}</span> <b class="mono">${esc(e.event)}</b> <span class="small">${esc(e.text)}</span></div>`).join("")}</div>`;
+  return `<div class="tl">${run.timeline.map(e=>`<div class="ev e-${esc(e.event)} ${e.event==="reviewer_verdict"&&/REJECT/.test(e.text)?"rej":""}"><span class="tag">${esc((e.ts||"").slice(11,19))}</span> <b>${esc(e.event)}</b> <span class="small">${esc(e.text)}</span></div>`).join("")}</div>`;
 }
 
 CH.push({t:"The human decides", r(){
   const R = S.recommendation, c = R.chosen || {};
   return `
-  <div class="kicker">Chapter 7 · management by exception</div>
-  <h1>One recommendation, its reasons, and two buttons</h1>
+  <div class="kicker">Chapter 7 · human approval</div>
+  <h1>One recommendation, two buttons</h1>
   <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
     <div class="card hl">
-      <div class="agent">${ICON.HUMAN}<h3 style="margin:0">Recommendation for ${esc(fl(S.flight))} · ${esc(S.scenario_id)}</h3></div>
-      <div class="big ok" style="font-size:58px">${esc(c.candidate_id)}</div>
-      <div class="mono">${esc(kindLabel[c.kind]||c.kind)} · delay ${signed(c.est_delay_min)} min · knock-on ${num(c.est_knock_on_min,1)} min <span class="dim">(model estimates)</span></div>
-      <div style="margin-top:10px" class="mono small">decided by <b>${esc(R.decided_by)}</b> in round ${esc(R.rounds_used)} · reviewer <b class="${verdictCls(R.reviewer_verdict)}">${esc(R.reviewer_verdict)}</b> · passes ${S.rule_ids.length}/${S.rule_ids.length} rules · ${esc(S.meta.n_agent_calls)} agent calls · $${num(S.meta.cost_usd,4)} · ${num(S.meta.latency_s,1)} s</div>
-      <div class="small" style="margin-top:8px">Ramp gets the revised plan at the same moment as ATC and the crew. ${pain("ramp")}</div>
+      <div class="agent">${ICON.HUMAN}<h3 style="margin:0">${esc(fl(S.flight))} · recommended</h3></div>
+      <div class="big ok" style="font-size:56px">${esc(c.candidate_id)}</div>
+      <div>${esc(kindLabel[c.kind]||c.kind)} · delay ${signed(c.est_delay_min)} min</div>
+      <div class="small dim" style="margin-top:8px">${esc(R.decided_by)} · reviewer <b class="${verdictCls(R.reviewer_verdict)}">${esc(R.reviewer_verdict)}</b> · ${S.rule_ids.length}/${S.rule_ids.length} rules · $${num(S.meta.cost_usd,4)} · ${num(S.meta.latency_s,0)} s</div>
       <div style="margin-top:16px;display:flex;gap:12px"><button class="btn primary" id="appr">✔ Approve</button><button class="btn" id="rej" style="border-color:var(--red);color:var(--red)">✖ Reject</button></div>
-      <div class="toast" id="toast">human_decision: <b class="mono">${esc(R.human_decision)}</b></div>
-      <div class="dim small">Illustrative only: these buttons are not wired. In the Streamlit app the click is appended to the log as a <span class="mono">human_decision</span> event. The tool never executes anything.</div>
+      <div class="toast" id="toast">human_decision: <b>${esc(R.human_decision)}</b></div>
+      <div class="small dim">Demo only. The tool never executes anything.</div>
     </div>
-    <div class="card"><h3>Consensus log: ${esc(S.scenario_id)}.jsonl</h3>${timeline(S)}<div class="legend">Append-only, timestamped. ${S.rules.length} rule_check events are collapsed into one line.</div></div>
+    <div class="card"><h3>Consensus log</h3>${timeline(S)}<div class="legend">Append-only. ${S.rules.length} rule checks shown as one line.</div></div>
   </div>`;
 }, after(){
   const t = document.getElementById("toast");
-  const say = d => { t.innerHTML = `<span class="mid">Illustrative:</span> would append <span class="mono">{"event":"human_decision","decision":"${d}"}</span> to the log. Nothing is executed.`; };
+  const say = d => { t.innerHTML = `Would log <b>human_decision: ${d}</b>. Nothing is executed.`; };
   document.getElementById("appr").onclick = () => say("approve");
   document.getElementById("rej").onclick = () => say("reject");
 }});
@@ -851,122 +1034,272 @@ CH.push({t:"The human decides", r(){
 CH.push({t:"When nothing is safe", r(){
   const f = F.flight, fd = D.failure_doc;
   const duty = F.facts.find(x=>x.key==="crew_duty_remaining_min");
-  const dutyRows = F.candidates.map(c=>({c, r: ruleOf(F,c.candidate_id,"R-DUTY-01"), other: failsOf(F,c.candidate_id).filter(x=>x!=="R-DUTY-01")}));
-  const allFailDuty = dutyRows.every(x=>x.r && !x.r.passed);
+  const dutyRows = F.candidates.map(c=>({c, r: ruleOf(F,c.candidate_id,"R-DUTY-01")}));
+  const agreed = (F.turns[F.turns.length-1]||{intersection:[]}).intersection.length;
   return `
   <div class="kicker">Chapter 8 · the honest failure</div>
-  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}, ${esc(f.date)}: every option times out the crew</h1>
-  <div class="banner red">No option passes engine and reviewer: escalate to the duty manager. Reviewer <b>${esc(F.reviewer.verdict)}</b> · fallback reason <span class="mono">${esc(F.fallback.reason)}</span> · eligible ${esc(F.fallback.n_eligible)} · decided by ${esc(F.recommendation.decided_by)}</div>
+  <h1>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}: every option times out the crew</h1>
+  <div class="banner red">No legal option. Escalated to the duty manager.</div>
   <div class="grid g3" style="margin-top:14px">
-    <div class="card"><div class="tag">ARRIVAL_DELAY</div><div class="big no">+${esc(f.ARRIVAL_DELAY)}</div>${chip("data")} <span class="dim small">weather ${esc(f.WEATHER_DELAY)}</span></div>
-    <div class="card"><div class="tag">crew_duty_remaining_min</div><div class="big mid">${esc(duty&&duty.value)}</div>${chip(duty&&duty.source)}<div class="dim small">${esc(duty&&duty.note)}</div></div>
-    <div class="card"><div class="tag">AGENTS</div>${F.turns.map(t=>`<div class="small">Round ${t.round}: ${t.intersection.length} options all three accept; top picks ${t.messages.map(m=>`${esc(m.agent)} <span class="mono">${esc(m.ranking[0]&&m.ranking[0].candidate_id)}</span>`).join(", ")}</div>`).join("")}<div class="dim small">${F.meta.n_agent_calls} calls · $${num(F.meta.cost_usd,4)} · ${num(F.meta.latency_s,1)} s</div></div>
+    <div class="card"><div class="tag">Arrival delay</div><div class="big no">+${esc(f.ARRIVAL_DELAY)} min</div>${chip("data")}</div>
+    <div class="card"><div class="tag">Crew duty left</div><div class="big mid">${esc(duty&&duty.value)} min</div>${chip(duty&&duty.source)}<span class="small dim">no real rosters</span></div>
+    <div class="card"><div class="tag">Agents</div><div class="big">${agreed}</div><div class="small">options all three accepted · reviewer <b class="no">${esc(F.reviewer.verdict)}</b></div></div>
   </div>
-  <div class="grid g2" style="margin-top:6px">
-    <div class="card"><h3>R-DUTY-01 on every option ${allFailDuty?'<span class="no">(all FAIL)</span>':""} ${pain("duty")}</h3>
-      <table class="mono small"><tr><th>candidate</th><th>duty left at arrival (min)</th><th>other fails</th></tr>
-      ${dutyRows.map(x=>`<tr><td>${esc(x.c.candidate_id)}</td><td class="${x.r&&x.r.passed?"ok":"no"}">${x.r?num(x.r.observed,1):"–"}</td><td>${x.other.map(esc).join(", ")}</td></tr>`).join("")}</table>
-      <div class="small" style="margin-top:6px">${esc((dutyRows[0]&&dutyRows[0].r||{}).citation||"")}</div></div>
-    <div>
-      <div class="card"><h3>Reviewer</h3>${F.reviewer.notes.map(n=>`<div class="bubble mono small">${esc(n)}</div>`).join("")}</div>
-      <div class="card warn" style="margin-top:12px"><h3>The bug this case exposed in our own reviewer (fixed)</h3>
-        <div class="small">On the first run${fd.bug_commit?` (commit <span class="mono">${esc(fd.bug_commit)}</span>)`:""}, the reviewer's own duty check passed every option: it computed <span class="mono">${esc(fd.bug_example||"duty − added")}</span>, subtracting only the option's added delay and forgetting the delay already incurred${fd.bug_disagreements?`, which showed up as ${esc(fd.bug_disagreements)} engine disagreements`:""}. The outcome was still safe because nothing could be picked, but the "independent" check had not caught it on its own.
-        ${fd.fix_commit?`Commit <span class="mono">${esc(fd.fix_commit)}</span>`:"The fix"} applies duty − incurred − added${fd.fix_example?` (<span class="mono">${esc(fd.fix_example)}</span>)`:""}. Reviewer-engine disagreement over 200 flights fell${fd.disagree_before_pct?` from ${esc(fd.disagree_before_pct)}%`:""} to ${pct(metric("reviewer_engine_disagreement_rate").value)}.</div>
-        <div class="cite">source: docs/failure_case.md; current rate: eval/results/summary.csv</div></div>
-      <div class="card" style="margin-top:12px"><h3>Honest caveat</h3><div class="small">The deciding value is ${chip(duty&&duty.source)}: we have no real crew rosters, so this may be a crew shortage that does not exist. The source tag says so, and the human makes the call.</div></div>
-    </div>
-  </div>
-  <h2>Its consensus log</h2><div class="card">${timeline(F)}</div>`;
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3>R-DUTY-01 · duty left at arrival (min)</h3>
+      <table><tr><th>option</th><th class="c">min</th></tr>
+      ${dutyRows.map(x=>`<tr><td>${esc(x.c.candidate_id)}</td><td class="c ${x.r&&x.r.passed?"ok":"no"}">${x.r?num(x.r.observed,0):"–"}</td></tr>`).join("")}</table></div>
+    <div class="card warn"><h3>It also caught a bug in our own reviewer</h3>
+      <div class="small">The reviewer forgot delay already incurred, so its duty check passed.${fd.fix_commit?` Fixed in ${esc(fd.fix_commit)}.`:""} Reviewer-engine disagreement over 200 flights fell${fd.disagree_before_pct?` from ${esc(fd.disagree_before_pct)}%`:""} to ${pct(metric("reviewer_engine_disagreement_rate").value)}.</div></div>
+  </div>`;
 }});
 
 CH.push({t:"The evidence", r(){
   const tiles = [];
-  const add = (big, title, m, extra, cls) => { if (!m) return; tiles.push(`<div class="card tile"><div class="big ${cls||""}">${big}</div><div><b>${title}</b></div><div class="def">n = ${esc(m.n)} · ${esc(m.definition)}${m.note?` · ${esc(m.note)}`:""}${extra?`<br>${extra}`:""}</div></div>`); };
-  const c = metric("consensus_rate"); add(c&&pct(c.value), "Consensus rate (agents agree on a rule-passing option)", c, null, "ok");
-  const tf = metric("agent_top_pick_rule_fail_rate"); add(tf&&pct(tf.value), "Agent top picks breaking a rule they could not see", tf, "every one caught by the rules engine", "mid");
-  const ex = metric("consensus_excluded_by_rules_rate"); add(ex&&pct(ex.value), "Agreed options all excluded by the rules", ex);
-  const ph = PS.haiku, pn = PS.none;
-  if (ph) tiles.push(`<div class="card tile"><div class="big no">${ph.escalated} / ${ph.n}</div><div><b>Escalated to a human: no legal option</b></div><div class="def">n = ${ph.n} · rows with no recommended candidate (per_scenario.csv, agents)${pn?` · solver-only: ${pn.escalated} / ${pn.n}`:""}</div></div>`);
+  const add = (big, title, m, cls) => { if (m) tiles.push(`<div class="card tile"><div class="big ${cls||""}">${big}</div><div class="small">${title}</div><div class="def">n = ${esc(m.n)}</div></div>`); };
+  const c = metric("consensus_rate"); add(c&&pct(c.value), "agents agree on a rule-passing option", c, "ok");
+  const tf = metric("agent_top_pick_rule_fail_rate"); add(tf&&pct(tf.value), "agent top picks broke a rule, all caught", tf, "mid");
+  const ph = PS.haiku;
+  if (ph) tiles.push(`<div class="card tile"><div class="big no">${ph.escalated} / ${ph.n}</div><div class="small">escalated to a human: no legal option</div><div class="def">n = ${ph.n}</div></div>`);
   const a = metric("reviewer_APPROVE_rate"), mo = metric("reviewer_MODIFY_rate"), rj = metric("reviewer_REJECT_rate");
-  if (a&&mo&&rj) tiles.push(`<div class="card tile"><div class="big"><span class="ok">${pct(a.value,1)}</span> <span class="mid">${pct(mo.value,1)}</span> <span class="no">${pct(rj.value,1)}</span></div><div><b>Reviewer APPROVE / MODIFY / REJECT</b></div><div class="def">n = ${esc(a.n)} · ${esc(a.definition)}</div></div>`);
-  const si = metric("schema_invalid_rate"); add(si&&pct(si.value,2), "Invalid agent replies (rejected, logged, never repaired)", si);
-  const fi = metric("fallback_rate_invalid_message"); add(fi&&pct(fi.value), "Fallback after an invalid reply", fi);
-  const rd = metric("reviewer_engine_disagreement_rate"); add(rd&&pct(rd.value,2), "Reviewer-engine disagreement", rd);
-  const cm = metric("cited_value_mismatch_rate"); add(cm&&pct(cm.value,2), "Agent cited a value that does not match the data", cm);
-  const sp = metric("agents_vs_solver_same_pick_rate"); add(sp&&pct(sp.value), "Agents + rules vs solver-only: same pick", sp);
-  const cu = metric("cost_usd_mean"), ct = metric("cost_usd_total"); add(cu&&("$"+num(cu.value,4)), "Cost per decision", cu, ct?`whole run $${num(ct.value,2)}`:null);
-  const lm = metric("latency_s_mean"), lp = metric("latency_s_p95"); add(lm&&(num(lm.value,0)+" s"), "Latency per decision (mean)", lm, lp?`p95 ${num(lp.value,0)} s (three sequential agent calls)`:null);
-  const ad = DATA.actual_delay_mean, ac = DATA.actual_chain_mean;
+  if (a&&mo&&rj) tiles.push(`<div class="card tile"><div class="big"><span class="ok">${pct(a.value,0)}</span> <span class="mid">${pct(mo.value,0)}</span> <span class="no">${pct(rj.value,0)}</span></div><div class="small">reviewer approve / modify / reject</div><div class="def">n = ${esc(a.n)}</div></div>`);
+  const si = metric("schema_invalid_rate"); add(si&&pct(si.value,1), "invalid agent replies, logged, never repaired", si);
+  const cu = metric("cost_usd_mean"); add(cu&&("$"+num(cu.value,4)), "cost per decision", cu);
+  const lm = metric("latency_s_mean"); add(lm&&(num(lm.value,0)+" s"), "time per decision", lm);
+  const cm = metric("cited_value_mismatch_rate"); add(cm&&pct(cm.value,1), "agent citations that did not match the data", cm);
   return `
   <div class="kicker">Chapter 9 · the evidence</div>
-  <h1>200 real delayed flights, the same pipeline, every number with its n</h1>
-  <p class="lead">Seeded sample of US DOT 2015 delayed arrivals, run with ${esc(S.meta.model)} agents and again solver-only. Values read from eval/results/summary.csv and per_scenario.csv at build time.</p>
-  <div class="grid g3">${tiles.join("")}</div>
-  ${ad?`<p class="small dim" style="margin-top:12px">For context (data): mean real arrival delay in the sample ${num(ad.value,1)} min${ac?`; mean ${num(ac.value,1)} min of delay on the same aircraft's later delayed legs that day (${esc(ac.note)})`:""}. Our modelled delays are estimates and are not compared like-for-like with these; no saving is claimed as measured.</p>`:""}`;
+  <h1>200 real delayed flights, same pipeline</h1>
+  <p class="lead">Seeded sample from US DOT 2015, run with ${esc(S.meta.model)} agents.</p>
+  <div class="grid g4">${tiles.join("")}</div>`;
 }});
 
-CH.push({t:"Real vs assumed, and what's next", r(){
+CH.push({t:"Real vs assumed", r(){
   const groups = {data:[],estimated:[],assumed:[],synthetic:[]};
-  S.facts.forEach(x=>{ (groups[x.source]=groups[x.source]||[]).push(`<span class="mono">${esc(x.key)}</span>`); });
-  groups.data.push("flight times &amp; delays, later legs, delayed arrivals per hour (flights.csv)", "alternates (airports.csv)");
-  groups.synthetic.push(`gates at ${esc(S.gates.airport)}`);
-  groups.assumed.push(`turnaround ${esc(S.gates.min_turnaround_min)} min`);
-  Object.entries(S.rule_source).forEach(([r,src])=>{ if (groups[src]) groups[src].push(`rule basis <span class="mono">${esc(r)}</span>`); });
+  S.facts.forEach(x=>{ (groups[x.source]=groups[x.source]||[]).push(esc(x.key)); });
+  groups.data.push("flight times and delays", "alternates");
+  groups.synthetic.push("gates");
+  groups.assumed.push("turnaround times");
   if (S.connections.source && groups[S.connections.source]) groups[S.connections.source].push("connecting passengers");
   return `
-  <div class="kicker">Chapter 10 · honesty and the road to production</div>
-  <h1>What is real, what is assumed, and what would make it production-ready</h1>
+  <div class="kicker">Chapter 10 · honesty and next steps</div>
+  <h1>What is real, what is assumed, what comes next</h1>
   <div class="grid g4">${Object.entries(groups).map(([k,v])=>`<div class="card"><h3>${chip(k)}</h3><ul class="tight small">${v.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
   <div class="grid g2" style="margin-top:14px">
-    <div class="card"><h3>To be production-ready</h3><ul class="tight">
-      <li>Real crew tracking (report time, legs flown, rest) instead of synthetic duty state: the main driver of escalations. ${pain("duty")}</li>
-      <li>Crew-swap and tail-swap options; the Part 117.19 extension as an explicit "requires PIC agreement" choice.</li>
-      <li>Aircraft type from the FAA registry for wake class; verified runway configurations and arrival rates.</li>
-      <li>A live, read-only feed from the airline's gate system, so the ramp sees the same plan as ATC and crew. ${pain("ramp")}</li>
-      <li>Fuel on board from dispatch instead of an estimate from distance and air time. ${pain("fuel")}</li>
-      <li>Shadow-mode trial alongside a real duty manager before any reliance.</li></ul></div>
-    <div class="card"><h3>What does not change</h3><ul class="tight">
-      <li>LLMs only rank, veto and explain; they never compute legality.</li>
-      <li>Every rule result cites its rule ID, the data field and its source tag.</li>
-      <li>A deterministic fallback and an independent reviewer sit behind every pick.</li>
-      <li>The tool recommends; a human approves. It never executes.</li></ul>
-      <div class="brief-note small" style="margin-top:8px">Industry figures in this story (${D.brief.map(b=>esc(b.figure)).join(", ")}) are ${brief()}, not our measurements.</div></div>
+    <div class="card"><h3>To reach production</h3><ul class="tight">
+      <li>Real crew rosters</li>
+      <li>Crew and tail swaps as options</li>
+      <li>Live gate and fuel feeds</li>
+      <li>Shadow trial with a duty manager</li></ul></div>
+    <div class="card"><h3>What never changes</h3><ul class="tight">
+      <li>LLMs rank and explain, never judge legality</li>
+      <li>Every result cites a rule and a source</li>
+      <li>A fallback and a reviewer behind every pick</li>
+      <li>A human approves; the tool never executes</li></ul></div>
   </div>
-  <div class="thesis">LLMs negotiate, code decides, every decision traces to a rule and a data field, and a human approves.</div>
+  <div class="thesis">LLMs negotiate, code decides, a human approves.</div>
   <div style="display:flex;justify-content:center"><div class="mandatory" role="img" aria-label="Mandatory sign: human approves">Hold short &middot; human approves</div></div>`;
 }});
 
-/* ---------- navigation ---------- */
-let cur = 0;
-const stage = document.getElementById("stage"), nav = document.getElementById("index");
-nav.innerHTML = CH.map((c,i)=>`<a data-i="${i}"><span class="n">${String(i+1).padStart(2,"0")}</span><span>${esc(c.t)}</span></a>`).join("");
-nav.addEventListener("click", e=>{ const a = e.target.closest("a"); if (a) go(+a.dataset.i); });
-function go(i){
-  cur = Math.max(0, Math.min(CH.length-1, i));
-  try { stage.innerHTML = CH[cur].r(); if (CH[cur].after) CH[cur].after(); }
-  catch(err){ stage.innerHTML = `<h1>Chapter ${cur+1}</h1><p class="no">Could not render this chapter: ${esc(err.message)}</p>`; }
-  document.getElementById("counter").textContent = `${String(cur+1).padStart(2,"0")} / ${String(CH.length).padStart(2,"0")}`;
-  document.getElementById("bar").style.width = ((cur+1)/CH.length*100) + "%";
-  document.getElementById("prev").disabled = cur===0;
-  document.getElementById("next").disabled = cur===CH.length-1;
-  document.getElementById("foot").textContent = CH[cur].t;
-  nav.querySelectorAll("a").forEach((a,j)=>a.classList.toggle("on", j===cur));
-  if (location.hash !== "#"+(cur+1)) history.replaceState(null, "", "#"+(cur+1));
-  window.scrollTo(0,0);
+/* ---------- console chrome: agent status bar + radar scope ---------- */
+const AC = {ATC:"var(--c-atc)", PILOT:"var(--c-pilot)", GROUND:"var(--c-ground)", RULES:"var(--c-rules)", REVIEWER:"var(--c-review)", HUMAN:"var(--c-human)"};
+const FLASH = [["ATC","ATC"],["PILOT","PILOT"],["GROUND","GROUND"],["RULES","RULES ENGINE"],["REVIEWER","REVIEWER"],["HUMAN","DUTY MANAGER"]];
+/* One entry per chapter, same order as CH: who acts, which run the scope shows, and its state. */
+const PHASE = [
+  {on:["HUMAN"], run:"S", mode:"idle", phase:"Phone coordination"},
+  {on:[], run:"S", mode:"idle", phase:"Scenario built (code)"},
+  {on:[], run:"S", mode:"menu", phase:"Menu generated (code)"},
+  {on:["ATC","PILOT","GROUND"], run:"S", mode:"menu", phase:"Agents negotiate"},
+  {on:["RULES"], run:"S", mode:"rules", phase:"Rules checked (code)"},
+  {on:["REVIEWER"], run:"S", mode:"chosen", phase:"Independent review"},
+  {on:["HUMAN"], run:"S", mode:"chosen", phase:"Awaiting approval"},
+  {on:["RULES","REVIEWER","HUMAN"], run:"F", mode:"escalate", phase:"Escalated"},
+  {on:["ATC","PILOT","GROUND","RULES","REVIEWER","HUMAN"], run:"S", mode:"chosen", phase:"200-flight evaluation"},
+  {on:["HUMAN"], run:"S", mode:"chosen", phase:"Human approves"},
+];
+const PLANE = "M12 2 L14 8 L20 10 L14 12 L14 18 L17 20 L17 21 L12 19 L7 21 L7 20 L10 18 L10 12 L4 10 L10 8 Z";
+
+function scopeSVG(run, mode){
+  const g = run.scope, C = 140, R = 120;
+  if (!g || !g.dest) return `<svg viewBox="0 0 280 280" role="img" aria-label="No coordinates for this airport"><circle cx="${C}" cy="${C}" r="${R}" fill="#040a04" stroke="#1a4a1a"/><text x="${C}" y="${C}" fill="#98bb98" font-size="12" text-anchor="middle">no coordinates</text></svg>`;
+  const range = g.range_nm, f = run.flight;
+  const P = (brg, nm) => { const r = Math.min(nm/range, 1)*R, a = (brg-90)*Math.PI/180; return [C + r*Math.cos(a), C + r*Math.sin(a)]; };
+  const fx = v => v.toFixed(1);
+  const chosen = run.recommendation.chosen;
+  const blipCol = mode==="escalate" ? "#ff3333" : mode==="chosen" ? "#33ff33" : "#ffaa00";
+  const ob = g.origin ? g.origin.brg : 270, heading = (ob + 180) % 360;
+  const [bx, by] = P(ob, range*0.52);
+  let s = `<svg viewBox="0 0 280 280" role="img" aria-label="Schematic scope centred on ${esc(g.dest.iata)}, ${esc(range)} nautical miles: alternates and origin by true bearing">`;
+  s += `<circle cx="${C}" cy="${C}" r="${R}" fill="#040a04" stroke="#1f5a1f" stroke-width="1.2"/>`;
+  for (let k = 1; k <= 4; k++){
+    const r = R*k/4;
+    s += `<circle cx="${C}" cy="${C}" r="${fx(r)}" fill="none" stroke="#1a4a1a" ${k<4?'stroke-dasharray="2 4"':""}/>`;
+    s += `<text x="${C+3}" y="${fx(C-r+10)}" fill="#3f7a3f" font-size="8">${Math.round(range*k/4)}</text>`;
+  }
+  s += `<line x1="${C-R}" y1="${C}" x2="${C+R}" y2="${C}" stroke="#123012"/><line x1="${C}" y1="${C-R}" x2="${C}" y2="${C+R}" stroke="#123012"/>`;
+  for (let d = 0; d < 360; d += 30){ const [x1,y1] = P(d, range*0.96), [x2,y2] = P(d, range); s += `<line x1="${fx(x1)}" y1="${fx(y1)}" x2="${fx(x2)}" y2="${fx(y2)}" stroke="#2a6a2a"/>`; }
+  s += `<text x="${C}" y="${C-R-5}" fill="#6a8e6a" font-size="9" text-anchor="middle">N</text>`;
+  if (Number(f.WEATHER_DELAY) > 0) s += `<circle class="wx" cx="${C}" cy="${C}" r="${fx(R*0.3)}" fill="rgba(255,170,0,.10)" stroke="rgba(255,170,0,.55)" stroke-dasharray="3 3"/><text x="${fx(C+R*0.3*0.72)}" y="${fx(C-R*0.3*0.72)}" fill="#ffaa00" font-size="9">WX</text>`;
+  const altPos = {};
+  (g.alternates||[]).forEach(a => { altPos[a.iata] = P(a.brg, a.nm); });
+  const diverts = run.candidates.filter(c => c.kind === "divert").map(c => ({c, iata: c.candidate_id.replace(/^DIVERT_/, "")})).filter(d => altPos[d.iata]);
+  const line = (x, y, col, dash, w) => `<line x1="${fx(bx)}" y1="${fx(by)}" x2="${fx(x)}" y2="${fx(y)}" stroke="${col}" stroke-width="${w||1.2}" ${dash?'stroke-dasharray="4 3"':""} opacity=".9"/>`;
+  const racetrack = col => `<g transform="translate(${fx(bx)},${fx(by)}) rotate(${heading}) translate(10,-6)"><rect width="12" height="22" rx="6" fill="none" stroke="${col}" stroke-dasharray="3 2"/></g>`;
+  if (mode === "menu" || mode === "rules"){
+    diverts.forEach(d => { const ok = !failsOf(run, d.c.candidate_id).length; s += line(altPos[d.iata][0], altPos[d.iata][1], mode==="rules" ? (ok?"#33ff33":"#ff3333") : "#33ccff", true); });
+    const holds = run.candidates.filter(c => c.kind === "hold");
+    if (holds.length) s += racetrack(mode==="rules" ? (holds.every(h=>!failsOf(run,h.candidate_id).length) ? "#33ff33" : "#ff3333") : "#33ccff");
+  }
+  if (mode === "chosen" && chosen){
+    if (chosen.kind === "divert"){ const p = altPos[chosen.candidate_id.replace(/^DIVERT_/, "")]; if (p) s += line(p[0], p[1], "#ff66ff", false, 2); }
+    if (chosen.kind === "hold") s += racetrack("#ff66ff");
+  }
+  (g.alternates||[]).forEach(a => {
+    const [x, y] = altPos[a.iata], right = x > C;
+    s += `<path d="M${fx(x)} ${fx(y-4)} L${fx(x+4)} ${fx(y)} L${fx(x)} ${fx(y+4)} L${fx(x-4)} ${fx(y)} Z" fill="none" stroke="#98bb98"/>`;
+    s += `<text x="${fx(right ? x-7 : x+7)}" y="${fx(y+3)}" fill="#98bb98" font-size="9" text-anchor="${right?"end":"start"}">${esc(a.iata)}</text>`;
+  });
+  /* Labels sit either side of the inbound track: the flight's on the upper side, the origin's opposite. */
+  const ang = (ob-90)*Math.PI/180;
+  let nx = -Math.sin(ang), ny = Math.cos(ang);
+  if (ny > 0){ nx = -nx; ny = -ny; }
+  const anchorFor = x => x < C-24 ? "start" : x > C+24 ? "end" : "middle";
+  if (g.origin){
+    const [ox, oy] = P(g.origin.brg, range);
+    const lx = Math.min(Math.max(ox - nx*12, 22), 258), ly = oy - ny*12 + 3;
+    s += `<circle cx="${fx(ox)}" cy="${fx(oy)}" r="2.5" fill="#33ccff"/>`;
+    s += `<text x="${fx(lx)}" y="${fx(ly)}" fill="#33ccff" font-size="8.5" text-anchor="${anchorFor(lx)}">${esc(g.origin.iata)} ${num(g.origin.nm)}NM</text>`;
+  }
+  s += `<rect x="${C-3}" y="${C-3}" width="6" height="6" fill="#d0e8d0"/><text x="${C}" y="${C+15}" fill="#d0e8d0" font-size="10" font-weight="600" text-anchor="middle">${esc(g.dest.iata)}</text>`;
+  for (let k = 1; k <= 3; k++){ const [tx, ty] = P(ob, range*(0.52 + k*0.05)); s += `<circle cx="${fx(tx)}" cy="${fx(ty)}" r="1.6" fill="${blipCol}" opacity="${(0.55 - k*0.15).toFixed(2)}"/>`; }
+  s += `<g class="${mode==="escalate"?"blinking":""}"><g transform="translate(${fx(bx)},${fx(by)}) rotate(${heading}) scale(.75) translate(-12,-12)"><path d="${PLANE}" fill="${blipCol}"/></g></g>`;
+  const tag = mode==="escalate" ? "ESCALATE" : (mode==="chosen" && chosen) ? chosen.candidate_id : `+${f.ARRIVAL_DELAY} MIN`;
+  const tx = Math.min(Math.max(bx + nx*20, 26), 254), ty = by + ny*20;
+  s += `<text x="${fx(tx)}" y="${fx(ty-5)}" fill="${blipCol}" font-size="9.5" font-weight="600" text-anchor="${anchorFor(tx)}">${esc(fl(f))}</text>`;
+  s += `<text x="${fx(tx)}" y="${fx(ty+6)}" fill="${blipCol}" font-size="8.5" text-anchor="${anchorFor(tx)}">${esc(tag)}</text>`;
+  return s + `</svg>`;
 }
-document.getElementById("prev").onclick = () => go(cur-1);
-document.getElementById("next").onclick = () => go(cur+1);
-document.getElementById("toggleIndex").onclick = () => nav.classList.toggle("hidden");
+
+function readoutHTML(run, ph){
+  const f = run.flight, R = run.recommendation, mode = ph.mode;
+  const nFail = run.rules.filter(r => !r.passed).length;
+  const status = mode==="idle" ? "inbound, delayed"
+    : mode==="menu" ? `${run.candidates.length} options on the menu`
+    : mode==="rules" ? `${nFail} of ${run.rules.length} checks FAIL`
+    : mode==="escalate" ? "escalate to duty manager"
+    : `${R.decided_by} · reviewer ${R.reviewer_verdict}`;
+  const pick = mode==="escalate" ? `<b class="no">NONE</b>` : (mode==="chosen" && R.chosen) ? `<b class="ok">${esc(R.chosen.candidate_id)}</b>` : `<b class="dim">pending</b>`;
+  const row = (k, v) => `<div><span>${k}</span>${v}</div>`;
+  return row("FLT", `<b>${esc(fl(f))} ${esc(f.ORIGIN_AIRPORT)}→${esc(f.DESTINATION_AIRPORT)}</b>`)
+    + row("TAIL", `<b>${esc(f.TAIL_NUMBER)}</b>`)
+    + row("ARR DELAY", `<b class="mid">+${esc(f.ARRIVAL_DELAY)} min</b>`)
+    + row("PHASE", `<b>${esc(ph.phase)}</b>`)
+    + row("STATUS", `<b>${esc(status)}</b>`)
+    + row("PICK", pick)
+    + `<span class="note">Bearings and distances from airports.csv. The aircraft's position is schematic.</span>`;
+}
+
+function renderChrome(i){
+  const ph = PHASE[i] || PHASE[0], run = ph.run === "F" ? F : S;
+  document.getElementById("flash").innerHTML = FLASH.map(([k, label]) =>
+    `<span role="listitem" class="fchip ${ph.on.indexOf(k) >= 0 ? "on" : ""}" style="--ac:${AC[k]}"><i></i>${label}</span>`).join("");
+  document.getElementById("scope").innerHTML = scopeSVG(run, ph.mode);
+  document.getElementById("readout").innerHTML = readoutHTML(run, ph);
+  document.getElementById("scopeTitle").textContent = `Scope · ${run.scope && run.scope.dest ? run.scope.dest.iata : "?"}`;
+  document.getElementById("scopeRange").textContent = run.scope ? `${run.scope.range_nm} NM` : "";
+  document.getElementById("scn").textContent = run.scenario_id;
+}
+
+/* ---------- navigation: one continuous scroll ---------- */
+const $ = id => document.getElementById(id);
+const stage = $("stage"), nav = $("index"), rail = $("rail");
+const pad = n => String(n).padStart(2, "0");
+const reduceMotion = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+let cur = -1;
+
+function heroHTML(){
+  const f = S.flight;
+  return `<section class="hero" id="sec-0"><span class="node" aria-hidden="true"></span>
+    <div class="eyebrow">Autonomous SG 2026 · Airbus track · Challenge 2</div>
+    <h1>One delayed arrival. Three agents. <em>One human decision.</em></h1>
+    <p class="sub">LLMs negotiate, code decides, a human approves.</p>
+    <div class="strip" role="group" aria-label="Flight strip">
+      <div><span class="k">Flight</span><span class="v">${esc(fl(f))}</span></div>
+      <div><span class="k">Route</span><div class="v">${esc(f.ORIGIN_AIRPORT)} → ${esc(f.DESTINATION_AIRPORT)}</div></div>
+      <div><span class="k">Date</span><div class="v">${esc(f.date)}</div></div>
+      <div><span class="k">Sched → actual</span><div class="v">${hhmm(f.SCHEDULED_ARRIVAL)} → ${hhmm(f.ARRIVAL_TIME)}</div></div>
+      <div><span class="k">Arrival delay</span><div class="v mid">+${esc(f.ARRIVAL_DELAY)} min</div></div>
+    </div>
+    <div class="cue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M5 13l7 7 7-7"/></svg>Scroll to follow it through ten phases</div>
+  </section>`;
+}
+
+let html = heroHTML();
+CH.forEach((c, i) => {
+  let body;
+  try { body = c.r(); }
+  catch(err){ body = `<h1>Chapter ${i+1}</h1><p class="no">Could not render this chapter: ${esc(err.message)}</p>`; }
+  html += `<section class="chap" id="sec-${i+1}" data-n="${pad(i+1)}" aria-label="${esc(c.t)}"><span class="node" aria-hidden="true"></span>${body}</section>`;
+});
+stage.innerHTML = html;
+CH.forEach(c => { if (c.after) { try { c.after(); } catch(err){} } });
+nav.innerHTML = CH.map((c,i)=>`<a data-i="${i}" tabindex="0" role="button"><span class="n">${pad(i+1)}</span><span>${esc(c.t)}</span><span class="d"></span></a>`).join("");
+const links = () => nav.querySelectorAll("a");
+
+function activate(i){
+  i = Math.max(0, Math.min(CH.length-1, i));
+  if (i === cur) return;
+  cur = i;
+  try { renderChrome(i); } catch(err){ const sc = $("scope"); if (sc) sc.innerHTML = ""; }
+  $("counter").textContent = `${pad(i+1)} / ${pad(CH.length)}`;
+  links().forEach((a,j) => { a.classList.toggle("on", j===i); a.classList.toggle("past", j<i); });
+  for (let k = 1; k <= CH.length; k++){ const s = $("sec-"+k); if (s){ s.classList.toggle("on", k===i+1); s.classList.toggle("past", k<i+1); } }
+}
+function go(i){
+  i = Math.max(0, Math.min(CH.length-1, i));
+  activate(i);
+  const s = $("sec-"+(i+1));
+  if (s && s.scrollIntoView) s.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block: "start"});
+  if (window.history && history.replaceState) history.replaceState(null, "", "#"+(i+1));
+}
+
+nav.addEventListener("click", e=>{ const a = e.target.closest("a"); if (a) go(+a.dataset.i); });
+nav.addEventListener("keydown", e=>{ if (e.key!=="Enter" && e.key!==" ") return; const a = e.target.closest && e.target.closest("a"); if (a){ e.preventDefault(); go(+a.dataset.i); } });
 document.addEventListener("keydown", e=>{
   if (e.altKey || e.ctrlKey || e.metaKey) return;
-  if (e.key==="ArrowRight"||e.key==="PageDown") { e.preventDefault(); go(cur+1); }
-  else if (e.key==="ArrowLeft"||e.key==="PageUp") { e.preventDefault(); go(cur-1); }
-  else if (e.key==="Home") go(0);
-  else if (e.key==="End") go(CH.length-1);
-  else if (e.key==="i"||e.key==="I") nav.classList.toggle("hidden");
+  const tag = e.target && e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if (e.key==="ArrowRight") { e.preventDefault(); go(cur+1); }
+  else if (e.key==="ArrowLeft") { e.preventDefault(); go(cur-1); }
+  else if (e.key==="Home") { e.preventDefault(); go(0); }
+  else if (e.key==="End") { e.preventDefault(); go(CH.length-1); }
+  else if (e.key==="i"||e.key==="I") { if (rail) rail.classList.toggle("hidden"); }
 });
-const h = parseInt((location.hash||"").slice(1),10);
-go(isNaN(h) ? 0 : h-1);
+
+/* Scroll spy: the phase crossing the middle of the screen is the active one; sections fade in as they arrive. */
+if (typeof IntersectionObserver !== "undefined"){
+  document.documentElement.classList.add("reveal");
+  const spy = new IntersectionObserver(entries => {
+    entries.forEach(en => { if (en.isIntersecting){ const n = +en.target.id.slice(4); activate(n === 0 ? 0 : n-1); } });
+  }, {rootMargin: "-45% 0px -50% 0px"});
+  const rev = new IntersectionObserver(entries => {
+    entries.forEach(en => { if (en.isIntersecting){ en.target.classList.add("in"); rev.unobserve(en.target); } });
+  }, {threshold: 0.08});
+  for (let k = 0; k <= CH.length; k++){ const s = $("sec-"+k); if (s){ spy.observe(s); if (k) rev.observe(s); } }
+}
+if (window.addEventListener){
+  const bar = $("bar");
+  const onScroll = () => {
+    const d = document.documentElement, max = d.scrollHeight - window.innerHeight;
+    bar.style.height = (max > 0 ? Math.min(100, window.scrollY / max * 100) : 0) + "%";
+  };
+  window.addEventListener("scroll", onScroll, {passive: true});
+  onScroll();
+}
+
+const h = parseInt((location.hash||"").slice(1), 10);
+if (!isNaN(h) && h >= 1){ activate(h-1); const s = $("sec-"+h); if (s && s.scrollIntoView) s.scrollIntoView({block:"start"}); }
+else activate(0);
 })();
 </script>
 </body>
