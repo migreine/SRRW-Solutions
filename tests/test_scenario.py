@@ -96,3 +96,48 @@ def test_delayed_arrivals_helper_matches_scenario():
     assert arrival_hour_stats("DFW", s.flight["date"], 1440 + 30)["day"] == arrival_hour_stats(
         "DFW", "2015-04-25", 30
     )["day"]
+
+
+# ---- edge cases -------------------------------------------------------------------------------
+from src.options.menu import generate_candidates  # noqa: E402
+from src.rules.engine import check_all  # noqa: E402
+
+SCHED_ARR_2400_ROW = 86285  # SCHEDULED_ARRIVAL 2400, departs 21:35
+ARR_TIME_2400_ROW = 78  # ARRIVAL_TIME 2400, scheduled 23:35, +25 min
+NO_COORDS_DEST_ROW = 2171  # destination ECP has no coordinates in airports.csv
+LONE_TAIL_ROW = 231375  # tail 7819A has no other legs that day
+
+
+def test_scheduled_arrival_2400_is_next_midnight():
+    s = build_scenario(SCHED_ARR_2400_ROW)
+    assert s.flight["SCHEDULED_ARRIVAL"] == 0
+    assert s.flight["sched_arr_abs"] == 1440
+    assert s.flight["sched_arr_abs"] - s.flight["sched_dep_abs"] == s.flight["SCHEDULED_TIME"]
+
+
+def test_actual_arrival_2400_wraps_past_midnight():
+    s = build_scenario(ARR_TIME_2400_ROW)
+    assert s.flight["ARRIVAL_TIME"] == 0
+    assert s.flight["actual_arr_abs"] == 1440
+    nxt = arrival_hour_stats(s.flight["DESTINATION_AIRPORT"], s.flight["date"], s.flight["actual_arr_abs"])
+    assert nxt["hour"] == 0 and nxt["day"] == load_flights().loc[ARR_TIME_2400_ROW, "day_idx"] + 1
+
+
+def test_missing_destination_coordinates():
+    s = build_scenario(NO_COORDS_DEST_ROW)
+    assert s.flight["DESTINATION_AIRPORT"] == "ECP"
+    assert s.alternates == []
+    assert "no alternate ranked" in s.fuel_reserve_min.note  # 30 min default alternate time
+    cands = generate_candidates(s)
+    assert len(cands) >= 5 and not any(c.kind == "divert" for c in cands)
+    assert len(check_all(s, cands)) == 6 * len(cands)
+
+
+def test_no_downstream_legs_and_unmatched_tail():
+    s = build_scenario(LONE_TAIL_ROW)
+    assert s.downstream_legs == []
+    assert s.wake_category.source == "assumed"  # no registry lookup: distance-based default
+    cands = generate_candidates(s)
+    assert all(c.est_knock_on_min == 0 for c in cands)
+    turn = [r for r in check_all(s, cands) if r.rule_id == "R-TURN-01"]
+    assert all(r.passed and str(r.observed).startswith("n/a") for r in turn)
