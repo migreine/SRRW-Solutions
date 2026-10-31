@@ -82,3 +82,4 @@ class Recommendation(BaseModel):
     # Additive: set when the deterministic fallback decided. {"fired": True, "reason", "chosen",
     # "objective", "n_eligible", "eligible_ids", "excluded", "unchecked", "weights"}; None on consensus.
     fallback: dict | None = None
+    reviewer_detail: dict | None = None
